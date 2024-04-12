@@ -1,4 +1,4 @@
-from ppo.algo.ppo import argsparser,ppo
+from algo.ppo import argsparser,ppo
 from ppo.algo import core
 
 from utils import logger

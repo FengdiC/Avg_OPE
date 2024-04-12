@@ -7,10 +7,10 @@ import torch
 from torch.optim import Adam
 import gym
 import time
-import ppo.algo.core as core
-from ppo.utils.logx import EpochLogger
-from ppo.utils.mpi_pytorch import setup_pytorch_for_mpi, sync_params, mpi_avg_grads
-from ppo.utils.mpi_tools import mpi_fork, mpi_avg, mpi_statistics_scalar, num_procs
+import core as core
+from utils.logx import EpochLogger
+from utils.mpi_pytorch import setup_pytorch_for_mpi, sync_params, mpi_avg_grads
+from utils.mpi_tools import mpi_fork, mpi_avg, mpi_statistics_scalar, num_procs
 
 # pip install mujoco
 

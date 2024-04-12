@@ -1,10 +1,14 @@
+import os, sys, inspect
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0, parentdir)
 from algo.ppo import argsparser,ppo
-from ppo.algo import core
+from algo import core
 
 from utils import logger
 import numpy as np
 import gym
-from ppo.algo.random_search import random_search,set_one_thread
+from algo.random_search import random_search,set_one_thread
 
 args = argsparser()
 seeds = range(3)

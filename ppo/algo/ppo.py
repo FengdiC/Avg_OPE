@@ -7,7 +7,7 @@ import torch
 from torch.optim import Adam
 import gym
 import time
-import core as core
+import algo.core as core
 from utils.logx import EpochLogger
 from utils.mpi_pytorch import setup_pytorch_for_mpi, sync_params, mpi_avg_grads
 from utils.mpi_tools import mpi_fork, mpi_avg, mpi_statistics_scalar, num_procs
@@ -201,7 +201,7 @@ def ppo(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
     setup_pytorch_for_mpi()
 
     # Set up logger and save configuration
-    logger = EpochLogger(**logger_kwargs)
+    logger = EpochLogger()
     logger.save_config(locals())
 
     # Random seed
@@ -345,7 +345,7 @@ def ppo(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
                 'model_state_dict': ac.state_dict(),
                 'vf_optimizer_state_dict': vf_optimizer.state_dict(),
                 'pi_optimizer_state_dict': pi_optimizer.state_dict()
-            }, logger_kwargs['log_dir'])
+            }, logger_kwargs['log_dir']+'/model-'+str(epoch)+'.pth')
 
         # Perform PPO update!
         update()

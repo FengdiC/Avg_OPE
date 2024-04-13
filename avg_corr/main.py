@@ -95,48 +95,41 @@ class WeightNet(nn.Module):
         return torch.squeeze(weight)
 
 # load target policy
-def load(seed,path,env):
-    hyperparam = random_search(seed)
-    pi_lr = hyperparam["pi_lr"],
-    vf_lr = hyperparam['vf_lr']
-
-    ac_kwargs = dict(hidden_sizes=args.hid)
+def load(path,env):
+    ac_kwargs = dict(hidden_sizes=[64,32])
 
     ac = core.MLPActorCritic(env.observation_space, env.action_space, **ac_kwargs)
-    pi_optimizer = Adam(ac.pi.parameters(), lr=pi_lr)
-    vf_optimizer = Adam(ac.v.parameters(), lr=vf_lr)
-
     checkpoint = torch.load(path)
     ac.load_state_dict(checkpoint['model_state_dict'])
-    vf_optimizer.load_state_dict(checkpoint['vf_optimizer_state_dict'])
-    pi_optimizer.load_state_dict(checkpoint['pi_optimizer_state_dict'])
-    epoch = checkpoint['epoch']
     return ac
 
-# sample behaviour dataset randomly
-def collect_dataset(buffer_size,random=True):
+# sample behaviour dataset
+# behaviour policy = (1- random_weight) * target_policy + random_weight * random_policy
+def collect_dataset(buffer_size,path, random_weight=0.5):
     env = gym.make('CartPole-v0')
-    ac = load(seed,path,env)
+    ac = load(path,env)
     obs_dim = env.observation_space.shape
     act_dim = env.action_space.shape
-    buf=PPOBuffer(obs_dim, act_dim, buffer_size, gamma, lam)
+    buf=PPOBuffer(obs_dim, act_dim, buffer_size, gamma=0.995)
 
     o, ep_len = env.reset(), 0
 
     if isinstance(env.action_space, Box):
         action_range=env.action_space.high-env.action_space.low
         assert action_range>0
-        logbev = -np.log(np.prod(action_range))
+        logunif = -np.log(np.prod(action_range))
     elif isinstance(env.action_space, Discrete):
-        logbev = -np.log(env.action_space.n)
+        logunif = -np.log(env.action_space.n)
 
     for t in range(buffer_size):
-        _, _, logtarg = ac.step(torch.as_tensor(o, dtype=torch.float32))
-        if random:
+        _, targ_a, logtarg = ac.step(torch.as_tensor(o, dtype=torch.float32))
+        if np.random()<random_weight:
             # random behaviour policy
             a = env.action_space.sample()
+            logbev = logunif + np.log(random_weight)
         else:
-            _,a,logbev = ac_bev.step(torch.as_tensor(o, dtype=torch.float32))
+            a = targ_a
+            logbev = logtarg + np.log(1-random_weight)
         next_o, r, d, _ = env.step(a)
         ep_len += 1
 
@@ -158,7 +151,7 @@ def collect_dataset(buffer_size,random=True):
 
 # train weight net
 def train():
-    buf = collect_dataset(buffer_size=4000,random=True)
+    buf = collect_dataset(buffer_size=5000,path='./model.pth')
     data = buf.get()
 
     start_time = time.time()

@@ -345,7 +345,7 @@ def ppo(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
                 'model_state_dict': ac.state_dict(),
                 'vf_optimizer_state_dict': vf_optimizer.state_dict(),
                 'pi_optimizer_state_dict': pi_optimizer.state_dict()
-            }, logger_kwargs['log_dir']+'/model-'+str(epoch)+'.pth')
+            }, logger_kwargs['log_dir']+'/model-'+str(seed)+'epoch-'+str(epoch)+'.pth')
 
         # Perform PPO update!
         update()

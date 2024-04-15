@@ -13,7 +13,7 @@ SECONDS=0
 #python ppo/ppo_tune.py --seed 32 --log_dir $SCRATCH/avg_discount/acrobot --env 'Acrobot-v1' --epochs 100 --save_freq 15&
 #python ppo/ppo_tune.py --seed 32 --log_dir $SCRATCH/avg_discount/cartpole --env 'CartPole-v1' --epochs 100 --save_freq 15&
 #python ppo/ppo_tune.py --seed 165 --log_dir $SCRATCH/avg_discount/pendulum --env 'Pendulum-v1' --epochs 100 --save_freq 15&
-#python ppo/ppo_tune.py --seed 196 --log_dir $SCRATCH/avg_discount/mountaincar --env 'MountainCarContinuous-v0' --epochs 100 --save_freq 15&
+python ppo/ppo_tune.py --seed 196 --log_dir $SCRATCH/avg_discount/mountaincar --env 'MountainCarContinuous-v0' --epochs 100 --save_freq 15&
 
 python ppo/ppo_tune.py --seed 280 --log_dir $SCRATCH/avg_discount/hopper --env 'Hopper-v4' --epochs 250 --save_freq 48&
 python ppo/ppo_tune.py --seed 394 --log_dir $SCRATCH/avg_discount/swimmer --env 'Swimmer-v4' --epochs 250 --save_freq 48&

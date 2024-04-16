@@ -1,3 +1,7 @@
+import os, sys, inspect
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0, parentdir)
 import numpy as np
 from gym.spaces import Box, Discrete
 import gym
@@ -7,6 +11,7 @@ import torch.nn as nn
 from torch.optim import Adam
 import ppo.algo.core as core
 from ppo.algo.random_search import random_search
+import matplotlib.pyplot as plt
 
 
 class PPOBuffer:
@@ -60,21 +65,22 @@ class PPOBuffer:
 
         # the next two lines implement GAE-Lambda advantage calculation
         deltas = self.logtarg_buf - self.logbev_buf
-        self.prod_buf[path_slice] = core.discount_cumsum(deltas, 1)
+        self.prod_buf[path_slice] = core.discount_cumsum(deltas[path_slice], 1)
 
         self.path_start_idx = self.ptr
 
-    def get(self):
+    def sample(self,batch_size):
         """
         Call this at the end of an epoch to get all of the data from
         the buffer, with advantages appropriately normalized (shifted to have
         mean zero and std one). Also, resets some pointers in the buffer.
         """
-        assert self.ptr == self.max_size  # buffer has to be full before you can get
-        self.ptr, self.path_start_idx = 0, 0
 
-        data = dict(obs=self.obs_buf, act=self.act_buf, prod=self.prod_buf, tim=self.tim_buf,
-                    logbev=self.logbev_buf, logtarg=self.logtarg_buf)
+        ind = np.random.randint(self.ptr, size=batch_size)
+
+        data = dict(obs=self.obs_buf[ind], act=self.act_buf[ind], prod=self.prod_buf[ind],
+                    tim=self.tim_buf[ind],
+                    logbev=self.logbev_buf[ind], logtarg=self.logtarg_buf[ind])
         return {k: torch.as_tensor(v, dtype=torch.float32) for k, v in data.items()}
 
 class WeightNet(nn.Module):
@@ -103,16 +109,44 @@ def load(path,env):
     ac.load_state_dict(checkpoint['model_state_dict'])
     return ac
 
+def eval_policy(path='./exper/cartpole_998.pth'):
+    env = gym.make('CartPole-v1')
+    ac = load(path, env)
+    hyperparam = random_search(32)
+    gamma = hyperparam['gamma']
+
+    o, ep_len, ep_ret = env.reset(), 0 ,0
+    num_traj=0
+    rets = []
+
+    while num_traj<600:
+        a, _,logtarg = ac.step(torch.as_tensor(o, dtype=torch.float32))
+        next_o, r, d, _ = env.step(a)
+        ep_ret += r * gamma ** ep_len
+        ep_len += 1
+        # Update obs (critical!)
+        o = next_o
+
+        terminal = d
+
+        if terminal:
+            num_traj+=1
+            rets.append(ep_ret)
+            o, ep_ret, ep_len = env.reset(), 0, 0
+    return (1-gamma)*np.mean(rets),np.var(rets)
+
 # sample behaviour dataset
 # behaviour policy = (1- random_weight) * target_policy + random_weight * random_policy
-def collect_dataset(buffer_size,path, random_weight=0.5):
-    env = gym.make('CartPole-v0')
+def collect_dataset(env,gamma,buffer_size=20,max_len=200,
+                    path='./exper/cartpole_998.pth', random_weight=0.2):
     ac = load(path,env)
     obs_dim = env.observation_space.shape
     act_dim = env.action_space.shape
-    buf=PPOBuffer(obs_dim, act_dim, buffer_size, gamma=0.995)
+
+    buf=PPOBuffer(obs_dim, act_dim, buffer_size*max_len, gamma)
 
     o, ep_len = env.reset(), 0
+    num_traj = 0
 
     if isinstance(env.action_space, Box):
         action_range=env.action_space.high-env.action_space.low
@@ -121,9 +155,9 @@ def collect_dataset(buffer_size,path, random_weight=0.5):
     elif isinstance(env.action_space, Discrete):
         logunif = -np.log(env.action_space.n)
 
-    for t in range(buffer_size):
-        _, targ_a, logtarg = ac.step(torch.as_tensor(o, dtype=torch.float32))
-        if np.random()<random_weight:
+    while num_traj<buffer_size:
+        targ_a,_, logtarg = ac.step(torch.as_tensor(o, dtype=torch.float32))
+        if np.random.random()<random_weight:
             # random behaviour policy
             a = env.action_space.sample()
             logbev = logunif + np.log(random_weight)
@@ -140,66 +174,61 @@ def collect_dataset(buffer_size,path, random_weight=0.5):
         o = next_o
 
         terminal = d
-        epoch_ended = t == buffer_size - 1
+        epoch_ended = ep_len == max_len - 1
 
         if terminal or epoch_ended:
-            if epoch_ended and not (terminal):
-                print('Warning: trajectory cut off by epoch at %d steps.' % ep_len, flush=True)
+            num_traj +=1
+            if terminal and not (epoch_ended):
+                print('Warning: trajectory ends early at %d steps.' % ep_len, flush=True)
             buf.finish_path()
             o, ep_ret, ep_len = env.reset(), 0, 0
-    return buf
+    return buf,num_traj
 
 # train weight net
-def train():
-    buf = collect_dataset(buffer_size=5000,path='./model.pth')
-    data = buf.get()
+def train(lr, batch_size=256):
+    hyperparam = random_search(32)
+    gamma = hyperparam['gamma']
+    env = gym.make('CartPole-v1')
+    true_value = 0.998
+    T = 100
+    buf,k = collect_dataset(env,gamma,buffer_size=20,max_len=T)
+    buf_test,k_test = collect_dataset(env, gamma,buffer_size=20,max_len=T)
+    weight = WeightNet(env.observation_space.shape[0], hidden_sizes=[256,256],activation=nn.ReLU)
 
     start_time = time.time()
-    def compute_loss_v(data):
-        obs, act = data['obs'], data['act']
-        tim, adv, logp_old = data['tim'], data['adv'], data['logp']
-
-        return ((ac.v(obs) - ret)**2).mean()
 
     # Set up optimizers for policy and value function
-    pi_optimizer = Adam(ac.pi.parameters(), lr=pi_lr)
-    vf_optimizer = Adam(ac.v.parameters(), lr=vf_lr)
-
-    # Set up model saving
-    logger.setup_pytorch_saver(ac)
+    optimizer = Adam(weight.parameters(), lr)
 
     def update():
-        data = buf.get()
+        #sample minibatches
+        data = buf.sample(batch_size)
 
-        pi_l_old, pi_info_old = compute_loss_pi(data)
-        pi_l_old = pi_l_old.item()
-        v_l_old = compute_loss_v(data).item()
+        obs, act = data['obs'], data['act']
+        tim, prod = data['tim'], data['prod']
 
-        # Train policy with multiple steps of gradient descent
-        for i in range(train_pi_iters):
-            pi_optimizer.zero_grad()
-            loss_pi, pi_info = compute_loss_pi(data)
-            kl = mpi_avg(pi_info['kl'])
-            if kl > 1.5 * target_kl:
-                logger.log('Early stopping at step %d due to reaching max kl.'%i)
-                break
-            loss_pi.backward()
-            mpi_avg_grads(ac.pi)    # average grads across MPI processes
-            pi_optimizer.step()
+        loss = ((weight(obs) - (np.log(gamma) * tim + prod)) ** 2).mean()
 
-        logger.store(StopIter=i)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
 
-        # Value function learning
-        for i in range(train_v_iters):
-            vf_optimizer.zero_grad()
-            loss_v = compute_loss_v(data)
-            loss_v.backward()
-            mpi_avg_grads(ac.v)    # average grads across MPI processes
-            vf_optimizer.step()
+    def eval(buffer):
+        ratio = weight(torch.as_tensor(buffer.obs_buf[:buffer.ptr],dtype=torch.float32)).detach().numpy()
+        obj = np.mean(np.exp(ratio) * buffer.rew_buf[:buffer.ptr])
+        return obj*T*(1-gamma)
 
-        # Log changes from update
-        kl, ent, cf = pi_info['kl'], pi_info_old['ent'], pi_info['cf']
-        logger.store(LossPi=pi_l_old, LossV=v_l_old,
-                     KL=kl, Entropy=ent, ClipFrac=cf,
-                     DeltaLossPi=(loss_pi.item() - pi_l_old),
-                     DeltaLossV=(loss_v.item() - v_l_old))
+    objs, objs_test = [], []
+    err, terr_test = 100, 100
+    for steps in range(25* 1000):
+        update()
+        if steps>0 and steps%1000==0:
+            obj, obj_test  = eval(buf), eval(buf_test)
+            objs.append(obj)
+            objs_test.append(obj_test)
+    return objs
+
+objs = train(0.1)
+plt.plot(range(len(objs)),objs)
+plt.plot(range(len(objs)),0.998*np.ones(len(objs)))
+plt.show()

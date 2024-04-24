@@ -120,7 +120,7 @@ def eval_policy(path='./exper/cartpole_998.pth'):
     rets = []
     avg_rets = []
 
-    while num_traj<150:
+    while num_traj<100:
         a, _,logtarg = ac.step(torch.as_tensor(o, dtype=torch.float32))
         next_o, r, d, _ = env.step(a)
         ep_ret += r * gamma ** ep_len
@@ -237,7 +237,7 @@ def train(lr, batch_size=256):
             objs_test.append(obj_test)
     return objs
 
-print(eval_policy('/scratch/fengdic/avg_discount/halfcheetah/model-0epoch-249.pth'))
+print(eval_policy('/scratch/fengdic/avg_discount/halfcheetah/model-1epoch-249.pth'))
 # objs = train(0.0001)
 # plt.plot(range(len(objs)),objs)
 # plt.plot(range(len(objs)),0.998*np.ones(len(objs)))

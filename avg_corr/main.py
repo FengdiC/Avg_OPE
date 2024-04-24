@@ -112,7 +112,7 @@ def load(path,env):
 def eval_policy(path='./exper/cartpole_998.pth'):
     env = gym.make('Hopper-v4')
     ac = load(path, env)
-    hyperparam = random_search(32)
+    hyperparam = random_search(280)
     gamma = hyperparam['gamma']
 
     o, ep_len, ep_ret, ep_avg_ret = env.reset(), 0 ,0, 0

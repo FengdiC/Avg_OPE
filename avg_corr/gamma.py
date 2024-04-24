@@ -12,7 +12,7 @@ from torch.optim import Adam
 import ppo.algo.core as core
 from ppo.algo.random_search import random_search
 import matplotlib.pyplot as plt
-
+import pandas as pd
 
 class PPOBuffer:
     """
@@ -63,9 +63,10 @@ class PPOBuffer:
 
         path_slice = slice(self.path_start_idx, self.ptr)
 
-        # the next two lines implement GAE-Lambda advantage calculation
-        deltas = self.logtarg_buf - self.logbev_buf
-        self.prod_buf[path_slice] = np.append(0,core.discount_cumsum(deltas[path_slice], 1)[:-1])
+        deltas = self.logtarg_buf[path_slice] - self.logbev_buf[path_slice]
+        for j in range(deltas.shape[0]-1):
+            deltas[j+1] = deltas[j+1] + deltas[j]
+        self.prod_buf[path_slice] = np.append(0,deltas[:-1])
 
         self.path_start_idx = self.ptr
 
@@ -75,13 +76,15 @@ class PPOBuffer:
         the buffer, with advantages appropriately normalized (shifted to have
         mean zero and std one). Also, resets some pointers in the buffer.
         """
-
         ind = np.random.randint(self.ptr, size=batch_size)
 
         data = dict(obs=self.obs_buf[ind], act=self.act_buf[ind], prod=self.prod_buf[ind],
                     tim=self.tim_buf[ind],
                     logbev=self.logbev_buf[ind], logtarg=self.logtarg_buf[ind])
         return {k: torch.as_tensor(v, dtype=torch.float32) for k, v in data.items()}
+
+    def delete_traj(self):
+        self.ptr =self.path_start_idx
 
 class WeightNet(nn.Module):
     def __init__(self, o_dim, hidden_sizes,activation):
@@ -90,9 +93,9 @@ class WeightNet(nn.Module):
         print(sizes)
         layers = []
         for j in range(len(sizes) - 1):
-            layers += [nn.Linear(sizes[j], sizes[j + 1]),activation()]
+            layers += [nn.Linear(sizes[j], sizes[j + 1]),nn.Tanh()]
         self.body = nn.Sequential(*layers)
-        self.weight = nn.Sequential(nn.Linear(sizes[-1], 1),activation())  #nn.Identity()
+        self.weight = nn.Sequential(nn.Linear(sizes[-1], 1),activation())
 
     def forward(self, obs):
         obs = obs.float()
@@ -109,32 +112,6 @@ def load(path,env):
     ac.load_state_dict(checkpoint['model_state_dict'])
     return ac
 
-def eval_policy(path='./exper/cartpole_998.pth'):
-    env = gym.make('HalfCheetah-v4')
-    ac = load(path, env)
-    hyperparam = random_search(32)
-    gamma = hyperparam['gamma']
-
-    o, ep_len, ep_ret = env.reset(), 0 ,0
-    num_traj=0
-    rets = []
-
-    while num_traj<50:
-        a, _,logtarg = ac.step(torch.as_tensor(o, dtype=torch.float32))
-        next_o, r, d, _ = env.step(a)
-        ep_ret += r * gamma ** ep_len
-        ep_len += 1
-        # Update obs (critical!)
-        o = next_o
-
-        terminal = d
-
-        if terminal:
-            num_traj+=1
-            rets.append(ep_ret)
-            o, ep_ret, ep_len = env.reset(), 0, 0
-    return (1-gamma)*np.mean(rets),np.var(rets)
-
 # sample behaviour dataset
 # behaviour policy = (1- random_weight) * target_policy + random_weight * random_policy
 def collect_dataset(env,gamma,buffer_size=20,max_len=200,
@@ -149,23 +126,23 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
     num_traj = 0
 
     if isinstance(env.action_space, Box):
-        action_range = env.action_space.high - env.action_space.low
-        assert action_range > 0
-        unif = 1 / np.prod(action_range)
+        action_range=env.action_space.high-env.action_space.low
+        assert action_range>0
+        unif = 1/np.prod(action_range)
     elif isinstance(env.action_space, Discrete):
-        unif = 1 / env.action_space.n
+        unif = 1/env.action_space.n
 
-    while num_traj < buffer_size:
-        targ_a, _, logtarg = ac.step(torch.as_tensor(o, dtype=torch.float32))
-        if np.random.random() < random_weight:
+    while num_traj<buffer_size:
+        targ_a,_, logtarg = ac.step(torch.as_tensor(o, dtype=torch.float32))
+        if np.random.random()<random_weight:
             # random behaviour policy
             a = env.action_space.sample()
             pi = ac.pi._distribution(torch.as_tensor(o, dtype=torch.float32))
             logp = ac.pi._log_prob_from_distribution(pi, torch.as_tensor(a)).detach().numpy()
-            logbev = np.log(random_weight * unif + (1 - random_weight) * np.exp(logp))
+            logbev = np.log(random_weight * unif + (1-random_weight)*np.exp(logp))
         else:
             a = targ_a
-            logbev = np.log(random_weight * unif + (1 - random_weight) * np.exp(logtarg))
+            logbev = np.log(random_weight * unif + (1-random_weight)*np.exp(logtarg))
         next_o, r, d, _ = env.step(a)
         ep_len += 1
 
@@ -179,12 +156,37 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
         epoch_ended = ep_len == max_len - 1
 
         if terminal or epoch_ended:
-            num_traj +=1
             if terminal and not (epoch_ended):
                 print('Warning: trajectory ends early at %d steps.' % ep_len, flush=True)
-            buf.finish_path()
+                # buf.delete_traj()
+                # o, ep_ret, ep_len = env.reset(), 0, 0
+                # continue
+            num_traj += 1
             o, ep_ret, ep_len = env.reset(), 0, 0
-    return buf,num_traj
+            buf.finish_path()
+    return buf
+
+def label_analysis():
+    hyperparam = random_search(32)
+    gamma = hyperparam['gamma']
+    env = gym.make('CartPole-v1')
+    true_value = 0.998
+    T = 100
+    buf = collect_dataset(env,gamma,buffer_size=20,max_len=T)
+
+    data = buf.sample(batch_size=128)
+    tim, prod = data['tim'].numpy(), data['prod'].numpy()
+    label = gamma**tim * np.exp(prod)
+    print(label.shape)
+    print(np.sum(label<1))
+    print(np.max(label))
+    # label = pd.Series(gamma**tim * np.exp( prod))
+    # count = label.value_counts().sort_index()
+    # print(count)
+    # x = list(count.index)
+    # y = count.to_list()
+    # plt.bar(x,y)
+    # plt.show()
 
 # train weight net
 def train(lr, batch_size=256):
@@ -193,9 +195,9 @@ def train(lr, batch_size=256):
     env = gym.make('CartPole-v1')
     true_value = 0.998
     T = 50
-    buf,k = collect_dataset(env,gamma,buffer_size=20,max_len=T)
-    buf_test,k_test = collect_dataset(env, gamma,buffer_size=20,max_len=T)
-    weight = WeightNet(env.observation_space.shape[0], hidden_sizes=[256,256],activation=nn.ReLU)
+    buf = collect_dataset(env,gamma,buffer_size=20,max_len=T)
+    buf_test = collect_dataset(env, gamma,buffer_size=20,max_len=T)
+    weight = WeightNet(env.observation_space.shape[0], hidden_sizes=[32,32],activation=nn.Identity)
 
     start_time = time.time()
 
@@ -209,8 +211,8 @@ def train(lr, batch_size=256):
         obs, act = data['obs'], data['act']
         tim, prod = data['tim'], data['prod']
 
-        loss = ((weight(obs) - 1/np.exp(np.log(gamma) * tim + prod)) ** 2).mean()
-        l1_lambda = 0.001
+        loss = (weight(obs) + torch.exp(-weight(obs)) * torch.exp(np.log(gamma) * tim + prod)).mean()
+        l1_lambda = 0
         l1_norm = sum(torch.linalg.norm(p, 1) for p in weight.parameters())
         loss = loss + l1_lambda * l1_norm
 
@@ -226,16 +228,15 @@ def train(lr, batch_size=256):
 
     objs, objs_test = [], []
     err, terr_test = 100, 100
-    for steps in range(200* 10):
+    for steps in range(66* 100):
         update()
-        if steps>0 and steps%10==0:
+        if steps>0 and steps%100==0:
             obj, obj_test  = eval(buf), eval(buf_test)
             objs.append(obj)
             objs_test.append(obj_test)
     return objs
 
-eval_policy('/scratch/fengdic/avg_discount/halfcheetah/model-1epoch-249.pth')
-# objs = train(0.0001)
-# plt.plot(range(len(objs)),objs)
-# plt.plot(range(len(objs)),0.998*np.ones(len(objs)))
-# plt.show()
+objs = train(0.0001)
+plt.plot(range(len(objs)),objs)
+plt.plot(range(len(objs)),0.998*np.ones(len(objs)))
+plt.show()

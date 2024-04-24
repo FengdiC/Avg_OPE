@@ -120,7 +120,7 @@ def eval_policy(path='./exper/cartpole_998.pth'):
     rets = []
     avg_rets = []
 
-    while num_traj<50:
+    while num_traj<100:
         a, _,logtarg = ac.step(torch.as_tensor(o, dtype=torch.float32))
         next_o, r, d, _ = env.step(a)
         ep_ret += r * gamma ** ep_len

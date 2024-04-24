@@ -118,6 +118,7 @@ def eval_policy(path='./exper/cartpole_998.pth'):
     o, ep_len, ep_ret, ep_avg_ret = env.reset(), 0 ,0, 0
     num_traj=0
     rets = []
+    avg_rets = []
 
     while num_traj<50:
         a, _,logtarg = ac.step(torch.as_tensor(o, dtype=torch.float32))
@@ -133,9 +134,9 @@ def eval_policy(path='./exper/cartpole_998.pth'):
         if terminal:
             num_traj+=1
             rets.append(ep_ret)
-            print(ep_avg_ret)
+            avg_rets.append(ep_avg_ret)
             o, ep_ret, ep_len, ep_avg_ret = env.reset(), 0, 0, 0
-    return (1-gamma)*np.mean(rets),np.var(rets)
+    return (1-gamma)*np.mean(rets),np.var(rets),np.mean(avg_rets)
 
 # sample behaviour dataset
 # behaviour policy = (1- random_weight) * target_policy + random_weight * random_policy

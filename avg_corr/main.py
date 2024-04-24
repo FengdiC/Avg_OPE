@@ -115,7 +115,7 @@ def eval_policy(path='./exper/cartpole_998.pth'):
     hyperparam = random_search(32)
     gamma = hyperparam['gamma']
 
-    o, ep_len, ep_ret = env.reset(), 0 ,0
+    o, ep_len, ep_ret, ep_avg_ret = env.reset(), 0 ,0, 0
     num_traj=0
     rets = []
 
@@ -123,6 +123,7 @@ def eval_policy(path='./exper/cartpole_998.pth'):
         a, _,logtarg = ac.step(torch.as_tensor(o, dtype=torch.float32))
         next_o, r, d, _ = env.step(a)
         ep_ret += r * gamma ** ep_len
+        ep_avg_ret += r
         ep_len += 1
         # Update obs (critical!)
         o = next_o
@@ -132,7 +133,8 @@ def eval_policy(path='./exper/cartpole_998.pth'):
         if terminal:
             num_traj+=1
             rets.append(ep_ret)
-            o, ep_ret, ep_len = env.reset(), 0, 0
+            print(ep_avg_len)
+            o, ep_ret, ep_len, ep_avg_len = env.reset(), 0, 0, 0
     return (1-gamma)*np.mean(rets),np.var(rets)
 
 # sample behaviour dataset

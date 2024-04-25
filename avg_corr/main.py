@@ -237,7 +237,7 @@ def train(lr, batch_size=256):
             objs_test.append(obj_test)
     return objs
 
-print(eval_policy('/scratch/fengdic/avg_discount/acrobot/model-1epoch-49.pth'))
+print(eval_policy('/scratch/fengdic/avg_discount/acrobot/model-1epoch-15.pth'))
 # objs = train(0.0001)
 # plt.plot(range(len(objs)),objs)
 # plt.plot(range(len(objs)),0.998*np.ones(len(objs)))

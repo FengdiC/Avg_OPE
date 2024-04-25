@@ -153,7 +153,7 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
 
     if isinstance(env.action_space, Box):
         action_range = env.action_space.high - env.action_space.low
-        assert action_range > 0
+        assert np.any(action_range > 0)
         unif = 1 / np.prod(action_range)
     elif isinstance(env.action_space, Discrete):
         unif = 1 / env.action_space.n

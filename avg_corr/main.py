@@ -110,9 +110,9 @@ def load(path,env):
     return ac
 
 def eval_policy(path='./exper/cartpole_998.pth'):
-    env = gym.make('Ant-v4')
+    env = gym.make('Walker-v4')
     ac = load(path, env)
-    hyperparam = random_search(16)
+    hyperparam = random_search(39)
     gamma = hyperparam['gamma']
 
     o, ep_len, ep_ret, ep_avg_ret = env.reset(), 0 ,0, 0
@@ -237,7 +237,7 @@ def train(lr, batch_size=256):
             objs_test.append(obj_test)
     return objs
 
-print(eval_policy('/scratch/fengdic/avg_discount/ant/model-1epoch-249.pth'))
+print(eval_policy('/scratch/fengdic/avg_discount/walker/model-1epoch-249.pth'))
 # objs = train(0.0001)
 # plt.plot(range(len(objs)),objs)
 # plt.plot(range(len(objs)),0.998*np.ones(len(objs)))

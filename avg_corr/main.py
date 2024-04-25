@@ -110,7 +110,7 @@ def load(path,env):
     return ac
 
 def eval_policy(path='./exper/cartpole_998.pth'):
-    env = gym.make('Walker-v4')
+    env = gym.make('Walker2d-v4')
     ac = load(path, env)
     hyperparam = random_search(39)
     gamma = hyperparam['gamma']

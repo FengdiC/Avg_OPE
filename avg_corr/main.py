@@ -191,11 +191,10 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
 
 # train weight net
 def train(lr, batch_size=256):
-    hyperparam = random_search(32)
+    hyperparam = random_search(280)
     gamma = hyperparam['gamma']
-    env = gym.make('CartPole-v1')
-    true_value = 0.998
-    T = 50
+    env = gym.make('Hopper-v4')
+    T = 200
     buf,k = collect_dataset(env,gamma,buffer_size=20,max_len=T)
     buf_test,k_test = collect_dataset(env, gamma,buffer_size=20,max_len=T)
     weight = WeightNet(env.observation_space.shape[0], hidden_sizes=[256,256],activation=nn.ReLU)
@@ -229,16 +228,16 @@ def train(lr, batch_size=256):
 
     objs, objs_test = [], []
     err, terr_test = 100, 100
-    for steps in range(200* 10):
+    for steps in range(2000* 100):
         update()
-        if steps>0 and steps%10==0:
+        if steps>0 and steps%100==0:
             obj, obj_test  = eval(buf), eval(buf_test)
             objs.append(obj)
             objs_test.append(obj_test)
     return objs
 
-print(eval_policy('/scratch/fengdic/avg_discount/mountaincar/model-1epoch-30.pth'))
-# objs = train(0.0001)
-# plt.plot(range(len(objs)),objs)
-# plt.plot(range(len(objs)),0.998*np.ones(len(objs)))
-# plt.show()
+# print(eval_policy('/scratch/fengdic/avg_discount/mountaincar/model-1epoch-30.pth'))
+objs = train(0.0001)
+plt.plot(range(len(objs)),objs)
+plt.plot(range(len(objs)),2.651*np.ones(len(objs)))
+plt.savefig('./')

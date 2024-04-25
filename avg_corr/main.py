@@ -190,13 +190,13 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
     return buf,num_traj
 
 # train weight net
-def train(lr, batch_size=256):
-    hyperparam = random_search(280)
+def train(lr, env,seed,path,batch_size=256):
+    hyperparam = random_search(seed)
     gamma = hyperparam['gamma']
-    env = gym.make('Hopper-v4')
+    env = gym.make(env)
     T = 200
-    buf,k = collect_dataset(env,gamma,buffer_size=20,max_len=T)
-    buf_test,k_test = collect_dataset(env, gamma,buffer_size=20,max_len=T)
+    buf,k = collect_dataset(env,gamma,buffer_size=20,max_len=T,path=path)
+    buf_test,k_test = collect_dataset(env, gamma,buffer_size=20,max_len=T,path=path)
     weight = WeightNet(env.observation_space.shape[0], hidden_sizes=[256,256],activation=nn.ReLU)
 
     start_time = time.time()
@@ -237,7 +237,8 @@ def train(lr, batch_size=256):
     return objs
 
 # print(eval_policy('/scratch/fengdic/avg_discount/mountaincar/model-1epoch-30.pth'))
-objs = train(0.0001)
+objs = train(0.0001,env='Hopper-v4',seed=280,
+             path='/scratch/fengdic/avg_discount/hopper/model-2epoch-249.pth')
 plt.plot(range(len(objs)),objs)
 plt.plot(range(len(objs)),2.651*np.ones(len(objs)))
 plt.savefig('./')

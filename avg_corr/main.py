@@ -86,7 +86,7 @@ class PPOBuffer:
                     logbev=self.logbev_buf[ind], logtarg=self.logtarg_buf[ind])
         return {k: torch.as_tensor(v, dtype=torch.float32) for k, v in data.items()}
 
-    def delete_traj(self):
+    def delete_last_traj(self):
         self.ptr =self.path_start_idx
 
 class WeightNet(nn.Module):
@@ -277,7 +277,7 @@ def argsparser():
     parser.add_argument('--env', type=str, default='Hopper-v4')
     parser.add_argument('--seed', '-s', type=int, default=0)
     parser.add_argument('--steps', type=int, default=4000)
-    parser.add_argument('--epochs', type=int, default=250)
+    parser.add_argument('--epoch', type=int, default=250)
 
     parser.add_argument('--lr', type=float, default=3e-4)
     parser.add_argument('--hid', type=list, default=[64, 32])

@@ -4,7 +4,7 @@
 #SBATCH --time=0-24:00
 #SBATCH --output=%N-%j.out
 #SBATCH --account=def-ashique
-#SBATCH --array=1-324
+#SBATCH --array=1-108
 
 # salloc --cpus-per-task=1 --mem=3600M --time=0-3:00 --account=def-ashique
 
@@ -20,15 +20,12 @@ do
   do
     for LINK in 'inverse' 'identity' 'log' 'loglog'
     do
-      for HID in (32,64) (64,128) (128,256)
+      for BUFFER in 20 40 200
       do
-        for BUFFER in 20 40 200
-        do
-          python avg_corr/main.py --path './exper/cartpole.pth' --env 'CartPole-v1' \
-          --log_dir '$SCRATCH/avg_discount/cartpole/' --batch_size $BATCH_SIZE \
-          --link $LINK --random_weight $RANDOM_WEIGHT --hid $HID \
-          --steps 5 --epoch 1000 --buffer_size $BUFFER --max_len 50 --seed $SLURM_ARRAY_TASK_ID&
-        done
+        python avg_corr/main.py --path './exper/cartpole.pth' --env 'CartPole-v1' \
+        --log_dir '$SCRATCH/avg_discount/cartpole/' --batch_size $BATCH_SIZE \
+        --link $LINK --random_weight $RANDOM_WEIGHT \
+        --steps 5 --epoch 1000 --buffer_size $BUFFER --max_len 50 --seed $SLURM_ARRAY_TASK_ID&
       done
     done
   done

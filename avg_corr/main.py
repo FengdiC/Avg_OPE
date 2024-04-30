@@ -199,7 +199,7 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
 
 # train weight net
 def train(lr, env,seed,path,link,random_weight,l1_lambda,
-          hid=(32,64),checkpoint=5,epoch=1000,cv_fold=10,batch_size=256,buffer_size=20,max_len=50):
+          checkpoint=5,epoch=1000,cv_fold=10,batch_size=256,buffer_size=20,max_len=50):
     hyperparam = random_search(seed)
     gamma = hyperparam['gamma']
     env = gym.make(env)
@@ -208,9 +208,9 @@ def train(lr, env,seed,path,link,random_weight,l1_lambda,
     buf_test = collect_dataset(env, gamma,buffer_size=20,max_len=max_len,
                                       path=path,random_weight=random_weight,fold=1)
     if link=='inverse':
-        weight = WeightNet(env.observation_space.shape[0], hidden_sizes=hid,activation=nn.ReLU)
+        weight = WeightNet(env.observation_space.shape[0], hidden_sizes=(256,256),activation=nn.ReLU)
     else:
-        weight = WeightNet(env.observation_space.shape[0], hidden_sizes=hid, activation=nn.Identity)
+        weight = WeightNet(env.observation_space.shape[0], hidden_sizes=(256,256), activation=nn.Identity)
 
     start_time = time.time()
 
@@ -280,7 +280,6 @@ def argsparser():
     parser.add_argument('--epoch', type=int, default=250)
 
     parser.add_argument('--lr', type=float, default=3e-4)
-    parser.add_argument('--hid', type=tuple, default=(64, 32))
     parser.add_argument('--batch_size', type=int, default=256)
     parser.add_argument('--buffer_size', type=int, default=20)
     parser.add_argument('--max_len', type=int, default=50)
@@ -304,8 +303,9 @@ def tune():
             for seed in seeds:
                 _,_,cv = train(lr=lr,env=args.env,seed=seed,path=args.path,
                                link=args.link,random_weight=args.random_weight,l1_lambda=alpha,
-                               hid =args.hid,checkpoint=args.steps,epoch=args.epoch, cv_fold=10,
-                               batch_size=args.batch_size,buffer_size=args.buffer_size, max_len=args.max_len)
+                               checkpoint=args.steps,epoch=args.epoch, cv_fold=10,
+                               batch_size=args.batch_size,buffer_size=args.buffer_size,
+                               max_len=args.max_len)
                 ret=np.array(cv)
                 print(ret.shape)
                 result.append(cv)

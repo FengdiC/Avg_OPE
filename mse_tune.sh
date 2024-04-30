@@ -20,7 +20,7 @@ do
   do
     for LINK in 'inverse' 'identity' 'log' 'loglog'
     do
-      for HID in [32,64] [64,128] [128,256]
+      for HID in (32,64) (64,128) (128,256)
       do
         for BUFFER in 20 40 200
         do

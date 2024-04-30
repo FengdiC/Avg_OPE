@@ -241,4 +241,4 @@ objs = train(0.0001,env='Hopper-v4',seed=280,
              path='/scratch/fengdic/avg_discount/hopper/model-2epoch-249.pth')
 plt.plot(range(len(objs)),objs)
 plt.plot(range(len(objs)),2.651*np.ones(len(objs)))
-plt.savefig('./')
+plt.savefig('hopper.png')

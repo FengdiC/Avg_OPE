@@ -207,7 +207,7 @@ def train(lr, env,seed,path,link,random_weight,l1_lambda,
                             random_weight=random_weight,fold = cv_fold)
     buf_test = collect_dataset(env, gamma,buffer_size=20,max_len=max_len,
                                       path=path,random_weight=random_weight,fold=1)
-    if link=='inverse':
+    if link=='inverse' or 'identity':
         weight = WeightNet(env.observation_space.shape[0], hidden_sizes=(256,256),activation=nn.ReLU)
     else:
         weight = WeightNet(env.observation_space.shape[0], hidden_sizes=(256,256), activation=nn.Identity)
@@ -226,6 +226,10 @@ def train(lr, env,seed,path,link,random_weight,l1_lambda,
 
         if link=="inverse":
             loss = ((weight(obs) - 1/np.exp(np.log(gamma) * tim + prod)) ** 2).mean()
+        elif link=='identity':
+            loss = ((weight(obs) - np.exp(np.log(gamma) * tim + prod)) ** 2).mean()
+        elif link =='loglog':
+            loss = ((weight(obs) - np.log(np.log(gamma) * tim + prod)) ** 2).mean()
         else:
             loss = ((weight(obs) - (np.log(gamma) * tim + prod)) ** 2).mean()
 
@@ -240,23 +244,31 @@ def train(lr, env,seed,path,link,random_weight,l1_lambda,
         ratio = weight(torch.as_tensor(buffer.obs_buf[:buffer.ptr],dtype=torch.float32)).detach().numpy()
         if link == "inverse":
             ratio = 1/(ratio+0.001)
+        elif link =='identity':
+            continue
+        elif link=='loglog':
+            ratio = np.exp(np.exp(ratio))
         else:
             ratio = np.exp(ratio)
         obj = np.mean(ratio * np.exp(buffer.logtarg_buf[:buffer.ptr]
                                      - buffer.logbev_buf[:buffer.ptr])*buffer.rew_buf[:buffer.ptr])
-        return obj*T*(1-gamma)
+        return obj*max_len*(1-gamma)
 
     def eval(buffer,fold_num):
         interval = int(buffer.ptr/buffer.fold)
         ind = range(fold_num* interval,(fold_num+1)* interval,1)
         ratio = weight(torch.as_tensor(buffer.obs_buf[ind],dtype=torch.float32)).detach().numpy()
         if link == "inverse":
-            ratio = 1/(ratio+0.001)
+            ratio = 1 / (ratio + 0.001)
+        elif link == 'identity':
+            continue
+        elif link == 'loglog':
+            ratio = np.exp(np.exp(ratio))
         else:
             ratio = np.exp(ratio)
         obj = np.mean(ratio * np.exp(buffer.logtarg_buf[ind]
                                      - buffer.logbev_buf[ind])*buffer.rew_buf[ind])
-        return obj*T*(1-gamma)
+        return obj*max_len*(1-gamma)
 
     objs, objs_test, objs_cv = [], [], []
     for fold_num in range(cv_fold):

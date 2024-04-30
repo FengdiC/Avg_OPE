@@ -229,7 +229,8 @@ def train(lr, env,seed,path,link,random_weight,l1_lambda,
         elif link=='identity':
             loss = ((weight(obs) - np.exp(np.log(gamma) * tim + prod)) ** 2).mean()
         elif link =='loglog':
-            loss = ((weight(obs) - np.log(np.log(gamma) * tim + prod)) ** 2).mean()
+            label =np.exp(np.log(gamma) * tim + prod)
+            loss = ((weight(obs) - np.log(np.log(label+1))) ** 2).mean()
         else:
             loss = ((weight(obs) - (np.log(gamma) * tim + prod)) ** 2).mean()
 
@@ -263,7 +264,7 @@ def train(lr, env,seed,path,link,random_weight,l1_lambda,
         elif link == 'identity':
             pass
         elif link == 'loglog':
-            ratio = np.exp(np.exp(ratio))
+            ratio = np.exp(np.exp(ratio))-1
         else:
             ratio = np.exp(ratio)
         obj = np.mean(ratio * np.exp(buffer.logtarg_buf[ind]

@@ -199,7 +199,7 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
 
 # train weight net
 def train(lr, env,seed,path,link,random_weight,l1_lambda,
-          hid=[32,64],checkpoint=5,epoch=1000,cv_fold=10,batch_size=256,buffer_size=20,max_len=50):
+          hid=(32,64),checkpoint=5,epoch=1000,cv_fold=10,batch_size=256,buffer_size=20,max_len=50):
     hyperparam = random_search(seed)
     gamma = hyperparam['gamma']
     env = gym.make(env)
@@ -280,7 +280,7 @@ def argsparser():
     parser.add_argument('--epoch', type=int, default=250)
 
     parser.add_argument('--lr', type=float, default=3e-4)
-    parser.add_argument('--hid', type=list, default=[64, 32])
+    parser.add_argument('--hid', type=tuple, default=(64, 32))
     parser.add_argument('--batch_size', type=int, default=256)
     parser.add_argument('--buffer_size', type=int, default=20)
     parser.add_argument('--max_len', type=int, default=50)

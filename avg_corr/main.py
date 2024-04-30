@@ -77,7 +77,6 @@ class PPOBuffer:
         the buffer, with advantages appropriately normalized (shifted to have
         mean zero and std one). Also, resets some pointers in the buffer.
         """
-        print(self.ptr / self.fold)
         interval = int(self.ptr / self.fold)
         ind = np.random.randint(self.ptr-interval, size=batch_size)
         ind = ind + np.where(ind>=fold_num*interval,1,0)*interval
@@ -248,7 +247,8 @@ def train(lr, env,seed,path,link,random_weight,l1_lambda,
         return obj*T*(1-gamma)
 
     def eval(buffer,fold_num):
-        ind = range(fold_num* buffer.ptr/buffer.fold,(fold_num+1)* buffer.ptr/buffer.fold,1)
+        interval = int(buffer.ptr/buffer.fold)
+        ind = range(fold_num* interval,(fold_num+1)* interval,1)
         ratio = weight(torch.as_tensor(buffer.obs_buf[ind],dtype=torch.float32)).detach().numpy()
         if link == "inverse":
             ratio = 1/(ratio+0.001)

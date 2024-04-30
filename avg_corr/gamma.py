@@ -83,7 +83,7 @@ class PPOBuffer:
                     logbev=self.logbev_buf[ind], logtarg=self.logtarg_buf[ind])
         return {k: torch.as_tensor(v, dtype=torch.float32) for k, v in data.items()}
 
-    def delete_traj(self):
+    def delete_last_traj(self):
         self.ptr =self.path_start_idx
 
 class WeightNet(nn.Module):

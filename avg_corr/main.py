@@ -290,7 +290,7 @@ def argsparser():
     parser.add_argument('--log_dir', type=str, default='./')
     parser.add_argument('--env', type=str, default='Hopper-v4')
     parser.add_argument('--seed', '-s', type=int, default=0)
-    parser.add_argument('--steps', type=int, default=4000)
+    parser.add_argument('--steps', type=int, default=5)
     parser.add_argument('--epoch', type=int, default=250)
 
     parser.add_argument('--lr', type=float, default=3e-4)
@@ -314,6 +314,7 @@ def tune():
     for alpha in [0.1,0.5,1.0,5.0]:
         for lr in [0.0001,0.001,0.01,0.1]:
             result = []
+            print("Finish one combination of hyperparameters!")
             for seed in seeds:
                 _,_,cv = train(lr=lr,env=args.env,seed=seed,path=args.path,
                                link=args.link,random_weight=args.random_weight,l1_lambda=alpha,

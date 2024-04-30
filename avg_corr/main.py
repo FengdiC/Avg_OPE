@@ -254,7 +254,7 @@ def train(lr, env,seed,path,link,random_weight,l1_lambda,
                                      - buffer.logbev_buf[:buffer.ptr])*buffer.rew_buf[:buffer.ptr])
         return obj*max_len*(1-gamma)
 
-    def eval(buffer,fold_num):
+    def eval_cv(buffer,fold_num):
         interval = int(buffer.ptr/buffer.fold)
         ind = range(fold_num* interval,(fold_num+1)* interval,1)
         ratio = weight(torch.as_tensor(buffer.obs_buf[ind],dtype=torch.float32)).detach().numpy()
@@ -275,7 +275,7 @@ def train(lr, env,seed,path,link,random_weight,l1_lambda,
         for steps in range(epoch*checkpoint):
             update(fold_num)
             if steps>0 and steps%checkpoint==0:
-                obj_cv = eval(buf,fold_num)
+                obj_cv = eval_cv(buf,fold_num)
                 obj, obj_test  = eval(buf), eval(buf_test)
                 objs.append(obj)
                 objs_test.append(obj_test)

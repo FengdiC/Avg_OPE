@@ -261,7 +261,7 @@ def train(lr, env,seed,path,link,random_weight,l1_lambda,
         if link == "inverse":
             ratio = 1 / (ratio + 0.001)
         elif link == 'identity':
-            continue
+            pass
         elif link == 'loglog':
             ratio = np.exp(np.exp(ratio))
         else:

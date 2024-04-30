@@ -199,14 +199,13 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
 
 # train weight net
 def train(lr, env,seed,path,link,random_weight,l1_lambda,
-          hid=[32,64],checkpoint=5,epoch=1000,cv_fold=10,batch_size=256):
+          hid=[32,64],checkpoint=5,epoch=1000,cv_fold=10,batch_size=256,buffer_size=20,max_len=50):
     hyperparam = random_search(seed)
     gamma = hyperparam['gamma']
     env = gym.make(env)
-    T = 200
-    buf = collect_dataset(env,gamma,buffer_size=20,max_len=T,path=path,
+    buf = collect_dataset(env,gamma,buffer_size=buffer_size,max_len=max_len,path=path,
                             random_weight=random_weight,fold = cv_fold)
-    buf_test = collect_dataset(env, gamma,buffer_size=20,max_len=T,
+    buf_test = collect_dataset(env, gamma,buffer_size=20,max_len=max_len,
                                       path=path,random_weight=random_weight,fold=1)
     if link=='inverse':
         weight = WeightNet(env.observation_space.shape[0], hidden_sizes=hid,activation=nn.ReLU)
@@ -283,9 +282,12 @@ def argsparser():
     parser.add_argument('--lr', type=float, default=3e-4)
     parser.add_argument('--hid', type=list, default=[64, 32])
     parser.add_argument('--batch_size', type=int, default=256)
+    parser.add_argument('--buffer_size', type=int, default=20)
+    parser.add_argument('--max_len', type=int, default=50)
     parser.add_argument('--link', type=str, default='log')
     parser.add_argument('--l1_lambda', type=float, default=1.0)
     parser.add_argument('--random_weight', type=float, default=0.3)
+    parser.add_argument('--true_value', type=float, default=1.0)
     args = parser.parse_args()
     return args
 
@@ -294,43 +296,42 @@ def tune():
     seeds = range(3)
 
     logger.configure(args.log_dir, ['csv'], log_suffix='mse-tune-' + str(args.env)+'-'+
-                                                       str(args.link)+'-'+ str(args.hid))
+                                            str(args.link)+'-'+ str(args.hid)+'-'+str(args.batch_size))
 
     for alpha in [0.1,0.5,1.0,5.0]:
-        for batch_size in [128,256,512]:
-            for lr in [0.0001,0.001,0.01,0.1]:
-                result = []
-                for seed in seeds:
-                    _,_,cv = train(lr=lr,env=args.env,seed=seed,path=args.path,
-                                   link=args.link,random_weight=args.random_weight,
-                                   l1_lambda=alpha,hid =args.hid,checkpoint=args.steps,epoch=args.epoch,
-                                   cv_fold=10,batch_size=batch_size)
-                    ret=np.array(cv)
-                    print(ret.shape)
-                    result.append(cv)
-                    name = ['batch',batch_size,'lr',lr,'alpha',alpha]
-                    name = [str(s) for s in name]
-                    name.append(str(seed))
-                    print("hyperparam", '-'.join(name))
-                    logger.logkv("hyperparam", '-'.join(name))
-                    for n in range(ret.shape[0]):
-                        logger.logkv(str((n + 1) * args.checkpoint), ret[n])
-                    logger.dumpkvs()
-                result = np.array(result)
-                ret = np.mean(result,axis=0)
-                var = np.var(result,axis=0)
-                name = ['batch',batch_size,'lr',lr,'alpha',alpha]
+        for lr in [0.0001,0.001,0.01,0.1]:
+            result = []
+            for seed in seeds:
+                _,_,cv = train(lr=lr,env=args.env,seed=seed,path=args.path,
+                               link=args.link,random_weight=args.random_weight,l1_lambda=alpha,
+                               hid =args.hid,checkpoint=args.steps,epoch=args.epoch, cv_fold=10,
+                               batch_size=args.batch_size,buffer_size=args.buffer_size, max_len=args.max_len)
+                ret=np.array(cv)
+                print(ret.shape)
+                result.append(cv)
+                name = ['lr',lr,'alpha',alpha]
                 name = [str(s) for s in name]
-                name_1 = name +['mean']
-                name_2 = name+ ['var']
-                logger.logkv("hyperparam", '-'.join(name_1))
+                name.append(str(seed))
+                print("hyperparam", '-'.join(name))
+                logger.logkv("hyperparam", '-'.join(name))
                 for n in range(ret.shape[0]):
                     logger.logkv(str((n + 1) * args.checkpoint), ret[n])
                 logger.dumpkvs()
-                logger.logkv("hyperparam", '-'.join(name_2))
-                for n in range(ret.shape[0]):
-                    logger.logkv(str((n + 1) * args.checkpoint), var[n])
-                logger.dumpkvs()
+            result = np.array(result)
+            ret = np.mean(result,axis=0)
+            var = np.var(result,axis=0)
+            name = ['lr',lr,'alpha',alpha]
+            name = [str(s) for s in name]
+            name_1 = name +['mean']
+            name_2 = name+ ['var']
+            logger.logkv("hyperparam", '-'.join(name_1))
+            for n in range(ret.shape[0]):
+                logger.logkv(str((n + 1) * args.checkpoint), ret[n])
+            logger.dumpkvs()
+            logger.logkv("hyperparam", '-'.join(name_2))
+            for n in range(ret.shape[0]):
+                logger.logkv(str((n + 1) * args.checkpoint), var[n])
+            logger.dumpkvs()
 
 # print(eval_policy('/scratch/fengdic/avg_discount/mountaincar/model-1epoch-30.pth'))
 # objs = train(0.0001,env='Hopper-v4',seed=280,

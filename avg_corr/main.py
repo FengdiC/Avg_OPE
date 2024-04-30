@@ -77,7 +77,8 @@ class PPOBuffer:
         the buffer, with advantages appropriately normalized (shifted to have
         mean zero and std one). Also, resets some pointers in the buffer.
         """
-        interval = self.ptr / self.fold
+        print(self.ptr / self.fold)
+        interval = int(self.ptr / self.fold)
         ind = np.random.randint(self.ptr-interval, size=batch_size)
         ind = ind + np.where(ind>=fold_num*interval,1,0)*interval
 

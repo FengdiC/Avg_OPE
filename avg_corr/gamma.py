@@ -290,7 +290,7 @@ def argsparser():
     parser.add_argument('--log_dir', type=str, default='./')
     parser.add_argument('--env', type=str, default='Hopper-v4')
     parser.add_argument('--seed', '-s', type=int, default=0)
-    parser.add_argument('--steps', type=int, default=4000)
+    parser.add_argument('--steps', type=int, default=5)
     parser.add_argument('--epoch', type=int, default=250)
 
     parser.add_argument('--lr', type=float, default=3e-4)
@@ -329,7 +329,7 @@ def tune():
                 print("hyperparam", '-'.join(name))
                 logger.logkv("hyperparam", '-'.join(name))
                 for n in range(ret.shape[0]):
-                    logger.logkv(str((n + 1) * args.checkpoint), ret[n])
+                    logger.logkv(str((n + 1) * args.steps), ret[n])
                 logger.dumpkvs()
             result = np.array(result)
             ret = np.mean(result,axis=0)
@@ -340,11 +340,11 @@ def tune():
             name_2 = name+ ['var']
             logger.logkv("hyperparam", '-'.join(name_1))
             for n in range(ret.shape[0]):
-                logger.logkv(str((n + 1) * args.checkpoint), ret[n])
+                logger.logkv(str((n + 1) * args.steps), ret[n])
             logger.dumpkvs()
             logger.logkv("hyperparam", '-'.join(name_2))
             for n in range(ret.shape[0]):
-                logger.logkv(str((n + 1) * args.checkpoint), var[n])
+                logger.logkv(str((n + 1) * args.steps), var[n])
             logger.dumpkvs()
 
 # print(eval_policy('/scratch/fengdic/avg_discount/mountaincar/model-1epoch-30.pth'))

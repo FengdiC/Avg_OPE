@@ -330,7 +330,7 @@ def tune():
                 print("hyperparam", '-'.join(name))
                 logger.logkv("hyperparam", '-'.join(name))
                 for n in range(ret.shape[0]):
-                    logger.logkv(str((n + 1) * args.checkpoint), ret[n])
+                    logger.logkv(str((n + 1) * args.steps), ret[n])
                 logger.dumpkvs()
             result = np.array(result)
             ret = np.mean(result,axis=0)
@@ -341,11 +341,11 @@ def tune():
             name_2 = name+ ['var']
             logger.logkv("hyperparam", '-'.join(name_1))
             for n in range(ret.shape[0]):
-                logger.logkv(str((n + 1) * args.checkpoint), ret[n])
+                logger.logkv(str((n + 1) * args.steps), ret[n])
             logger.dumpkvs()
             logger.logkv("hyperparam", '-'.join(name_2))
             for n in range(ret.shape[0]):
-                logger.logkv(str((n + 1) * args.checkpoint), var[n])
+                logger.logkv(str((n + 1) * args.steps), var[n])
             logger.dumpkvs()
 
 # print(eval_policy('/scratch/fengdic/avg_discount/mountaincar/model-1epoch-30.pth'))

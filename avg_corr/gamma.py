@@ -133,16 +133,15 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
         unif = 1/env.action_space.n
 
     while num_traj<buffer_size:
-        targ_a,_, logtarg = ac.step(torch.as_tensor(o, dtype=torch.float32))
-        if np.random.random()<random_weight:
+        targ_a,_, _ = ac.step(torch.as_tensor(o, dtype=torch.float32))
+        if np.random.random() < random_weight:
             # random behaviour policy
             a = env.action_space.sample()
-            pi = ac.pi._distribution(torch.as_tensor(o, dtype=torch.float32))
-            logp = ac.pi._log_prob_from_distribution(pi, torch.as_tensor(a)).detach().numpy()
-            logbev = np.log(random_weight * unif + (1-random_weight)*np.exp(logp))
         else:
             a = targ_a
-            logbev = np.log(random_weight * unif + (1-random_weight)*np.exp(logtarg))
+        pi = ac.pi._distribution(torch.as_tensor(o, dtype=torch.float32))
+        logtarg = ac.pi._log_prob_from_distribution(pi, torch.as_tensor(a)).detach().numpy()
+        logbev = np.log(random_weight * unif + (1 - random_weight) * np.exp(logtarg))
         next_o, r, d, _ = env.step(a)
         ep_len += 1
 
@@ -158,11 +157,11 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
         if terminal or epoch_ended:
             if terminal and not (epoch_ended):
                 print('Warning: trajectory ends early at %d steps.' % ep_len, flush=True)
-                # buf.delete_traj()
-                # o, ep_ret, ep_len = env.reset(), 0, 0
-                # continue
-            num_traj += 1
+                buf.delete_last_traj()
+                o, ep_ret, ep_len = env.reset(), 0, 0
+                continue
             o, ep_ret, ep_len = env.reset(), 0, 0
+            num_traj += 1
             buf.finish_path()
     return buf
 
@@ -189,15 +188,18 @@ def label_analysis():
     # plt.show()
 
 # train weight net
-def train(lr, batch_size=256):
-    hyperparam = random_search(32)
+def train(lr, env,seed,path,link,random_weight,l1_lambda,batch_size=256):
+    hyperparam = random_search(seed)
     gamma = hyperparam['gamma']
-    env = gym.make('CartPole-v1')
-    true_value = 0.998
-    T = 50
-    buf = collect_dataset(env,gamma,buffer_size=20,max_len=T)
-    buf_test = collect_dataset(env, gamma,buffer_size=20,max_len=T)
-    weight = WeightNet(env.observation_space.shape[0], hidden_sizes=[32,32],activation=nn.Identity)
+    env = gym.make(env)
+    T = 200
+    buf,k = collect_dataset(env,gamma,buffer_size=20,max_len=T,path=path,random_weight=random_weight)
+    buf_test,k_test = collect_dataset(env, gamma,buffer_size=20,max_len=T,
+                                      path=path,random_weight=random_weight)
+    if link == 'inverse':
+        weight = WeightNet(env.observation_space.shape[0], hidden_sizes=[256, 256], activation=nn.ReLU)
+    else:
+        weight = WeightNet(env.observation_space.shape[0], hidden_sizes=[256, 256], activation=nn.Identity)
 
     start_time = time.time()
 
@@ -211,8 +213,11 @@ def train(lr, batch_size=256):
         obs, act = data['obs'], data['act']
         tim, prod = data['tim'], data['prod']
 
-        loss = (weight(obs) + torch.exp(-weight(obs)) * torch.exp(np.log(gamma) * tim + prod)).mean()
-        l1_lambda = 0
+        if link == "inverse":
+            loss = ((weight(obs) - 1 / np.exp(np.log(gamma) * tim + prod)) ** 2).mean()
+        else:
+            loss = ((weight(obs) - (np.log(gamma) * tim + prod)) ** 2).mean()
+
         l1_norm = sum(torch.linalg.norm(p, 1) for p in weight.parameters())
         loss = loss + l1_lambda * l1_norm
 
@@ -221,10 +226,14 @@ def train(lr, batch_size=256):
         optimizer.step()
 
     def eval(buffer):
-        ratio = weight(torch.as_tensor(buffer.obs_buf[:buffer.ptr],dtype=torch.float32)).detach().numpy()
-        obj = np.mean(1/(ratio+0.001) * np.exp(buffer.logtarg_buf[:buffer.ptr]
-                                     - buffer.logbev_buf[:buffer.ptr])*buffer.rew_buf[:buffer.ptr])
-        return obj*T*(1-gamma)
+        ratio = weight(torch.as_tensor(buffer.obs_buf[:buffer.ptr], dtype=torch.float32)).detach().numpy()
+        if link == "inverse":
+            ratio = 1 / (ratio + 0.001)
+        else:
+            ratio = np.exp(ratio)
+        obj = np.mean(ratio * np.exp(buffer.logtarg_buf[:buffer.ptr]
+                                     - buffer.logbev_buf[:buffer.ptr]) * buffer.rew_buf[:buffer.ptr])
+        return obj * T * (1 - gamma)
 
     objs, objs_test = [], []
     err, terr_test = 100, 100

@@ -320,7 +320,8 @@ def tune():
     seeds = range(3)
 
     logger.configure(args.log_dir, ['csv'], log_suffix='mse-tune-' + str(args.env)+'-'+
-                                            str(args.link)+'-'+str(args.batch_size))
+                                            str(args.link)+'-'+str(args.batch_size)+
+                                            '-'+str(args.buffer_size))
 
     for alpha in [0.1,0.5,1.0,5.0]:
         for lr in [0.0001,0.001,0.01,0.1]:

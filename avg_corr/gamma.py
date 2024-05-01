@@ -327,7 +327,7 @@ def tune():
             result = []
             print("Finish one combination of hyperparameters!")
             for seed in seeds:
-               cv = train(lr=lr,env=args.env,seed=seed,path=args.path,hyper_choice=args.seed,
+                cv = train(lr=lr,env=args.env,seed=seed,path=args.path,hyper_choice=args.seed,
                                link=args.link,random_weight=args.random_weight,l1_lambda=alpha,
                                checkpoint=args.steps,epoch=args.epoch, cv_fold=10,
                                batch_size=args.batch_size,buffer_size=args.buffer_size,

@@ -198,11 +198,19 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
     return buf
 
 # train weight net
-def train(lr, env,seed,path,link,random_weight,l1_lambda,
+def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,
           checkpoint=5,epoch=1000,cv_fold=10,batch_size=256,buffer_size=20,max_len=50):
-    hyperparam = random_search(seed)
+    hyperparam = random_search(hyper_choice)
     gamma = hyperparam['gamma']
     env = gym.make(env)
+
+    np.random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
+    env.seed(seed)
+
     buf = collect_dataset(env,gamma,buffer_size=buffer_size,max_len=max_len,path=path,
                             random_weight=random_weight,fold = cv_fold)
     buf_test = collect_dataset(env, gamma,buffer_size=20,max_len=max_len,
@@ -228,9 +236,9 @@ def train(lr, env,seed,path,link,random_weight,l1_lambda,
             loss = ((weight(obs) - 1 / np.exp(np.log(gamma) * tim + prod)) ** 2).mean()
         elif link == "identity":
             loss = ((weight(obs) - np.exp(np.log(gamma) * tim + prod)) ** 2).mean()
-        elif link=='loglog':
+        elif link == 'loglog':
             label = np.exp(np.log(gamma) * tim + prod)
-            loss = ((weight(obs) - np.log(np.log(label+1))) ** 2).mean()
+            loss = ((weight(obs) - np.log(np.log(label + 1))) ** 2).mean()
         else:
             loss = ((weight(obs) - (np.log(gamma) * tim + prod)) ** 2).mean()
 
@@ -271,17 +279,20 @@ def train(lr, env,seed,path,link,random_weight,l1_lambda,
                                      - buffer.logbev_buf[ind])*buffer.rew_buf[ind])
         return obj*max_len*(1-gamma)
 
-    objs, objs_test, objs_cv = [], [], []
+    objs_cv_mean = []
     for fold_num in range(cv_fold):
+        objs, objs_test, objs_cv = [], [], []
         for steps in range(epoch*checkpoint):
             update(fold_num)
             if steps>0 and steps%checkpoint==0:
                 obj_cv = eval_cv(buf,fold_num)
-                obj, obj_test  = eval(buf), eval(buf_test)
-                objs.append(obj)
-                objs_test.append(obj_test)
+                # obj, obj_test  = eval(buf), eval(buf_test)
+                # objs.append(obj)
+                # objs_test.append(obj_test)
                 objs_cv.append(obj_cv)
-        return objs,objs_test, objs_cv
+        objs_cv_mean.append(objs_cv)
+    # return objs,objs_test
+    return np.mean(np.array(objs_cv_mean),axis=0)
 
 def argsparser():
     import argparse
@@ -314,22 +325,21 @@ def tune():
     for alpha in [0.1,0.5,1.0,5.0]:
         for lr in [0.0001,0.001,0.01,0.1]:
             result = []
+            print("Finish one combination of hyperparameters!")
             for seed in seeds:
-                _,_,cv = train(lr=lr,env=args.env,seed=seed,path=args.path,
+               cv = train(lr=lr,env=args.env,seed=seed,path=args.path,hyper_choice=args.seed,
                                link=args.link,random_weight=args.random_weight,l1_lambda=alpha,
                                checkpoint=args.steps,epoch=args.epoch, cv_fold=10,
                                batch_size=args.batch_size,buffer_size=args.buffer_size,
                                max_len=args.max_len)
-                ret=np.array(cv)
-                print(ret.shape)
                 result.append(cv)
                 name = ['lr',lr,'alpha',alpha]
                 name = [str(s) for s in name]
                 name.append(str(seed))
                 print("hyperparam", '-'.join(name))
                 logger.logkv("hyperparam", '-'.join(name))
-                for n in range(ret.shape[0]):
-                    logger.logkv(str((n + 1) * args.steps), ret[n])
+                for n in range(cv.shape[0]):
+                    logger.logkv(str((n + 1) * args.steps), cv[n])
                 logger.dumpkvs()
             result = np.array(result)
             ret = np.mean(result,axis=0)

@@ -25,7 +25,7 @@ do
         python avg_corr/gamma.py --path './exper/cartpole.pth' --env 'CartPole-v1' \
         --log_dir $SCRATCH/avg_gamma/cartpole/ --batch_size $BATCH_SIZE \
         --link $LINK --random_weight $RANDOM_WEIGHT \
-        --steps 5 --epoch 1000 --buffer_size $BUFFER --max_len 50 --seed $SLURM_ARRAY_TASK_ID&
+        --steps 5 --epoch 1000 --buffer_size $BUFFER --max_len 50 --seed 32 &
       done
     done
   done

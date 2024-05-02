@@ -4,7 +4,7 @@
 #SBATCH --time=0-3:00
 #SBATCH --output=%N-%j.out
 #SBATCH --account=def-ashique
-#SBATCH --array=1-108
+#SBATCH --array=1-36
 
 # salloc --cpus-per-task=1 --mem=3600M --time=0-3:00 --account=def-ashique
 
@@ -16,11 +16,11 @@ SECONDS=0
 echo
 for RANDOM_WEIGHT in 0.3 0.5 0.7
 do
-  for BATCH_SIZE in 128 256 512
+  for BATCH_SIZE in 256 512
   do
-    for LINK in 'inverse' 'identity' 'log' 'loglog'
+    for LINK in 'inverse' 'log'
     do
-      for BUFFER in 20 40 200
+      for BUFFER in 40 80 200
       do
         python avg_corr/gamma.py --path './exper/cartpole.pth' --env 'CartPole-v1' \
         --log_dir $SCRATCH/avg_gamma/cartpole/ --batch_size $BATCH_SIZE \

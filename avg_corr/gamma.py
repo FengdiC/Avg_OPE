@@ -8,7 +8,7 @@ import gym
 import time
 import torch
 import torch.nn as nn
-from torch.optim import Adam
+from torch.optim import Adam, SGD
 import ppo.algo.core as core
 from ppo.algo.random_search import random_search
 import ppo.utils.logger as logger
@@ -96,7 +96,7 @@ class WeightNet(nn.Module):
         print(sizes)
         layers = []
         for j in range(len(sizes) - 1):
-            layers += [nn.Linear(sizes[j], sizes[j + 1]),activation()]
+            layers += [nn.Linear(sizes[j], sizes[j + 1]),nn.Tanh()]
         self.body = nn.Sequential(*layers)
         self.weight = nn.Sequential(nn.Linear(sizes[-1], 1),activation())  #nn.Identity()
 
@@ -215,7 +215,7 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,
                             random_weight=random_weight,fold = cv_fold)
     buf_test = collect_dataset(env, gamma,buffer_size=20,max_len=max_len,
                                       path=path,random_weight=random_weight,fold=1)
-    if link=='inverse' or 'identity':
+    if link=='inverse' or link=='identity':
         weight = WeightNet(env.observation_space.shape[0], hidden_sizes=(256,256),activation=nn.ReLU)
     else:
         weight = WeightNet(env.observation_space.shape[0], hidden_sizes=(256,256), activation=nn.Identity)
@@ -232,21 +232,25 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,
         obs, act = data['obs'], data['act']
         tim, prod = data['tim'], data['prod']
 
+        f = weight(obs)
+        label = np.exp(np.log(gamma) * tim + prod)
         if link == "inverse":
-            loss = ((weight(obs) - 1 / np.exp(np.log(gamma) * tim + prod)) ** 2).mean()
+            loss = (-torch.log(f) + f * label).mean()
         elif link == "identity":
-            loss = ((weight(obs) - np.exp(np.log(gamma) * tim + prod)) ** 2).mean()
+            loss = (torch.log(weight(obs)) + label/f).mean()
         elif link == 'loglog':
-            label = np.exp(np.log(gamma) * tim + prod)
-            loss = ((weight(obs) - np.log(np.log(label + 1))) ** 2).mean()
+            loss = (torch.log(torch.exp(torch.exp(f))-1)+label/torch.exp(torch.exp(f))-1).mean()
         else:
-            loss = ((weight(obs) - (np.log(gamma) * tim + prod)) ** 2).mean()
+            loss = (f + label/ torch.exp(f)).mean()
 
+        # print(loss)
         l1_norm = sum(torch.linalg.norm(p, 1) for p in weight.parameters())
         loss = loss + l1_lambda * l1_norm
 
         optimizer.zero_grad()
         loss.backward()
+        # for p in weight.parameters():
+        #     print(p.grad.norm())
         optimizer.step()
 
     def eval(buffer):
@@ -275,6 +279,7 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,
             ratio = np.exp(np.exp(ratio))-1
         else:
             ratio = np.exp(ratio)
+        print(ratio)
         obj = np.mean(ratio * np.exp(buffer.logtarg_buf[ind]
                                      - buffer.logbev_buf[ind])*buffer.rew_buf[ind])
         return obj*max_len*(1-gamma)
@@ -283,13 +288,13 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,
     for fold_num in range(cv_fold):
         objs, objs_test, objs_cv = [], [], []
         for steps in range(epoch*checkpoint):
-            update(fold_num)
-            if steps>0 and steps%checkpoint==0:
+            if steps%checkpoint==0:
                 obj_cv = eval_cv(buf,fold_num)
                 # obj, obj_test  = eval(buf), eval(buf_test)
                 # objs.append(obj)
                 # objs_test.append(obj_test)
                 objs_cv.append(obj_cv)
+            update(fold_num)
         objs_cv_mean.append(objs_cv)
     # return objs,objs_test
     return np.mean(np.array(objs_cv_mean),axis=0)
@@ -323,8 +328,8 @@ def tune():
                                                        str(args.buffer_size) + '-' + str(args.link) +
                                                        '-' + str(args.batch_size))
 
-    for alpha in [0.1,0.5,1.0,5.0]:
-        for lr in [0.0001,0.001,0.01,0.1]:
+    for alpha in [0.0005, 0.001, 0.002, 0.005, 0.01]:
+        for lr in [0.0001, 0.0005, 0.001, 0.005]:
             result = []
             print("Finish one combination of hyperparameters!")
             for seed in seeds:
@@ -359,11 +364,14 @@ def tune():
             logger.dumpkvs()
 
 # print(eval_policy('/scratch/fengdic/avg_discount/mountaincar/model-1epoch-30.pth'))
-# objs = train(0.0001,env='Hopper-v4',seed=280,
-#              path='/scratch/fengdic/avg_discount/hopper/model-2epoch-249.pth',
-#              link='inverse')
+# objs = train(0.001,env='CartPole-v1',seed=2,
+#              path='./exper/cartpole.pth',hyper_choice=32,
+#              link='identity',random_weight=0.7,l1_lambda=0.05,checkpoint=5,
+#              epoch=100, cv_fold=10,batch_size=256,buffer_size=80,max_len=50)
+# print('identity')
 # plt.plot(range(len(objs)),objs)
-# plt.plot(range(len(objs)),2.651*np.ones(len(objs)))
-# plt.savefig('hopper.png')
+# plt.plot(range(len(objs)),0.998*np.ones(len(objs)))
+# plt.ylim((0,5))
+# plt.show()
 
 tune()

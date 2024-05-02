@@ -359,12 +359,12 @@ def tune():
             logger.dumpkvs()
 
 # print(eval_policy('/scratch/fengdic/avg_discount/mountaincar/model-1epoch-30.pth'))
-objs = train(0.001,env='Swimmer-v4',seed=2,
-             path='./exper/swimmer.pth',hyper_choice=394,
-             link='inverse',random_weight=0.3,l1_lambda=0.001,checkpoint=5,
-             epoch=1000, cv_fold=10,batch_size=32,buffer_size=40,max_len=100)
-plt.plot(range(len(objs)),objs)
-plt.plot(range(len(objs)),0.327*np.ones(len(objs)))
-plt.savefig('hopper.png')
+# objs = train(0.001,env='Swimmer-v4',seed=2,
+#              path='./exper/swimmer.pth',hyper_choice=394,
+#              link='inverse',random_weight=0.3,l1_lambda=0.001,checkpoint=5,
+#              epoch=1000, cv_fold=10,batch_size=32,buffer_size=40,max_len=100)
+# plt.plot(range(len(objs)),objs)
+# plt.plot(range(len(objs)),0.327*np.ones(len(objs)))
+# plt.savefig('hopper.png')
 
-# tune()
+tune()

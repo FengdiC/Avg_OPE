@@ -319,7 +319,7 @@ def tune():
     args = argsparser()
     seeds = range(3)
 
-    logger.configure(args.log_dir, ['csv'], log_suffix='avg-tune-' + str(args.random_weight)+'-'+
+    logger.configure(args.log_dir, ['csv'], log_suffix='mse-tune-' + str(args.random_weight)+'-'+
                                             str(args.buffer_size)+'-'+str(args.link)+
                                                        '-'+str(args.batch_size))
 

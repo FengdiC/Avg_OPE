@@ -25,7 +25,7 @@ do
         python avg_corr/main.py --path './exper/hopper.pth' --env 'Hopper-v4' \
         --log_dir $SCRATCH/avg_mse/hopper/ --batch_size $BATCH_SIZE \
         --link $LINK --random_weight $RANDOM_WEIGHT \
-        --steps 5 --epoch 10000 --buffer_size $BUFFER --max_len 100 --seed 280 &
+        --steps 5 --epoch 3000 --buffer_size $BUFFER --max_len 100 --seed 280 &
       done
     done
   done

@@ -324,7 +324,7 @@ def tune():
     args = argsparser()
     seeds = range(3)
 
-    logger.configure(args.log_dir, ['csv'], log_suffix='avg-tune-' + str(args.random_weight) + '-' +
+    logger.configure(args.log_dir, ['csv'], log_suffix='gamma-tune-' + str(args.random_weight) + '-' +
                                                        str(args.buffer_size) + '-' + str(args.link) +
                                                        '-' + str(args.batch_size))
 
@@ -338,29 +338,32 @@ def tune():
                                checkpoint=args.steps,epoch=args.epoch, cv_fold=10,
                                batch_size=args.batch_size,buffer_size=args.buffer_size,
                                max_len=args.max_len)
+                print("Return result shape: ", cv.shape, ":::", args.steps)
                 result.append(cv)
-                name = ['lr',lr,'alpha',alpha]
+                name = ['lr', lr, 'alpha', alpha]
                 name = [str(s) for s in name]
                 name.append(str(seed))
                 print("hyperparam", '-'.join(name))
-                logger.logkv("hyperparam", '-'.join(name))
+                logger.logkv("hyperparam", '-'.join(name) + '\n')
                 for n in range(cv.shape[0]):
-                    logger.logkv(str((n + 1) * args.steps), cv[n])
+                    logger.logkv(str(n * args.steps), cv[n])
                 logger.dumpkvs()
             result = np.array(result)
-            ret = np.mean(result,axis=0)
-            var = np.var(result,axis=0)
-            name = ['lr',lr,'alpha',alpha]
+            ret = np.mean(result, axis=0)
+            var = np.var(result, axis=0)
+            print("Mean shape: ", ret.shape, ":::", var.shape)
+            name = ['lr', lr, 'alpha', alpha]
             name = [str(s) for s in name]
-            name_1 = name +['mean']
-            name_2 = name+ ['var']
-            logger.logkv("hyperparam", '-'.join(name_1))
+            name_1 = name + ['mean']
+            name_2 = name + ['var']
+            logger.logkv("hyperparam", '-'.join(name_1) + '\n')
             for n in range(ret.shape[0]):
-                logger.logkv(str((n + 1) * args.steps), ret[n])
+                logger.logkv(str(n * args.steps), ret[n])
             logger.dumpkvs()
-            logger.logkv("hyperparam", '-'.join(name_2))
+
+            logger.logkv("hyperparam", '-'.join(name_2) + '\n')
             for n in range(ret.shape[0]):
-                logger.logkv(str((n + 1) * args.steps), var[n])
+                logger.logkv(str(n * args.steps), var[n])
             logger.dumpkvs()
 
 # print(eval_policy('/scratch/fengdic/avg_discount/mountaincar/model-1epoch-30.pth'))

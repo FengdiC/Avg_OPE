@@ -292,7 +292,7 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,
                 objs_cv.append(obj_cv)
         objs_cv_mean.append(objs_cv)
     # return objs,objs_test
-    return np.mean(np.array(objs_cv_mean),axis=0)
+    return np.mean(objs_cv_mean,axis=0)
 
 def argsparser():
     import argparse
@@ -333,6 +333,7 @@ def tune():
                                checkpoint=args.steps,epoch=args.epoch, cv_fold=10,
                                batch_size=args.batch_size,buffer_size=args.buffer_size,
                                max_len=args.max_len)
+                print("Return result shape: ",cv.shape,":::", args.steps)
                 result.append(cv)
                 name = ['lr',lr,'alpha',alpha]
                 name = [str(s) for s in name]
@@ -340,22 +341,24 @@ def tune():
                 print("hyperparam", '-'.join(name))
                 logger.logkv("hyperparam", '-'.join(name))
                 for n in range(cv.shape[0]):
-                    logger.logkv(str((n + 1) * args.steps), cv[n])
+                    logger.logkv(str(n * args.steps), cv[n])
                 logger.dumpkvs()
             result = np.array(result)
             ret = np.mean(result,axis=0)
             var = np.var(result,axis=0)
+            print("Mean shape: ",ret.shape,":::",var.shape)
             name = ['lr',lr,'alpha',alpha]
             name = [str(s) for s in name]
             name_1 = name +['mean']
             name_2 = name+ ['var']
             logger.logkv("hyperparam", '-'.join(name_1))
             for n in range(ret.shape[0]):
-                logger.logkv(str((n + 1) * args.steps), ret[n])
+                logger.logkv(str(n * args.steps), ret[n])
             logger.dumpkvs()
+
             logger.logkv("hyperparam", '-'.join(name_2))
             for n in range(ret.shape[0]):
-                logger.logkv(str((n + 1) * args.steps), var[n])
+                logger.logkv(str(n * args.steps), var[n])
             logger.dumpkvs()
 
 # print(eval_policy('/scratch/fengdic/avg_discount/mountaincar/model-1epoch-30.pth'))

@@ -339,7 +339,7 @@ def tune():
                 name = [str(s) for s in name]
                 name.append(str(seed))
                 print("hyperparam", '-'.join(name))
-                logger.logkv("hyperparam", '-'.join(name))
+                logger.logkv("hyperparam", '-'.join(name)+'\n')
                 for n in range(cv.shape[0]):
                     logger.logkv(str(n * args.steps), cv[n])
                 logger.dumpkvs()
@@ -351,12 +351,12 @@ def tune():
             name = [str(s) for s in name]
             name_1 = name +['mean']
             name_2 = name+ ['var']
-            logger.logkv("hyperparam", '-'.join(name_1))
+            logger.logkv("hyperparam", '-'.join(name_1)+'\n')
             for n in range(ret.shape[0]):
                 logger.logkv(str(n * args.steps), ret[n])
             logger.dumpkvs()
 
-            logger.logkv("hyperparam", '-'.join(name_2))
+            logger.logkv("hyperparam", '-'.join(name_2)+'\n')
             for n in range(ret.shape[0]):
                 logger.logkv(str(n * args.steps), var[n])
             logger.dumpkvs()

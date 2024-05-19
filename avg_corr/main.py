@@ -289,7 +289,7 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,
                 # obj, obj_test  = eval(buf), eval(buf_test)
                 # objs.append(obj)
                 # objs_test.append(obj_test)
-                objs_cv.append(obj_cv)
+                objs_cv.append(np.around(obj_cv,decimals=3))
         objs_cv_mean.append(objs_cv)
     # return objs,objs_test
     return np.mean(objs_cv_mean,axis=0)

@@ -289,10 +289,10 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,
                 # obj, obj_test  = eval(buf), eval(buf_test)
                 # objs.append(obj)
                 # objs_test.append(obj_test)
-                objs_cv.append(np.around(obj_cv,decimals=3))
+                objs_cv.append(np.around(obj_cv,decimals=4))
         objs_cv_mean.append(objs_cv)
     # return objs,objs_test
-    return np.mean(objs_cv_mean,axis=0)
+    return np.around(np.mean(objs_cv_mean,axis=0),decimals=4)
 
 def argsparser():
     import argparse
@@ -339,7 +339,7 @@ def tune():
                 name = [str(s) for s in name]
                 name.append(str(seed))
                 print("hyperparam", '-'.join(name))
-                logger.logkv("hyperparam", '-'.join(name)+'\n')
+                logger.logkv("hyperparam", '-'.join(name))
                 for n in range(cv.shape[0]):
                     logger.logkv(str(n * args.steps), cv[n])
                 logger.dumpkvs()
@@ -351,12 +351,12 @@ def tune():
             name = [str(s) for s in name]
             name_1 = name +['mean']
             name_2 = name+ ['var']
-            logger.logkv("hyperparam", '-'.join(name_1)+'\n')
+            logger.logkv("hyperparam", '-'.join(name_1))
             for n in range(ret.shape[0]):
                 logger.logkv(str(n * args.steps), ret[n])
             logger.dumpkvs()
 
-            logger.logkv("hyperparam", '-'.join(name_2)+'\n')
+            logger.logkv("hyperparam", '-'.join(name_2))
             for n in range(ret.shape[0]):
                 logger.logkv(str(n * args.steps), var[n])
             logger.dumpkvs()

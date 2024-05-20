@@ -13,6 +13,7 @@ import ppo.algo.core as core
 from ppo.algo.random_search import random_search
 import ppo.utils.logger as logger
 import matplotlib.pyplot as plt
+import csv
 
 
 class PPOBuffer:
@@ -319,10 +320,14 @@ def argsparser():
 def tune():
     args = argsparser()
     seeds = range(3)
-
-    logger.configure(args.log_dir, ['csv'], log_suffix='mse-tune-' + str(args.random_weight)+'-'+
-                                            str(args.buffer_size)+'-'+str(args.link)+
-                                                       '-'+str(args.batch_size))
+    filename = args.log_dir+'/mse-tune-' + str(args.random_weight)+\
+               '-'+str(args.buffer_size)+'-'+str(args.link)+\
+               '-'+str(args.batch_size)+'.csv'
+    mylist = [str(i) for i in range(0,args.epoch,args.steps)] + ['hyperparam']
+    with open(filename, 'w', newline='') as file:
+        # Step 4: Using csv.writer to write the list to the CSV file
+        writer = csv.writer(file)
+        writer.writerow(mylist)  # Use writerow for single list
 
     for alpha in [0.0005,0.001,0.002,0.005,0.01]:
         for lr in [0.0001,0.0005,0.001,0.005]:
@@ -352,10 +357,11 @@ def tune():
             name = [str(s) for s in name]
             name_1 = name +['mean']
             name_2 = name+ ['var']
-            logger.logkv("hyperparam", '-'.join(name_1))
-            for n in range(ret.shape[0]):
-                logger.logkv(str(n * args.steps), ret[n])
-            logger.dumpkvs()
+            mylist = [str(i) for i in list(ret)] + [name_1]
+            with open(filename, 'w', newline='') as file:
+                # Step 4: Using csv.writer to write the list to the CSV file
+                writer = csv.writer(file)
+                writer.writerow(mylist)  # Use writerow for single list
 
             # logger.logkv("hyperparam", '-'.join(name_2))
             # for n in range(ret.shape[0]):

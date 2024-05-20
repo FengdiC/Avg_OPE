@@ -209,7 +209,7 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
-    env.seed(seed)
+    env.reset(seed=seed)
 
     buf = collect_dataset(env,gamma,buffer_size=buffer_size,max_len=max_len,path=path,
                             random_weight=random_weight,fold = cv_fold)
@@ -303,6 +303,7 @@ def argsparser():
     parser.add_argument('--seed', '-s', type=int, default=0)
     parser.add_argument('--steps', type=int, default=5)
     parser.add_argument('--epoch', type=int, default=250)
+    parser.add_argument('--array', type=int, default=1)
 
     parser.add_argument('--lr', type=float, default=3e-4)
     parser.add_argument('--batch_size', type=int, default=256)

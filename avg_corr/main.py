@@ -147,6 +147,7 @@ def eval_policy(path='./exper/cartpole_998.pth'):
 
 # sample behaviour dataset
 # behaviour policy = (1- random_weight) * target_policy + random_weight * random_policy
+# random_weight = 0.3  0.5  0.7
 def collect_dataset(env,gamma,buffer_size=20,max_len=200,
                     path='./exper/cartpole_998.pth', random_weight=0.2,fold=10):
     ac = load(path,env)

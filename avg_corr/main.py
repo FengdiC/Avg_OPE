@@ -251,6 +251,9 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,
         loss.backward()
         optimizer.step()
 
+    # Let's record the estimated objective value = 1/n \sum_{i=1}^n est_ratio(s_i,a_i) r(s_i,a_i)
+    # 
+
     def eval(buffer):
         ratio = weight(torch.as_tensor(buffer.obs_buf[:buffer.ptr],dtype=torch.float32)).detach().numpy()
         if link == "inverse":

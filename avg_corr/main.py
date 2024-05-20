@@ -188,7 +188,7 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
 
         if terminal or epoch_ended:
             if terminal and not (epoch_ended):
-                print('Warning: trajectory ends early at %d steps.' % ep_len, flush=True)
+                # print('Warning: trajectory ends early at %d steps.' % ep_len, flush=True)
                 buf.delete_last_traj()
                 o, ep_ret, ep_len = env.reset(), 0, 0
                 continue
@@ -333,7 +333,7 @@ def tune():
                                checkpoint=args.steps,epoch=args.epoch, cv_fold=10,
                                batch_size=args.batch_size,buffer_size=args.buffer_size,
                                max_len=args.max_len)
-                print("Return result shape: ",cv.shape,":::", args.steps)
+                # print("Return result shape: ",cv.shape,":::", args.steps)
                 result.append(cv)
                 # name = ['lr',lr,'alpha',alpha]
                 # name = [str(s) for s in name]
@@ -345,7 +345,6 @@ def tune():
                 # logger.dumpkvs()
             result = np.array(result)
             ret = np.around(np.mean(result,axis=0),decimals=4)
-            print(ret.shape)
             var = np.around(np.var(result,axis=0),decimals=4)
             print("Mean shape: ",ret.shape,":::",var.shape)
             name = ['lr',lr,'alpha',alpha]
@@ -357,10 +356,10 @@ def tune():
                 logger.logkv(str(n * args.steps), ret[n])
             logger.dumpkvs()
 
-            logger.logkv("hyperparam", '-'.join(name_2))
-            for n in range(ret.shape[0]):
-                logger.logkv(str(n * args.steps), var[n])
-            logger.dumpkvs()
+            # logger.logkv("hyperparam", '-'.join(name_2))
+            # for n in range(ret.shape[0]):
+            #     logger.logkv(str(n * args.steps), var[n])
+            # logger.dumpkvs()
 
 # print(eval_policy('/scratch/fengdic/avg_discount/mountaincar/model-1epoch-30.pth'))
 # objs = train(0.001,env='Swimmer-v4',seed=2,

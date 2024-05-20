@@ -213,8 +213,8 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,
 
     buf = collect_dataset(env,gamma,buffer_size=buffer_size,max_len=max_len,path=path,
                             random_weight=random_weight,fold = cv_fold)
-    buf_test = collect_dataset(env, gamma,buffer_size=20,max_len=max_len,
-                                      path=path,random_weight=random_weight,fold=1)
+    # buf_test = collect_dataset(env, gamma,buffer_size=20,max_len=max_len,
+    #                                   path=path,random_weight=random_weight,fold=1)
     if link=='inverse' or link=='identity':
         weight = WeightNet(env.observation_space.shape[0], hidden_sizes=(256,256),activation=nn.ReLU)
     else:
@@ -334,7 +334,7 @@ def tune():
                                checkpoint=args.steps,epoch=args.epoch, cv_fold=10,
                                batch_size=args.batch_size,buffer_size=args.buffer_size,
                                max_len=args.max_len)
-                # print("Return result shape: ",cv.shape,":::", args.steps)
+                print("Return result shape: ",cv.shape,":::", args.steps,":::",seeds)
                 result.append(cv)
                 # name = ['lr',lr,'alpha',alpha]
                 # name = [str(s) for s in name]

@@ -148,6 +148,7 @@ def eval_policy(path='./exper/cartpole_998.pth'):
 # sample behaviour dataset
 # behaviour policy = (1- random_weight) * target_policy + random_weight * random_policy
 # random_weight = 0.3  0.5  0.7
+# classic control max_len=50 number_traj = 40 80 200
 def collect_dataset(env,gamma,buffer_size=20,max_len=200,
                     path='./exper/cartpole_998.pth', random_weight=0.2,fold=10):
     ac = load(path,env)
@@ -252,7 +253,7 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,
         optimizer.step()
 
     # Let's record the estimated objective value = 1/n \sum_{i=1}^n est_ratio(s_i,a_i) r(s_i,a_i)
-    # 
+    # classic control: train 5k steps and checkpoint =5
 
     def eval(buffer):
         ratio = weight(torch.as_tensor(buffer.obs_buf[:buffer.ptr],dtype=torch.float32)).detach().numpy()

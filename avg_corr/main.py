@@ -325,9 +325,10 @@ def argsparser():
 def tune():
     args = argsparser()
     seeds = range(3)
-    filename = args.log_dir+'/mse-tune-' + str(args.random_weight)+\
+    filename = args.log_dir+'mse-tune-' + str(args.random_weight)+\
                '-'+str(args.buffer_size)+'-'+str(args.link)+\
                '-'+str(args.batch_size)+'.csv'
+    f = open(filename, "x")
     mylist = [str(i) for i in range(0,args.epoch,args.steps)] + ['hyperparam']
     with open(filename, 'w', newline='') as file:
         # Step 4: Using csv.writer to write the list to the CSV file
@@ -363,7 +364,7 @@ def tune():
             name_1 = name +['mean']
             name_2 = name+ ['var']
             mylist = [str(i) for i in list(ret)] + [name_1]
-            with open(filename, 'w', newline='') as file:
+            with open(filename, 'a', newline='') as file:
                 # Step 4: Using csv.writer to write the list to the CSV file
                 writer = csv.writer(file)
                 writer.writerow(mylist)  # Use writerow for single list

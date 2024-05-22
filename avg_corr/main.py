@@ -329,7 +329,7 @@ def tune():
                '-'+str(args.buffer_size)+'-'+str(args.link)+\
                '-'+str(args.batch_size)+'.csv'
     os.makedirs(args.log_dir, exist_ok=True)
-    mylist = [str(i) for i in range(0,args.epoch,args.steps)] + ['hyperparam']
+    mylist = [str(i) for i in range(0,args.epoch*args.steps,args.steps)] + ['hyperparam']
     with open(filename, 'w+', newline='') as file:
         # Step 4: Using csv.writer to write the list to the CSV file
         writer = csv.writer(file)
@@ -363,7 +363,7 @@ def tune():
             name = [str(s) for s in name]
             name_1 = name +['mean']
             name_2 = name+ ['var']
-            mylist = [str(i) for i in list(ret)] + [name_1]
+            mylist = [str(i) for i in list(ret)] + ['-'.join(name_1)]
             with open(filename, 'a', newline='') as file:
                 # Step 4: Using csv.writer to write the list to the CSV file
                 writer = csv.writer(file)

@@ -368,7 +368,7 @@ def tune():
                 # Step 4: Using csv.writer to write the list to the CSV file
                 writer = csv.writer(file)
                 writer.writerow(mylist)  # Use writerow for single list
-
+            print('-'.join(name_1))
             # logger.logkv("hyperparam", '-'.join(name_2))
             # for n in range(ret.shape[0]):
             #     logger.logkv(str(n * args.steps), var[n])

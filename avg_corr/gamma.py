@@ -356,8 +356,8 @@ def tune():
                 #     logger.logkv(str(n * args.steps), cv[n])
                 # logger.dumpkvs()
             result = np.array(result)
-            ret = np.mean(result, axis=0)
-            var = np.var(result, axis=0)
+            ret = np.around(np.mean(result, axis=0), decimals=4)
+            var = np.around(np.var(result, axis=0), decimals=4)
             print("Mean shape: ", ret.shape, ":::", var.shape)
             name = ['lr', lr, 'alpha', alpha]
             name = [str(s) for s in name]

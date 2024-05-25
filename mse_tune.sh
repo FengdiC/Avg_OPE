@@ -14,24 +14,12 @@ module load gcc opencv intel/2023.2.1 cuda/11.8 python/3.10 mpi4py
 
 SECONDS=0
 echo
-for RANDOM_WEIGHT in 0.3 0.5 0.7
-do
-  for BATCH_SIZE in 256 512
-  do
-    for LINK in 'inverse' 'identity'
-    do
-      for BUFFER in 40 80 200
-      do
-        python avg_corr/main.py --path './exper/cartpole.pth' --env 'CartPole-v1' \
-        --log_dir $SCRATCH/avg_mse/cartpole/ --batch_size $BATCH_SIZE \
-        --link $LINK --random_weight $RANDOM_WEIGHT --array $SLURM_ARRAY_TASK_ID\
-        --steps 5 --epoch 500 --buffer_size $BUFFER --max_len 50 --seed 32 &
-      done
-    done
-  done
-done
+
+python avg_corr/main.py --path './exper/cartpole.pth' --env 'CartPole-v1' \
+--log_dir $SCRATCH/avg_mse/cartpole/ --array $SLURM_ARRAY_TASK_ID --steps 5 --epoch 500 \
+--max_len 50 --seed 32 &
 
 echo "Baseline job $seed took $SECONDS"
 sleep 72h
 
-#python avg_corr/main.py --path './exper/cartpole.pth' --env 'CartPole-v1' --log_dir $SCRATCH/avg_mse/cartpole/ --steps 5 --epoch 500 --max_len 50 --seed 32
+#python avg_corr/main.py --path './exper/cartpole.pth' --env 'CartPole-v1' --log_dir $SCRATCH/avg_mse/cartpole/ --steps 5 --epoch 500 --max_len 50 --seed 32 --array 15

@@ -323,11 +323,18 @@ def argsparser():
     return args
 
 def tune():
+    random_weight = [0.3, 0.5, 0.7]
+    batch_size= [256,512]
+    link = ['inverse','identity']
+    buffer = [40,80,200]
+
     args = argsparser()
     seeds = range(3)
-    filename = args.log_dir+'mse-tune-' + str(args.random_weight)+\
-               '-'+str(args.buffer_size)+'-'+str(args.link)+\
-               '-'+str(args.batch_size)+'.csv'
+    idx = np.unravel_index(args.array, (3,2,2,3))
+    random_weight,batch_size = random_weight[idx[0]],batch_size[idx[1]]
+    link,buffer_size = link[idx[2]], buffer[idx[3]]
+    filename = args.log_dir+'mse-tune-' + str(random_weight)+\
+               '-'+str(buffer_size)+'-'+str(link)+'-'+str(batch_size)+'.csv'
     os.makedirs(args.log_dir, exist_ok=True)
     mylist = [str(i) for i in range(0,args.epoch*args.steps,args.steps)] + ['hyperparam']
     with open(filename, 'w+', newline='') as file:
@@ -341,9 +348,9 @@ def tune():
             print("Finish one combination of hyperparameters!")
             for seed in seeds:
                 cv = train(lr=lr,env=args.env,seed=seed,path=args.path,hyper_choice=args.seed,
-                               link=args.link,random_weight=args.random_weight,l1_lambda=alpha,
+                               link=link,random_weight=random_weight,l1_lambda=alpha,
                                checkpoint=args.steps,epoch=args.epoch, cv_fold=10,
-                               batch_size=args.batch_size,buffer_size=args.buffer_size,
+                               batch_size=batch_size,buffer_size=buffer_size,
                                max_len=args.max_len)
                 print("Return result shape: ",cv.shape,":::", args.steps,":::",seeds)
                 result.append(cv)

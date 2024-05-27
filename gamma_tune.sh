@@ -14,7 +14,7 @@ module load gcc opencv intel/2023.2.1 cuda/11.8 python/3.10 mpi4py
 
 SECONDS=0
 echo
-python avg_corr/gamma.py --path './exper/cartpole.pth' --env 'CartPole-v1' \
+python avg_corr/gamma.py --path './exper/cartpole.pth' --env 'CartPole-v1' --array $SLURM_ARRAY_TASK_ID\
 --log_dir $SCRATCH/avg_gamma/cartpole/ --steps 5 --epoch 500 --max_len 50 --seed 32 &
 
 echo "Baseline job $seed took $SECONDS"

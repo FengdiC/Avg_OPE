@@ -309,6 +309,7 @@ def argsparser():
     parser.add_argument('--seed', '-s', type=int, default=0)
     parser.add_argument('--steps', type=int, default=5)
     parser.add_argument('--epoch', type=int, default=250)
+    parser.add_argument('--array', type=int, default=1)
 
     parser.add_argument('--lr', type=float, default=3e-4)
     parser.add_argument('--batch_size', type=int, default=256)

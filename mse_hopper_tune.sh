@@ -15,7 +15,7 @@ module load gcc opencv intel/2023.2.1 cuda/11.8 python/3.10 mpi4py
 SECONDS=0
 echo
 
-python avg_corr/main.py --path './exper/hopper.pth' --env 'Hopper-v4' --array $SLURM_ARRAY_TASK_ID\
+python avg_corr/main.py --path './exper/hopper.pth' --env 'Hopper-v4' --array $SLURM_ARRAY_TASK_ID \
 --log_dir $SCRATCH/avg_mse/hopper/ --steps 5 --epoch 3000 --max_len 100 --seed 280 &
 
 echo "Baseline job $seed took $SECONDS"

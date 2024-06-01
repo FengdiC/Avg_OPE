@@ -16,7 +16,7 @@ SECONDS=0
 echo
 
 python avg_corr/gamma.py --path './exper/hopper.pth' --env 'Hopper-v4' \
---log_dir $SCRATCH/avg_gamma/hopper/ --array $SLURM_ARRAY_TASK_ID\
+--log_dir $SCRATCH/avg_gamma/hopper/ --array $SLURM_ARRAY_TASK_ID \
 --steps 5 --epoch 3000 --max_len 100 --seed 280 &
 
 echo "Baseline job $seed took $SECONDS"

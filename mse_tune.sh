@@ -7,6 +7,7 @@
 #SBATCH --array=1-36
 
 # salloc --cpus-per-task=1 --mem=3600M --time=0-3:00 --account=def-ashique
+# Did not tune for three discount factors
 
 source $HOME/ENV_1/bin/activate
 module load StdEnv/2023

@@ -38,9 +38,10 @@ def run_classic():
     buffer = [40, 80, 200]
     random_weight = [0.3, 0.5, 0.7]
     env = ['CartPole-v1','Acrobot-v1','MountainCarContinuous-v0']
+    path = ['./exper/cartpole.pth','./exper/acrobot.pth', './exper/mountaincar.pth']
     idx = np.unravel_index(args.array, (3, 3, 3, 3))
     random_weight, buffer, discount_factor = random_weight[idx[0]], buffer[idx[1]], discount_factor[idx[2]]
-    env = env[idx[3]]
+    env, path = env[idx[3]], path[idx[3]]
     batch, link, alpha, lr, loss = classic(buffer,random_weight)
 
     filename = args.log_dir + 'final-result-' + str(env) +'-array-'+str(args.array) + '.csv'
@@ -54,7 +55,7 @@ def run_classic():
     result_train, result_test = [], []
     for seed in seeds:
         if loss=='mse':
-            train, test = train_mse(lr=lr, env=env, seed=seed, path=args.path, hyper_choice=args.seed,
+            train, test = train_mse(lr=lr, env=env, seed=seed, path=path, hyper_choice=args.seed,
                    link=link, random_weight=random_weight, l1_lambda=alpha, discount = discount_factor,
                    checkpoint=args.steps, epoch=args.epoch, cv_fold=1,
                    batch_size=batch, buffer_size=buffer,

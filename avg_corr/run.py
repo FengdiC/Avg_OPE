@@ -4,8 +4,8 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 import numpy as np
 import csv
-import main.train as train_mse
-import gamma.train as train_gamma
+from avg_corr.main import train as train_mse
+from avg_corr.gamma import train as train_gamma
 from arguments import classic
 
 def argsparser():

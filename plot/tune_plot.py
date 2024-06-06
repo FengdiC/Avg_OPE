@@ -10,7 +10,7 @@ def tune_result(env):
         # checking if it is a file
         if not f.endswith('.csv'):
             continue
-        if '0.3-80' in filename:
+        if '0.7-200' in filename:
             data = pd.read_csv(f, header=0,index_col='hyperparam')
             data.columns = data.columns.astype(int)
             data = data.sort_index(axis=1, ascending=True)
@@ -66,6 +66,6 @@ def top_five(data,best_value):
     plt.title('last')
     plt.show()
 
-data = tune_result('hopper')
-top_five(data,2.651)
+data = tune_result('cartpole')
+top_five(data,0.998)
 

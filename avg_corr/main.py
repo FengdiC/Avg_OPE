@@ -79,8 +79,11 @@ class PPOBuffer:
         mean zero and std one). Also, resets some pointers in the buffer.
         """
         interval = int(self.ptr / self.fold)
-        ind = np.random.randint(self.ptr-interval, size=batch_size)
-        ind = ind + np.where(ind>=fold_num*interval,1,0)*interval
+        if self.fold>1:
+            ind = np.random.randint(self.ptr-interval, size=batch_size)
+            ind = ind + np.where(ind >= fold_num * interval, 1, 0) * interval
+        else:
+            ind = np.random.randint(self.ptr, size=batch_size)
 
         data = dict(obs=self.obs_buf[ind], act=self.act_buf[ind], prod=self.prod_buf[ind],
                     tim=self.tim_buf[ind],
@@ -201,10 +204,11 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
     return buf
 
 # train weight net
-def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,
-          checkpoint=5,epoch=1000,cv_fold=10,batch_size=256,buffer_size=20,max_len=50):
+def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda, discount=0.95,
+          checkpoint=5,epoch=1000,cv_fold=1,batch_size=256,buffer_size=20,max_len=50):
     hyperparam = random_search(hyper_choice)
-    gamma = hyperparam['gamma']
+    # gamma = hyperparam['gamma']
+    gamma = discount
     env = gym.make(env)
 
     np.random.seed(seed)
@@ -215,9 +219,9 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,
     env.reset(seed=seed)
 
     buf = collect_dataset(env,gamma,buffer_size=buffer_size,max_len=max_len,path=path,
-                            random_weight=random_weight,fold = cv_fold)
-    # buf_test = collect_dataset(env, gamma,buffer_size=20,max_len=max_len,
-    #                                   path=path,random_weight=random_weight,fold=1)
+                            random_weight=random_weight,fold = 1)
+    buf_test = collect_dataset(env, gamma,buffer_size=buffer_size,max_len=max_len,
+                                      path=path,random_weight=random_weight,fold=1)
     if link=='inverse' or link=='identity':
         weight = WeightNet(env.observation_space.shape[0], hidden_sizes=(256,256),activation=nn.ReLU)
     else:
@@ -291,14 +295,14 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,
         for steps in range(epoch*checkpoint):
             update(fold_num)
             if steps%checkpoint==0:
-                obj_cv = eval_cv(buf,fold_num)
-                # obj, obj_test  = eval(buf), eval(buf_test)
-                # objs.append(obj)
-                # objs_test.append(obj_test)
-                objs_cv.append(np.around(obj_cv,decimals=4))
-        objs_cv_mean.append(objs_cv)
-    # return objs,objs_test
-    return np.around(np.mean(objs_cv_mean,axis=0),decimals=4)
+                # obj_cv = eval_cv(buf,fold_num)
+                obj, obj_test  = eval(buf), eval(buf_test)
+                objs.append(obj)
+                objs_test.append(obj_test)
+                # objs_cv.append(np.around(obj_cv,decimals=4))
+        # objs_cv_mean.append(objs_cv)
+    return objs,objs_test
+    # return np.around(np.mean(objs_cv_mean,axis=0),decimals=4)
 
 def argsparser():
     import argparse

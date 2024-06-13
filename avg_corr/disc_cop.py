@@ -3,6 +3,7 @@ import os, sys, inspect
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
+import copy
 import numpy as np
 from gym.spaces import Box, Discrete
 from tqdm import tqdm
@@ -256,8 +257,13 @@ def train(
     buffer_size=20,
     max_len=50,
     use_batch_norm=False,
+    use_target_network=False,
+    tau=0.0005,
     **kwargs
 ):
+    """
+    With cop_discount -> 1, fixed-point solution -> d_pi/d_mu
+    """
     # hyperparam = random_search(hyper_choice)
     # gamma = hyperparam['gamma']
     gamma = discount
@@ -311,44 +317,98 @@ def train(
     # Set up optimizers for policy and value function
     optimizer = Adam(weight.parameters(), lr)
 
-    def update(fold_num):
-        # sample minibatches
-        data = buf.sample(batch_size, fold_num)
+    if use_target_network:
+        target_weight = copy.deepcopy(weight)
 
-        obs, act, next_obs = data["obs"], data["act"], data["next_obs"]
-        tim, prod = data["tim"], data["prod"]
-        logbev, logtarg = data["logbev"], data["logtarg"]
+        def update(fold_num):
+            # sample minibatches
+            data = buf.sample(batch_size, fold_num)
 
-        all_obs = torch.cat((obs, next_obs), dim=0)
-        (c_obs, c_next_obs) = torch.split(weight(all_obs), batch_size)
+            obs, act, next_obs = data["obs"], data["act"], data["next_obs"]
+            tim, prod = data["tim"], data["prod"]
+            logbev, logtarg = data["logbev"], data["logtarg"]
 
-        if link == "inverse":
-            raise NotImplementedError
-            # loss = ((1/weight(obs) - label) ** 2).mean()
-        elif link == "identity":
+            c_obs = weight(obs)
             with torch.no_grad():
-                label = cop_discount * torch.exp(
-                    (logtarg - logbev) + torch.log(c_next_obs)
-                ) + (1 - cop_discount)
-                label = label.detach()
-            loss = ((c_obs - label) ** 2).mean()
-        elif link == "loglog":
-            raise NotImplementedError
-            # loss = ((torch.exp(torch.exp(weight(obs)))-1 - label) ** 2).mean()
-        else:
-            with torch.no_grad():
-                label = cop_discount * torch.exp((logtarg - logbev) + c_next_obs) + (
-                    1 - cop_discount
-                )
-                label = label.detach()
-            loss = ((torch.exp(c_obs) - label) ** 2).mean()
+                c_next_obs = target_weight(next_obs)
 
-        l1_norm = sum(torch.linalg.norm(p, 1) for p in weight.parameters())
-        loss = loss + l1_lambda * l1_norm
+            if link == "inverse":
+                raise NotImplementedError
+                # loss = ((1/weight(obs) - label) ** 2).mean()
+            elif link == "identity":
+                with torch.no_grad():
+                    label = cop_discount * torch.exp(
+                        (logtarg - logbev) + torch.log(c_next_obs)
+                    ) + (1 - cop_discount)
+                    label = label.detach()
+                loss = ((c_obs - label) ** 2).mean()
+            elif link == "loglog":
+                raise NotImplementedError
+                # loss = ((torch.exp(torch.exp(weight(obs)))-1 - label) ** 2).mean()
+            else:
+                # By default log parameterization
+                with torch.no_grad():
+                    label = cop_discount * torch.exp(
+                        (logtarg - logbev) + c_next_obs
+                    ) + (1 - cop_discount)
+                    label = label.detach()
+                loss = ((torch.exp(c_obs) - label) ** 2).mean()
 
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+            l1_norm = sum(torch.linalg.norm(p, 1) for p in weight.parameters())
+            loss = loss + l1_lambda * l1_norm
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            # Update target network
+            for param, target_param in zip(
+                weight.parameters(), target_weight.parameters()
+            ):
+                target_param.data.mul_(1.0 - tau)
+                target_param.data.add_(param.data * tau)
+
+    else:
+
+        def update(fold_num):
+            # sample minibatches
+            data = buf.sample(batch_size, fold_num)
+
+            obs, act, next_obs = data["obs"], data["act"], data["next_obs"]
+            tim, prod = data["tim"], data["prod"]
+            logbev, logtarg = data["logbev"], data["logtarg"]
+
+            all_obs = torch.cat((obs, next_obs), dim=0)
+            (c_obs, c_next_obs) = torch.split(weight(all_obs), batch_size)
+
+            if link == "inverse":
+                raise NotImplementedError
+                # loss = ((1/weight(obs) - label) ** 2).mean()
+            elif link == "identity":
+                with torch.no_grad():
+                    label = cop_discount * torch.exp(
+                        (logtarg - logbev) + torch.log(c_next_obs)
+                    ) + (1 - cop_discount)
+                    label = label.detach()
+                loss = ((c_obs - label) ** 2).mean()
+            elif link == "loglog":
+                raise NotImplementedError
+                # loss = ((torch.exp(torch.exp(weight(obs)))-1 - label) ** 2).mean()
+            else:
+                # By default log parameterization
+                with torch.no_grad():
+                    label = cop_discount * torch.exp(
+                        (logtarg - logbev) + c_next_obs
+                    ) + (1 - cop_discount)
+                    label = label.detach()
+                loss = ((torch.exp(c_obs) - label) ** 2).mean()
+
+            l1_norm = sum(torch.linalg.norm(p, 1) for p in weight.parameters())
+            loss = loss + l1_lambda * l1_norm
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
     # Let's record the estimated objective value = 1/n \sum_{i=1}^n est_ratio(s_i,a_i) r(s_i,a_i)
     # classic control: train 5k steps and checkpoint =5
@@ -427,6 +487,8 @@ def argsparser():
     parser.add_argument("--epoch", type=int, default=250)
     parser.add_argument("--array", type=int, default=1)
 
+    parser.add_argument("--use_target_network", action="store_true")
+    parser.add_argument("--tau", type=float, default=0.0005)
     parser.add_argument("--use_batch_norm", action="store_true")
     parser.add_argument("--cop_discount", type=float, default=0.99)
     parser.add_argument("--discount", type=float, default=0.99)

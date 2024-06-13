@@ -109,13 +109,16 @@ class PPOBuffer:
 
 
 class WeightNet(nn.Module):
-    def __init__(self, o_dim, hidden_sizes, activation):
+    def __init__(self, o_dim, hidden_sizes, activation, use_batch_norm=False):
         super(WeightNet, self).__init__()
         sizes = [o_dim] + list(hidden_sizes)
         layers = []
         for j in range(len(sizes) - 1):
-            # layers += [nn.BatchNorm1d(sizes[j])]
+            if use_batch_norm:
+                layers += [nn.BatchNorm1d(sizes[j])]
             layers += [nn.Linear(sizes[j], sizes[j + 1]), nn.Tanh()]
+        if use_batch_norm:
+            layers += [nn.BatchNorm1d(sizes[-1])]
         self.body = nn.Sequential(*layers)
         self.weight = nn.Sequential(
             nn.Linear(sizes[-1], 1), activation()
@@ -244,6 +247,7 @@ def train(
     link,
     random_weight,
     l1_lambda,
+    cop_discount,
     discount=0.95,
     checkpoint=5,
     epoch=1000,
@@ -251,6 +255,7 @@ def train(
     batch_size=256,
     buffer_size=20,
     max_len=50,
+    use_batch_norm=False,
     **kwargs
 ):
     # hyperparam = random_search(hyper_choice)
@@ -286,13 +291,17 @@ def train(
 
     if link == "inverse" or link == "identity":
         weight = WeightNet(
-            env.observation_space.shape[0], hidden_sizes=(256, 256), activation=nn.ReLU
+            env.observation_space.shape[0],
+            hidden_sizes=(256, 256),
+            activation=nn.ReLU,
+            use_batch_norm=use_batch_norm,
         )
     else:
         weight = WeightNet(
             env.observation_space.shape[0],
             hidden_sizes=(256, 256),
             activation=nn.Identity,
+            use_batch_norm=use_batch_norm,
         )
 
     # TODO: Might need target network...
@@ -318,20 +327,23 @@ def train(
             # loss = ((1/weight(obs) - label) ** 2).mean()
         elif link == "identity":
             with torch.no_grad():
-                label = gamma * torch.exp(
+                label = cop_discount * torch.exp(
                     (logtarg - logbev) + torch.log(c_next_obs)
-                ) + (1 - gamma)
+                ) + (1 - cop_discount)
+                label = label.detach()
             loss = ((c_obs - label) ** 2).mean()
         elif link == "loglog":
             raise NotImplementedError
             # loss = ((torch.exp(torch.exp(weight(obs)))-1 - label) ** 2).mean()
         else:
             with torch.no_grad():
-                label = gamma * torch.exp((logtarg - logbev) + c_next_obs) + (1 - gamma)
+                label = cop_discount * torch.exp((logtarg - logbev) + c_next_obs) + (
+                    1 - cop_discount
+                )
+                label = label.detach()
             loss = ((torch.exp(c_obs) - label) ** 2).mean()
 
         l1_norm = sum(torch.linalg.norm(p, 1) for p in weight.parameters())
-        # print(loss)
         loss = loss + l1_lambda * l1_norm
 
         optimizer.zero_grad()
@@ -415,7 +427,9 @@ def argsparser():
     parser.add_argument("--epoch", type=int, default=250)
     parser.add_argument("--array", type=int, default=1)
 
-    parser.add_argument("--discount", type=float, default=0.95)
+    parser.add_argument("--use_batch_norm", action="store_true")
+    parser.add_argument("--cop_discount", type=float, default=0.99)
+    parser.add_argument("--discount", type=float, default=0.99)
     parser.add_argument("--lr", type=float, default=3e-4)
     parser.add_argument("--batch_size", type=int, default=256)
     parser.add_argument("--buffer_size", type=int, default=20)

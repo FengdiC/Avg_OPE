@@ -249,6 +249,19 @@ def collect_dataset(
     return buf
 
 
+# TODO: TD learning
+def td_learning():
+    """
+    Two-timescale learning:
+    - weight ratio
+    - values
+
+    NOTE: we need to apply importance sampling on the loss
+    """
+
+    pass
+
+
 # train weight net
 def train(
     lr,
@@ -321,10 +334,6 @@ def train(
             use_batch_norm=use_batch_norm,
         )
 
-    # TODO: Might need target network...
-
-    start_time = time.time()
-
     # Set up optimizers for policy and value function
     optimizer = Adam(weight.parameters(), lr)
 
@@ -393,8 +402,13 @@ def train(
             logbev, logtarg = data["logbev"], data["logtarg"]
             first_timestep = data["first_timestep"]
 
-            all_obs = torch.cat((obs, next_obs), dim=0)
-            (c_obs, c_next_obs) = torch.split(weight(all_obs), batch_size)
+            # Since we might get s_0 as s', we should exclude predicting s for those situations
+            non_first_timestep = np.where(1 - first_timestep)[0]
+            all_obs = torch.cat((obs[non_first_timestep], next_obs), dim=0)
+            c_all = weight(all_obs)
+            c_next_obs = c_all[len(non_first_timestep) :]
+            c_obs = torch.ones_like(c_next_obs)
+            c_obs[non_first_timestep] = c_all[non_first_timestep]
 
             if link == "inverse":
                 raise NotImplementedError

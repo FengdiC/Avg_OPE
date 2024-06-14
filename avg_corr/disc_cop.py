@@ -40,6 +40,7 @@ class PPOBuffer:
         self.gamma = gamma
         self.fold = fold
         self.ptr, self.path_start_idx, self.max_size = 0, 0, size
+        self.ep_start_inds = [0]
 
     def store(self, obs, act, rew, next_obs, tim, logbev, logtarg):
         """
@@ -80,6 +81,7 @@ class PPOBuffer:
         )
 
         self.path_start_idx = self.ptr
+        self.ep_start_inds.append(self.ptr)
 
     def sample(self, batch_size, fold_num):
         """
@@ -92,17 +94,26 @@ class PPOBuffer:
             ind = np.random.randint(self.ptr - interval, size=batch_size)
             ind = ind + np.where(ind >= fold_num * interval, 1, 0) * interval
         else:
-            ind = np.random.randint(self.ptr, size=batch_size)
+            ind = np.random.randint(-len(self.ep_start_inds), self.ptr, size=batch_size)
 
+        samp_ind = np.clip(ind, a_min=0, a_max=np.inf).astype(int)
         data = dict(
-            obs=self.obs_buf[ind],
-            act=self.act_buf[ind],
-            prod=self.prod_buf[ind],
-            next_obs=self.next_obs_buf[ind],
-            tim=self.tim_buf[ind],
-            logbev=self.logbev_buf[ind],
-            logtarg=self.logtarg_buf[ind],
+            obs=self.obs_buf[samp_ind],
+            act=self.act_buf[samp_ind],
+            prod=self.prod_buf[samp_ind],
+            next_obs=self.next_obs_buf[samp_ind],
+            tim=self.tim_buf[samp_ind],
+            logbev=self.logbev_buf[samp_ind],
+            logtarg=self.logtarg_buf[samp_ind],
+            first_timestep=ind < 0,
         )
+
+        if np.any(ind < 0):
+            # Find any s_0 as s' and properly set them.
+            start_ind = np.where(ind < 0)[0]
+            data["next_obs"][start_ind] = self.obs_buf[
+                np.asarray(self.ep_start_inds)[-ind[start_ind] - 1]
+            ]
         return {k: torch.as_tensor(v, dtype=torch.float32) for k, v in data.items()}
 
     def delete_last_traj(self):
@@ -327,32 +338,35 @@ def train(
             obs, act, next_obs = data["obs"], data["act"], data["next_obs"]
             tim, prod = data["tim"], data["prod"]
             logbev, logtarg = data["logbev"], data["logtarg"]
+            first_timestep = data["first_timestep"]
 
-            c_obs = weight(obs)
+            c_next_obs = target_weight(next_obs)
             with torch.no_grad():
-                c_next_obs = target_weight(next_obs)
+                c_obs = weight(obs)
 
             if link == "inverse":
                 raise NotImplementedError
                 # loss = ((1/weight(obs) - label) ** 2).mean()
             elif link == "identity":
                 with torch.no_grad():
-                    label = cop_discount * torch.exp(
-                        (logtarg - logbev) + torch.log(c_next_obs)
-                    ) + (1 - cop_discount)
+                    label = (
+                        cop_discount * torch.exp((logtarg - logbev) + torch.log(c_obs))
+                        + (1 - cop_discount)
+                    ) ** (1 - first_timestep)
                     label = label.detach()
-                loss = ((c_obs - label) ** 2).mean()
+                loss = ((c_next_obs - label) ** 2).mean()
             elif link == "loglog":
                 raise NotImplementedError
                 # loss = ((torch.exp(torch.exp(weight(obs)))-1 - label) ** 2).mean()
             else:
                 # By default log parameterization
                 with torch.no_grad():
-                    label = cop_discount * torch.exp(
-                        (logtarg - logbev) + c_next_obs
-                    ) + (1 - cop_discount)
+                    label = (
+                        cop_discount * torch.exp((logtarg - logbev) + c_obs)
+                        + (1 - cop_discount)
+                    ) ** (1 - first_timestep)
                     label = label.detach()
-                loss = ((torch.exp(c_obs) - label) ** 2).mean()
+                loss = ((torch.exp(c_next_obs) - label) ** 2).mean()
 
             l1_norm = sum(torch.linalg.norm(p, 1) for p in weight.parameters())
             loss = loss + l1_lambda * l1_norm
@@ -377,6 +391,7 @@ def train(
             obs, act, next_obs = data["obs"], data["act"], data["next_obs"]
             tim, prod = data["tim"], data["prod"]
             logbev, logtarg = data["logbev"], data["logtarg"]
+            first_timestep = data["first_timestep"]
 
             all_obs = torch.cat((obs, next_obs), dim=0)
             (c_obs, c_next_obs) = torch.split(weight(all_obs), batch_size)
@@ -386,22 +401,24 @@ def train(
                 # loss = ((1/weight(obs) - label) ** 2).mean()
             elif link == "identity":
                 with torch.no_grad():
-                    label = cop_discount * torch.exp(
-                        (logtarg - logbev) + torch.log(c_next_obs)
-                    ) + (1 - cop_discount)
+                    label = (
+                        cop_discount * torch.exp((logtarg - logbev) + torch.log(c_obs))
+                        + (1 - cop_discount)
+                    ) ** (1 - first_timestep)
                     label = label.detach()
-                loss = ((c_obs - label) ** 2).mean()
+                loss = ((c_next_obs - label) ** 2).mean()
             elif link == "loglog":
                 raise NotImplementedError
                 # loss = ((torch.exp(torch.exp(weight(obs)))-1 - label) ** 2).mean()
             else:
                 # By default log parameterization
                 with torch.no_grad():
-                    label = cop_discount * torch.exp(
-                        (logtarg - logbev) + c_next_obs
-                    ) + (1 - cop_discount)
+                    label = (
+                        cop_discount * torch.exp((logtarg - logbev) + c_obs)
+                        + (1 - cop_discount)
+                    ) ** (1 - first_timestep)
                     label = label.detach()
-                loss = ((torch.exp(c_obs) - label) ** 2).mean()
+                loss = ((torch.exp(c_next_obs) - label) ** 2).mean()
 
             l1_norm = sum(torch.linalg.norm(p, 1) for p in weight.parameters())
             loss = loss + l1_lambda * l1_norm

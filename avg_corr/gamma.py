@@ -79,8 +79,11 @@ class PPOBuffer:
         mean zero and std one). Also, resets some pointers in the buffer.
         """
         interval = int(self.ptr / self.fold)
-        ind = np.random.randint(self.ptr-interval, size=batch_size)
-        ind = ind + np.where(ind>=fold_num*interval,1,0)*interval
+        if self.fold > 1:
+            ind = np.random.randint(self.ptr - interval, size=batch_size)
+            ind = ind + np.where(ind >= fold_num * interval, 1, 0) * interval
+        else:
+            ind = np.random.randint(self.ptr, size=batch_size)
 
         data = dict(obs=self.obs_buf[ind], act=self.act_buf[ind], prod=self.prod_buf[ind],
                     tim=self.tim_buf[ind],

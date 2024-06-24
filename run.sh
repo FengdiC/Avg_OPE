@@ -16,7 +16,7 @@ module load gcc opencv intel/2023.2.1 cuda/11.8 python/3.10 mpi4py
 SECONDS=0
 echo
 
-python avg_corr/main.py --log_dir $SCRATCH/avg_corr/classic/ \
+python avg_corr/run.py --log_dir $SCRATCH/avg_corr/classic/ \
 --array $SLURM_ARRAY_TASK_ID --steps 5 --epoch 2000 --max_len 50 &
 
 echo "Baseline job $seed took $SECONDS"

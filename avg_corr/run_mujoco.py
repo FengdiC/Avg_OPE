@@ -41,7 +41,7 @@ def run_mujoco():
            'Swimmer-v4','Walker2d-v4']
     path = ['./exper/mountaincar.pth','./exper/hopper.pth','./exper/halfcheetah_0.pth',
             './exper/halfcheetah_1.pth','./exper/ant.pth','./exper/swimmer.pth','./exper/walker.pth']
-    idx = np.unravel_index(args.array, (3, 3, 5, 3))
+    idx = np.unravel_index(args.array, (3, 3, 5, 7))
     random_weight, buffer, discount_factor = random_weight[idx[0]], buffer[idx[1]], discount_factor[idx[2]]
     env, path = env[idx[3]], path[idx[3]]
     batch, link, alpha, lr, loss = 512,'inverse',0.0005,0.0001,'gamma'
@@ -64,7 +64,7 @@ def run_mujoco():
                    batch_size=batch, buffer_size=buffer,
                    max_len=args.max_len)
         elif loss=='gamma':
-            train, test = train_gamma(lr=lr, env=env, seed=seed, path=args.path, hyper_choice=args.seed,
+            train, test = train_gamma(lr=lr, env=env, seed=seed, path=path, hyper_choice=args.seed,
                    link=link, random_weight=random_weight, l1_lambda=alpha, discount = discount_factor,
                    checkpoint=args.steps, epoch=args.epoch, cv_fold=1,
                    batch_size=batch, buffer_size=buffer,

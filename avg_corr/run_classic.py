@@ -34,6 +34,9 @@ def run_classic():
     args = argsparser()
     seeds = range(10)
 
+    if args.array>135:
+        return -1
+
     discount_factor = [0.8, 0.9,0.95, 0.99, 0.995]
     buffer = [40, 80, 200]
     random_weight = [0.3, 0.5, 0.7]

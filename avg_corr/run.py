@@ -34,17 +34,18 @@ def run_classic():
     args = argsparser()
     seeds = range(10)
 
-    discount_factor = [0.8, 0.99, 0.995]
+    discount_factor = [0.8, 0.9,0.95, 0.99, 0.995]
     buffer = [40, 80, 200]
     random_weight = [0.3, 0.5, 0.7]
     env = ['CartPole-v1','Acrobot-v1','MountainCarContinuous-v0']
     path = ['./exper/cartpole.pth','./exper/acrobot.pth', './exper/mountaincar.pth']
-    idx = np.unravel_index(args.array, (3, 3, 3, 3))
+    idx = np.unravel_index(args.array, (3, 3, 5, 3))
     random_weight, buffer, discount_factor = random_weight[idx[0]], buffer[idx[1]], discount_factor[idx[2]]
     env, path = env[idx[3]], path[idx[3]]
-    batch, link, alpha, lr, loss = classic(buffer,random_weight)
+    batch, link, alpha, lr, loss = 512,'identity',0.0005,0.0005,'mse'
 
-    filename = args.log_dir + 'final-result-' + str(env) +'-array-'+str(args.array) + '.csv'
+    filename = args.log_dir + 'final-classic-' + str(env) +'-discount-'+str(discount_factor)\
+               +'-buffer-'+str(buffer)+'-random-'+str(random_weight)+'.csv'
     os.makedirs(args.log_dir, exist_ok=True)
     mylist = [str(i) for i in range(0, args.epoch * args.steps, args.steps)] + ['hyperparam']
     with open(filename, 'w+', newline='') as file:

@@ -199,10 +199,10 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
     return buf
 
 # train weight net
-def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,
+def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,discount,
           checkpoint=5,epoch=1000,cv_fold=10,batch_size=256,buffer_size=20,max_len=50):
     hyperparam = random_search(hyper_choice)
-    gamma = hyperparam['gamma']
+    gamma = discount
     env = gym.make(env)
 
     np.random.seed(seed)

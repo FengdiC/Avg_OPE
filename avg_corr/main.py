@@ -119,11 +119,9 @@ def load(path,env):
     ac.load_state_dict(checkpoint['model_state_dict'])
     return ac
 
-def eval_policy(path='./exper/cartpole_998.pth'):
-    env = gym.make('MountainCarContinuous-v0')
+def eval_policy(path='./exper/cartpole.pth',env='CartPole-v1',gamma=0.8):
+    env = gym.make(env)
     ac = load(path, env)
-    hyperparam = random_search(196)
-    gamma = hyperparam['gamma']
 
     o, ep_len, ep_ret, ep_avg_ret = env.reset(), 0 ,0, 0
     num_traj=0
@@ -395,3 +393,5 @@ def tune():
 # plt.savefig('hopper.png')
 
 # tune()
+
+print(eval_policy(path='./exper/cartpole.pth',env='CartPole-v1',gamma=0.99))

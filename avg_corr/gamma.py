@@ -283,7 +283,7 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,discount,
             ratio = np.exp(np.exp(ratio))-1
         else:
             ratio = np.exp(ratio)
-        print(ratio)
+        # print(ratio)
         obj = np.mean(ratio * np.exp(buffer.logtarg_buf[ind]
                                      - buffer.logbev_buf[ind])*buffer.rew_buf[ind])
         return obj*max_len*(1-gamma)
@@ -291,17 +291,18 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,discount,
     objs_cv_mean = []
     for fold_num in range(cv_fold):
         objs, objs_test, objs_cv = [], [], []
-        for steps in range(epoch*checkpoint):
-            if steps%checkpoint==0:
-                obj_cv = eval_cv(buf,fold_num)
-                # obj, obj_test  = eval(buf), eval(buf_test)
-                # objs.append(obj)
-                # objs_test.append(obj_test)
-                objs_cv.append(np.around(obj_cv,decimals=4))
+        for steps in range(epoch * checkpoint):
             update(fold_num)
-        objs_cv_mean.append(objs_cv)
+            if steps % checkpoint == 0:
+                # obj_cv = eval_cv(buf,fold_num)
+                obj, obj_test = eval(buf), eval(buf_test)
+                objs.append(obj)
+                objs_test.append(obj_test)
+                # objs_cv.append(np.around(obj_cv,decimals=4))
+        # objs_cv_mean.append(objs_cv)
+    return objs, objs_test
     # return objs,objs_test
-    return np.around(np.mean(np.array(objs_cv_mean),axis=0),decimals=4)
+    # return np.around(np.mean(np.array(objs_cv_mean),axis=0),decimals=4)
 
 def argsparser():
     import argparse

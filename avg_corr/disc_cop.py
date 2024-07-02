@@ -536,25 +536,54 @@ def argsparser():
 
 
 def tune():
-    random_weight = [0.3, 0.5, 0.7]
-    batch_size = [256, 512]
-    link = ["inverse", "identity"]
-    buffer = [40, 80, 200]
+    """
+    (1) The true value is estimated by sampling a large amount of trajectories under the target policy. The target policy is in the zip file
+
+    (2) The behaviour policy will be (1- random_weight) * target_policy + random_weight*random_policy. The code is in the same file, method, collect(). We will use random_weight = 0.3, 0.5 and 0.7.
+
+    (3) Let's record the estimated objective value = 1/n \sum_{i=1}^n est_ratio(s_i,a_i) r(s_i,a_i)  and (1-gamma) \sum_{i=1}^{100}q(s_{i,0},\pi_{targ}(s_{i,0}))on two datasets: both training and testing.
+    And track the MSE between estimated value and the given true value; we will store the weight of the last model for each seed.
+
+    (3)(b) Let's record every 5 steps and totally train for 10k steps for classic control, 250k for mujoco across 10 random seeds. [Check again with the original paper.]
+
+    (4) The dataset size will be based on the number of trajectories, say 40 80 200 trajectories, each of 50 steps for classic control and 100 steps for mujoco.
+
+    (5) Let's try for 3 discount factors: 0.8, 0.99 and 0.995.
+    """
+    random_weights = [0.3, 0.5, 0.7]
+    discount_factors = [0.8, 0.99, 0.995]
+    batch_sizes = [256, 512]
+    links = ["default"]
+    buffer_sizes = [40, 80, 200]
 
     args = argsparser()
     seeds = range(3)
-    idx = np.unravel_index(args.array, (3, 2, 2, 3))
-    random_weight, batch_size = random_weight[idx[0]], batch_size[idx[1]]
-    link, buffer_size = link[idx[2]], buffer[idx[3]]
+
+    # One for each hyperparameter
+    idx = np.unravel_index(args.array, (3, 3, 2, 1, 3))
+    random_weight, discount_factor, batch_size, link, buffer_size = (
+        random_weights[idx[0]],
+        discount_factors[idx[1]],
+        batch_sizes[idx[2]],
+        links[idx[3]],
+        buffer_sizes[idx[4]],
+    )
     filename = (
         args.log_dir
         + "mse-tune-"
+        + "random_weight_"
         + str(random_weight)
         + "-"
+        + "discount_factor_"
+        + str(discount_factor)
+        + "-"
+        + "buffer_size_"
         + str(buffer_size)
         + "-"
+        + "link_"
         + str(link)
         + "-"
+        + "batch_size_"
         + str(batch_size)
         + ".csv"
     )

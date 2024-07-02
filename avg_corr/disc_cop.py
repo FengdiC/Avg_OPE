@@ -8,6 +8,7 @@ import numpy as np
 from gym.spaces import Box, Discrete
 from tqdm import tqdm
 import gym
+import math
 import time
 import torch
 import torch.nn as nn
@@ -17,6 +18,7 @@ from ppo.algo.random_search import random_search
 import ppo.utils.logger as logger
 import matplotlib.pyplot as plt
 import csv
+from itertools import product
 
 
 class PPOBuffer:
@@ -283,7 +285,7 @@ def train(
     use_batch_norm=False,
     use_target_network=False,
     tau=0.0005,
-    **kwargs
+    **kwargs,
 ):
     """
     With cop_discount -> 1, fixed-point solution -> d_pi/d_mu
@@ -491,7 +493,7 @@ def train(
     objs_cv_mean = []
     for fold_num in range(cv_fold):
         objs, objs_test, objs_cv = [], [], []
-        for steps in tqdm(range(epoch * checkpoint)):
+        for steps in range(epoch * checkpoint):
             weight.train()
             update(fold_num)
             if steps % checkpoint == 0:
@@ -535,7 +537,7 @@ def argsparser():
     return args
 
 
-def tune():
+def hyperparam_sweep():
     """
     (1) The true value is estimated by sampling a large amount of trajectories under the target policy. The target policy is in the zip file
 
@@ -550,110 +552,174 @@ def tune():
 
     (5) Let's try for 3 discount factors: 0.8, 0.99 and 0.995.
     """
+
+    log_dir = "./results"
+
     random_weights = [0.3, 0.5, 0.7]
     discount_factors = [0.8, 0.99, 0.995]
     batch_sizes = [256, 512]
     links = ["default"]
     buffer_sizes = [40, 80, 200]
+    bootstrap_targets = ["target_network", "cross_q"]
+    seeds = range(10)
 
-    args = argsparser()
-    seeds = range(3)
+    step_frequency = 5
+    envs = {
+        "mujoco": {
+            "ant": ("Ant-v4", "./exper/ant.pth"),
+            "halfcheetah": ("HalfCheetah-v4", "./exper/halfcheetah_1.pth"),
+            "hopper": ("Hopper-v4", "./exper/hopper.pth"),
+            "swimmer": ("Swimmer-v4", "./exper/swimmer.pth"),
+            "walker": ("Walker2d-v4", "./exper/walker.pth"),
+        },
+        "classic_control": {
+            "acrobot": ("Acrobot-v1", "./exper/acrobot.pth"),
+            "cartpole": ("CartPole-v1", "./exper/cartpole.pth"),
+            "mountain_car": ("MountainCarContinuous-v0", "./exper/mountaincar.pth"),
+        },
+    }
+    env_specifics = {
+        "mujoco": {
+            "max_len": 100,
+            "train_steps": 10_000,
+        },
+        "classic_control": {
+            "max_len": 50,
+            "train_steps": 250_000,
+        },
+    }
 
-    # One for each hyperparameter
-    idx = np.unravel_index(args.array, (3, 3, 2, 1, 3))
-    random_weight, discount_factor, batch_size, link, buffer_size = (
-        random_weights[idx[0]],
-        discount_factors[idx[1]],
-        batch_sizes[idx[2]],
-        links[idx[3]],
-        buffer_sizes[idx[4]],
-    )
-    filename = (
-        args.log_dir
-        + "mse-tune-"
-        + "random_weight_"
-        + str(random_weight)
-        + "-"
-        + "discount_factor_"
-        + str(discount_factor)
-        + "-"
-        + "buffer_size_"
-        + str(buffer_size)
-        + "-"
-        + "link_"
-        + str(link)
-        + "-"
-        + "batch_size_"
-        + str(batch_size)
-        + ".csv"
-    )
-    os.makedirs(args.log_dir, exist_ok=True)
-    mylist = [str(i) for i in range(0, args.epoch * args.steps, args.steps)] + [
-        "hyperparam"
-    ]
-    with open(filename, "w+", newline="") as file:
-        # Step 4: Using csv.writer to write the list to the CSV file
-        writer = csv.writer(file)
-        writer.writerow(mylist)  # Use writerow for single list
+    for env_family in envs:
+        env_specific = env_specifics[env_family]
+        for env_name, env_config in envs[env_family].items():
+            # idx = np.unravel_index(args.array, (3, 3, 2, 1, 3, 2))
+            # random_weight, discount_factor, batch_size, link, buffer_size, bootstrap_target = (
+            #     random_weights[idx[0]],
+            #     discount_factors[idx[1]],
+            #     batch_sizes[idx[2]],
+            #     links[idx[3]],
+            #     buffer_sizes[idx[4]],
+            #     bootstrap_targets[idx[5]]
+            # )
 
-    for alpha in [0.0005, 0.001, 0.002, 0.005, 0.01]:
-        for lr in [0.0001, 0.0005, 0.001, 0.005]:
-            result = []
-            print("Finish one combination of hyperparameters!")
-            for seed in seeds:
-                cv = train(
-                    lr=lr,
-                    env=args.env,
-                    seed=seed,
-                    path=args.path,
-                    hyper_choice=args.seed,
-                    link=link,
-                    random_weight=random_weight,
-                    l1_lambda=alpha,
-                    checkpoint=args.steps,
-                    epoch=args.epoch,
-                    cv_fold=10,
-                    batch_size=batch_size,
-                    buffer_size=buffer_size,
-                    max_len=args.max_len,
+            # One for each hyperparameter
+            for (
+                random_weight,
+                discount_factor,
+                batch_size,
+                link,
+                buffer_size,
+                bootstrap_target,
+            ) in tqdm(
+                product(
+                    random_weights,
+                    discount_factors,
+                    batch_sizes,
+                    links,
+                    buffer_sizes,
+                    bootstrap_targets,
+                ),
+                postfix="Hyperparameter sweep for environment: {}".format(env_name),
+            ):
+                filename = (
+                    log_dir
+                    + "mse-tune-"
+                    + str(env_name)
+                    + "-"
+                    + "random_weight_"
+                    + str(random_weight)
+                    + "-"
+                    + "discount_factor_"
+                    + str(discount_factor)
+                    + "-"
+                    + "buffer_size_"
+                    + str(buffer_size)
+                    + "-"
+                    + "link_"
+                    + str(link)
+                    + "-"
+                    + "batch_size_"
+                    + str(batch_size)
+                    + "-"
+                    + "bootstrap_target_"
+                    + str(bootstrap_target)
+                    + ".csv"
                 )
-                print(
-                    "Return result shape: ", cv.shape, ":::", args.steps, ":::", seeds
-                )
-                result.append(cv)
-                # name = ['lr',lr,'alpha',alpha]
-                # name = [str(s) for s in name]
-                # name.append(str(seed))
-                # print("hyperparam", '-'.join(name))
-                # logger.logkv("hyperparam", '-'.join(name))
-                # for n in range(cv.shape[0]):
-                #     logger.logkv(str(n * args.steps), cv[n])
-                # logger.dumpkvs()
-            result = np.array(result)
-            ret = np.around(np.mean(result, axis=0), decimals=4)
-            var = np.around(np.var(result, axis=0), decimals=4)
-            print("Mean shape: ", ret.shape, ":::", var.shape)
-            name = ["lr", lr, "alpha", alpha]
-            name = [str(s) for s in name]
-            name_1 = name + ["mean"]
-            name_2 = name + ["var"]
-            mylist = [str(i) for i in list(ret)] + ["-".join(name_1)]
-            with open(filename, "a", newline="") as file:
-                # Step 4: Using csv.writer to write the list to the CSV file
-                writer = csv.writer(file)
-                writer.writerow(mylist)  # Use writerow for single list
-            print("-".join(name_1))
-            # logger.logkv("hyperparam", '-'.join(name_2))
-            # for n in range(ret.shape[0]):
-            #     logger.logkv(str(n * args.steps), var[n])
-            # logger.dumpkvs()
+                os.makedirs(log_dir, exist_ok=True)
+                mylist = [
+                    str(i)
+                    for i in range(0, env_specific["train_steps"], step_frequency)
+                ] + ["hyperparam"]
+                with open(filename, "w+", newline="") as file:
+                    # Step 4: Using csv.writer to write the list to the CSV file
+                    writer = csv.writer(file)
+                    writer.writerow(mylist)  # Use writerow for single list
+
+                for alpha in [0.0005, 0.001, 0.002, 0.005, 0.01]:
+                    for lr in [0.0001, 0.0005, 0.001, 0.005]:
+                        result = []
+                        # print("Finish one combination of hyperparameters!")
+                        for seed in seeds:
+                            cv = train(
+                                lr=lr,
+                                env=env_config[0],
+                                seed=seed,
+                                path=env_config[1],
+                                hyper_choice=0,
+                                link=link,
+                                random_weight=random_weight,
+                                l1_lambda=alpha,
+                                checkpoint=step_frequency,
+                                epoch=math.ceil(
+                                    env_specific["train_steps"] / step_frequency
+                                ),
+                                cv_fold=1,  # TODO: No K-fold cross validation
+                                batch_size=batch_size,
+                                buffer_size=buffer_size,
+                                max_len=env_specific["max_len"],
+                                use_batch_norm=bootstrap_target != "target_network",
+                                use_target_network=bootstrap_target == "target_network",
+                                discount=discount_factor,
+                                cop_discount=discount_factor,
+                            )
+                            # print(
+                            #     "Return result shape: ", cv.shape, ":::", step_frequency, ":::", seeds
+                            # )
+                            result.append(cv)
+                            # name = ['lr',lr,'alpha',alpha]
+                            # name = [str(s) for s in name]
+                            # name.append(str(seed))
+                            # print("hyperparam", '-'.join(name))
+                            # logger.logkv("hyperparam", '-'.join(name))
+                            # for n in range(cv.shape[0]):
+                            #     logger.logkv(str(n * args.steps), cv[n])
+                            # logger.dumpkvs()
+                        result = np.array(result)
+                        ret = np.around(np.mean(result, axis=0), decimals=4)
+                        var = np.around(np.var(result, axis=0), decimals=4)
+                        print("Mean shape: ", ret.shape, ":::", var.shape)
+                        name = ["lr", lr, "alpha", alpha]
+                        name = [str(s) for s in name]
+                        name_1 = name + ["mean"]
+                        name_2 = name + ["var"]
+                        mylist = [str(i) for i in list(ret)] + ["-".join(name_1)]
+                        with open(filename, "a", newline="") as file:
+                            # Step 4: Using csv.writer to write the list to the CSV file
+                            writer = csv.writer(file)
+                            writer.writerow(mylist)  # Use writerow for single list
+                        print("-".join(name_1))
+                        # logger.logkv("hyperparam", '-'.join(name_2))
+                        # for n in range(ret.shape[0]):
+                        #     logger.logkv(str(n * args.steps), var[n])
+                        # logger.dumpkvs()
 
 
 if __name__ == "__main__":
-    args = argsparser()
-    res_train, res_test = train(**vars(args), hyper_choice=args.seed)
-    print(res_train[-1])
-    print(res_test[-1])
+    # args = argsparser()
+    # res_train, res_test = train(**vars(args), hyper_choice=args.seed)
+    # print(res_train[-1])
+    # print(res_test[-1])
 
-    res_targ = eval_policy(args.env, args.path, args.discount)
-    print(res_targ[0])
+    # res_targ = eval_policy(args.env, args.path, args.discount)
+    # print(res_targ[0])
+    hyperparam_sweep()

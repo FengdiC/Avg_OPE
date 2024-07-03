@@ -13,6 +13,17 @@ ENVS = {
     },
 }
 
+ENV_TO_FAMILY = {
+    "ant": "mujoco",
+    "halfcheetah": "mujoco",
+    "hopper": "mujoco",
+    "swimmer": "mujoco",
+    "walker": "mujoco",
+    "acrobot": "classic_control",
+    "cartpole": "classic_control",
+    "mountain_car": "classic_control",
+}
+
 ENV_FAMILY_SPECIFICS = {
     "mujoco": {
         "max_len": 100,

@@ -1,9 +1,9 @@
 import os
 
 from constants import LOG_DIR, RUN_REPORT_DIR, REPO_PATH
-from envs import ENVS, ENV_FAMILY_SPECIFICS
+from envs import ENV_TO_FAMILY, ENV_FAMILY_SPECIFICS
 
-for env_name in ENVS:
+for env_name in ENV_TO_FAMILY:
     os.makedirs(
         os.path.join(RUN_REPORT_DIR, env_name),
         exist_ok=True,
@@ -18,7 +18,7 @@ for env_name in ENVS:
     sbatch_content += "#!/bin/bash\n"
     sbatch_content += "#SBATCH --account=def-schuurma\n"
     sbatch_content += "#SBATCH --time={}\n".format(
-        ENV_FAMILY_SPECIFICS[env_name]["run_time"]
+        ENV_FAMILY_SPECIFICS[ENV_TO_FAMILY[env_name]]["run_time"]
     )
     sbatch_content += "#SBATCH --cpus-per-task=1\n"
     sbatch_content += "#SBATCH --mem=3G\n"

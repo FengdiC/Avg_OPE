@@ -38,7 +38,6 @@ ENV_ID_TO_NAME = {
     "Acrobot-v1": "acrobot",
     "CartPole-v1": "cartpole",
     "MountainCarContinuous-v0": "mountain_car",
-
 }
 
 ENV_TO_FAMILY = {

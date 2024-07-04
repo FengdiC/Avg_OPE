@@ -301,14 +301,12 @@ def train_ratio(
                             os.path.join(
                                 save_path,
                                 "{}-curr_best_at_step_{}.pt".format(
-                                    filename_prefix,
-                                    steps
-                                )
+                                    filename_prefix, steps
+                                ),
                             )
-                        )
+                        ),
                     )
             return curr_best
-
 
     curr_best = np.inf
     for fold_num in range(cv_fold):
@@ -326,9 +324,7 @@ def train_ratio(
     if save_path:
         torch.save(
             weight.state_dict(),
-            open(
-                os.path.join(save_path, "{}-final.pt".format(filename_prefix))
-            )
+            open(os.path.join(save_path, "{}-final.pt".format(filename_prefix))),
         )
 
     return objs, objs_test

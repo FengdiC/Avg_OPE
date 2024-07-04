@@ -109,7 +109,9 @@ def generate_experiment_configs():
                         discount=discount_factor,
                         cop_discount=discount_factor,
                         tau=tau,
-                        baseline_path=os.path.join(LOG_DIR, "baseline-{}.pkl".format(env_name)),
+                        baseline_path=os.path.join(
+                            LOG_DIR, "baseline-{}.pkl".format(env_name)
+                        ),
                         save_path=os.path.join(LOG_DIR, "saved_models", env_name),
                     ),
                     results=dict(),

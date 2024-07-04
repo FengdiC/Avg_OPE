@@ -254,7 +254,7 @@ def train_ratio(
     """
     TRAINING LOOP
     """
-    filename_prefix = (
+    run_dirname = (
         "random_weight_"
         + str(random_weight)
         + "-"
@@ -278,16 +278,17 @@ def train_ratio(
         + "-"
         + "alpha_"
         + str(l1_lambda)
-        + "-"
+    )
+
+    seed_prefix = (
         + "seed_"
         + str(seed)
     )
-
     baseline = None
     check_best = lambda obj_test, curr_best, steps: curr_best
 
     if save_path:
-        os.makedirs(save_path, exist_ok=True)
+        os.makedirs(os.path.join(save_path, run_dirname), exist_ok=True)
 
     if baseline_path and os.path.isfile(baseline_path):
         baseline = pickle.load(open(baseline_path, "rb"))[seed][gamma][0]
@@ -307,8 +308,9 @@ def train_ratio(
                         open(
                             os.path.join(
                                 save_path,
+                                run_dirname,
                                 "{}-curr_best.pt".format(
-                                    filename_prefix
+                                    seed_prefix
                                 ),
                             ),
                             "wb",
@@ -337,7 +339,11 @@ def train_ratio(
                 "model_state_dict": weight.state_dict(),
             },
             open(
-                os.path.join(save_path, "{}-final.pt".format(filename_prefix)),
+                os.path.join(
+                    save_path,
+                    run_dirname,
+                    "{}-final.pt".format(seed_prefix)
+                ),
                 "wb",
             ),
         )

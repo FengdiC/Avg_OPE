@@ -121,10 +121,10 @@ You may simply do `sbatch run_all-<FILE>.sh` to kick off the run.
 ```
 ant: running
 halfcheetah: running
-hopper
-swimmer
-walker
-acrobot
-cartpole
-mountain_car
+hopper: 
+swimmer:
+walker:
+acrobot:
+cartpole:
+mountain_car:
 ```

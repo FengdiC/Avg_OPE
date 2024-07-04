@@ -296,6 +296,7 @@ def train_ratio(
             loss = (obj_test - baseline) ** 2
             if loss < curr_best:
                 curr_best = loss
+                print(curr_best)
                 if save_path:
                     torch.save(
                         weight.state_dict(),

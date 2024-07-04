@@ -44,7 +44,7 @@ for env_name in ENV_TO_FAMILY:
     sbatch_content += 'echo "Current working directory is `pwd`"\n'
     sbatch_content += 'echo "Running on hostname `hostname`"\n'
     sbatch_content += 'echo "Starting run at: `date`"\n'
-    sbatch_content += "python3 {}/disc_cop/train.py \\\n".format(REPO_PATH)
+    sbatch_content += "python3 {}/disc_cop/run_experiment.py \\\n".format(REPO_PATH)
     sbatch_content += "  --config_path=${config_path} \\\n"
     sbatch_content += "  --dataset_dir=${dataset_dir}\n"
     sbatch_content += 'echo "Program test finished with exit code $? at: `date`"\n'

@@ -116,3 +116,15 @@ run_all-walker.sh
 
 You may simply do `sbatch run_all-<FILE>.sh` to kick off the run.
 
+
+## Experimental Status
+```
+ant: running
+halfcheetah: running
+hopper
+swimmer
+walker
+acrobot
+cartpole
+mountain_car
+```

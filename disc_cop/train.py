@@ -296,15 +296,19 @@ def train_ratio(
             loss = (obj_test - baseline) ** 2
             if loss < curr_best:
                 curr_best = loss
-                print(curr_best)
+                print("CURRENT BEST {} @ {}".format(curr_best, steps))
                 if save_path:
                     torch.save(
-                        weight.state_dict(),
+                        {
+                            "loss": loss,
+                            "steps": steps,
+                            "model_state_dict": weight.state_dict(),
+                        },
                         open(
                             os.path.join(
                                 save_path,
-                                "{}-curr_best_at_step_{}.pt".format(
-                                    filename_prefix, steps
+                                "{}-curr_best.pt".format(
+                                    filename_prefix
                                 ),
                             ),
                             "wb",
@@ -327,7 +331,11 @@ def train_ratio(
 
     if save_path:
         torch.save(
-            weight.state_dict(),
+            {
+                "loss": None,
+                "steps": steps,
+                "model_state_dict": weight.state_dict(),
+            },
             open(
                 os.path.join(save_path, "{}-final.pt".format(filename_prefix)),
                 "wb",

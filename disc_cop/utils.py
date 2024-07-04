@@ -147,6 +147,7 @@ def maybe_collect_dataset(
     if load_dataset:
         if os.path.isfile(load_dataset):
             save_buf = False
+            print("Loaded from existing buffer.")
             return pickle.load(open(load_dataset, "rb"))
         os.makedirs(os.path.dirname(load_dataset), exist_ok=True)
 

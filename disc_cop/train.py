@@ -1,3 +1,4 @@
+import _pickle as pickle
 import copy
 import gym
 import inspect
@@ -270,13 +271,14 @@ def train_ratio(
         + str(batch_size)
         + "-"
         + "bootstrap_target_"
-        + str(bootstrap_target)
+        + ("target_network" if use_target_network else "cross_q")
         + "-"
         + "lr_"
         + str(lr)
         + "-"
         + "alpha_"
-        + str(alpha)
+        + str(l1_lambda)
+        + "-"
         + "seed_"
         + str(seed)
     )
@@ -303,7 +305,8 @@ def train_ratio(
                                 "{}-curr_best_at_step_{}.pt".format(
                                     filename_prefix, steps
                                 ),
-                            )
+                            ),
+                            "wb",
                         ),
                     )
             return curr_best
@@ -324,7 +327,10 @@ def train_ratio(
     if save_path:
         torch.save(
             weight.state_dict(),
-            open(os.path.join(save_path, "{}-final.pt".format(filename_prefix))),
+            open(
+                os.path.join(save_path, "{}-final.pt".format(filename_prefix)),
+                "wb",
+            ),
         )
 
     return objs, objs_test

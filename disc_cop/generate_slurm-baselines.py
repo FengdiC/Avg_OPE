@@ -22,7 +22,7 @@ for env_name in ENV_TO_FAMILY:
         DATASET_DIR,
     )
 
-with open(os.path.join(LOG_DIR, "generate_datasets.dat"), "w+") as f:
+with open(os.path.join(LOG_DIR, "baselines.dat"), "w+") as f:
     f.writelines(dat_content)
 
 sbatch_content = ""
@@ -33,24 +33,23 @@ sbatch_content += "#SBATCH --cpus-per-task=1\n"
 sbatch_content += "#SBATCH --mem=3G\n"
 sbatch_content += "#SBATCH --array=1-{}\n".format(len(ENV_TO_FAMILY))
 sbatch_content += "#SBATCH --output={}/%j.out\n".format(
-    os.path.join(RUN_REPORT_DIR, "generate_datasets")
+    os.path.join(RUN_REPORT_DIR, "baselines")
 )
 sbatch_content += "module load python/3.10\n"
 sbatch_content += "module load mujoco\n"
 sbatch_content += "source ~/avg_ope/bin/activate\n"
 sbatch_content += '`sed -n "${SLURM_ARRAY_TASK_ID}p"'
-sbatch_content += " < {}`\n".format(os.path.join(LOG_DIR, "generate_datasets.dat"))
+sbatch_content += " < {}`\n".format(os.path.join(LOG_DIR, "baselines.dat"))
 sbatch_content += "echo ${SLURM_ARRAY_TASK_ID}\n"
 sbatch_content += 'echo "Current working directory is `pwd`"\n'
 sbatch_content += 'echo "Running on hostname `hostname`"\n'
 sbatch_content += 'echo "Starting run at: `date`"\n'
-sbatch_content += "python3 {}/generate_datasets.py \\\n".format(REPO_PATH)
-sbatch_content += "  --env_name=${env_name} \\\n"
-sbatch_content += "  --dataset_dir=${dataset_dir}\n"
+sbatch_content += "python3 {}/run_baseline.py \\\n".format(REPO_PATH)
+sbatch_content += "  --env_name=${env_name}\n"
 sbatch_content += 'echo "Program test finished with exit code $? at: `date`"\n'
 
 with open(
-    os.path.join(f"./run_all-generate_datasets.sh"),
+    os.path.join(f"./run_all-run_baselines.sh"),
     "w+",
 ) as f:
     f.writelines(sbatch_content)

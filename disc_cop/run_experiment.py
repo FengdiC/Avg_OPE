@@ -1,8 +1,14 @@
 import _pickle as pickle
 import argparse
+import inspect
 import os
+import sys
 
-from train import train_ratio
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0, parentdir)
+
+from disc_cop.train import train_ratio
 
 from tqdm import tqdm
 

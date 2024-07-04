@@ -12,9 +12,9 @@ sys.path.insert(0, parentdir)
 from itertools import product
 from tqdm import tqdm
 
-from constants import HYPERPARAMETERS
-from envs import ENVS, ENV_FAMILY_SPECIFICS, ENV_TO_FAMILY
-from utils import maybe_collect_dataset, set_seed
+from disc_cop.constants import HYPERPARAMETERS
+from disc_cop.envs import ENVS, ENV_FAMILY_SPECIFICS, ENV_TO_FAMILY
+from disc_cop.utils import maybe_collect_dataset, set_seed
 
 
 def main(args):

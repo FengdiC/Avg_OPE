@@ -1,7 +1,9 @@
-LOG_DIR = "/home/chanb/scratch/results/disc_cop"
-RUN_REPORT_DIR = "/home/chanb/scratch/run_reports/disc_cop"
-DATASET_DIR = "/home/chanb/scratch/datasets/disc_cop"
-REPO_PATH = "/home/chanb/scratch/Avg_OPE/disc_cop"
+HOME_DIR = "/home/chanb"
+LOG_DIR = f"{HOME_DIR}/scratch/results/disc_cop"
+RUN_REPORT_DIR = f"{HOME_DIR}/scratch/run_reports/disc_cop"
+DATASET_DIR = f"{HOME_DIR}/scratch/datasets/disc_cop"
+REPO_PATH = f"{HOME_DIR}/src/Avg_OPE/disc_cop"
+CC_ACCOUNT = "def-schuurma"
 
 HYPERPARAMETERS = dict(
     random_weights=[0.3, 0.5, 0.7],

@@ -1,7 +1,13 @@
+import inspect
 import os
+import sys
 
-from constants import LOG_DIR, RUN_REPORT_DIR, REPO_PATH
-from envs import ENV_TO_FAMILY, ENV_FAMILY_SPECIFICS
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0, parentdir)
+
+from disc_cop.constants import LOG_DIR, RUN_REPORT_DIR, REPO_PATH, CC_ACCOUNT
+from disc_cop.envs import ENV_TO_FAMILY, ENV_FAMILY_SPECIFICS
 
 for env_name in ENV_TO_FAMILY:
     os.makedirs(
@@ -16,7 +22,7 @@ for env_name in ENV_TO_FAMILY:
 
     sbatch_content = ""
     sbatch_content += "#!/bin/bash\n"
-    sbatch_content += "#SBATCH --account=def-schuurma\n"
+    sbatch_content += "#SBATCH --account={}\n".format(CC_ACCOUNT)
     sbatch_content += "#SBATCH --time={}\n".format(
         ENV_FAMILY_SPECIFICS[ENV_TO_FAMILY[env_name]]["run_time"]
     )
@@ -26,9 +32,9 @@ for env_name in ENV_TO_FAMILY:
     sbatch_content += "#SBATCH --output={}/%j.out\n".format(
         os.path.join(RUN_REPORT_DIR, env_name)
     )
-    sbatch_content += "module load python/3.9\n"
+    sbatch_content += "module load python/3.10\n"
     sbatch_content += "module load mujoco\n"
-    sbatch_content += "source ~/jaxl_env/bin/activate\n"
+    sbatch_content += "source ~/avg_ope/bin/activate\n"
     sbatch_content += '`sed -n "${SLURM_ARRAY_TASK_ID}p"'
     sbatch_content += " < {}`\n".format(
         os.path.join(LOG_DIR, "{}.dat".format(env_name))

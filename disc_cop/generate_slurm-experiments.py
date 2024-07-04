@@ -33,7 +33,8 @@ for env_name in ENV_TO_FAMILY:
         os.path.join(RUN_REPORT_DIR, env_name)
     )
     sbatch_content += "module load python/3.10\n"
-    sbatch_content += "module load mujoco\n"
+    sbatch_content += "module load StdEnv/2020\n"
+    sbatch_content += "module load mujoco/2.2.2\n"
     sbatch_content += "source ~/avg_ope/bin/activate\n"
     sbatch_content += '`sed -n "${SLURM_ARRAY_TASK_ID}p"'
     sbatch_content += " < {}`\n".format(

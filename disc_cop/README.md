@@ -15,7 +15,8 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.mujoco/mujoco210/bin:/usr/lib/nvidia
 # ========================================================================
 # If Compute Canada:
 module load python/3.10
-module load mujoco
+module load StdEnv/2020
+module load mujoco/2.2.2
 
 pip install torch --no-index
 # ========================================================================
@@ -26,13 +27,17 @@ source ~/avg_ope/bin/activate
 # ========================================================================
 # If not Compute Canada:
 pip install mujoco matplotlib numpy torch
+pip install mujoco==2.3.3
 # ========================================================================
 
-pip install mujoco==2.3.3
 pip install tqdm
 pip install gym
 pip install mujoco-py
+
+# ========================================================================
+# Might need to do this when gym.make fails on MuJoCo
 pip install "cython<3"
+# ========================================================================
 ```
 
 ## Running Experiments

@@ -28,7 +28,7 @@ with open(os.path.join(LOG_DIR, "baselines.dat"), "w+") as f:
 sbatch_content = ""
 sbatch_content += "#!/bin/bash\n"
 sbatch_content += "#SBATCH --account={}\n".format(CC_ACCOUNT)
-sbatch_content += "#SBATCH --time=00:30:00\n"
+sbatch_content += "#SBATCH --time=02:00:00\n"
 sbatch_content += "#SBATCH --cpus-per-task=1\n"
 sbatch_content += "#SBATCH --mem=3G\n"
 sbatch_content += "#SBATCH --array=1-{}\n".format(len(ENV_TO_FAMILY))

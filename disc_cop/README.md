@@ -28,6 +28,7 @@ source ~/avg_ope/bin/activate
 pip install mujoco matplotlib numpy torch
 # ========================================================================
 
+pip install mujoco==2.3.3
 pip install tqdm
 pip install gym
 pip install mujoco-py

@@ -29,6 +29,18 @@ ENVS = {
     },
 }
 
+ENV_ID_TO_NAME = {
+    "Ant-v4": "ant",
+    "HalfCheetah-v4": "halfcheetah",
+    "Hopper-v4": "hopper",
+    "Swimmer-v4": "swimmer",
+    "Walker2d-v4": "walker",
+    "Acrobot-v1": "acrobot",
+    "CartPole-v1": "cartpole",
+    "MountainCarContinuous-v0": "mountain_car",
+
+}
+
 ENV_TO_FAMILY = {
     "ant": "mujoco",
     "halfcheetah": "mujoco",

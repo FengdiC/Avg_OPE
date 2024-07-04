@@ -60,6 +60,8 @@ def train_ratio(
     use_target_network=False,
     tau=0.0005,
     load_dataset=None,
+    baseline_path=None,
+    save_path=None,
     **kwargs,
 ):
     """
@@ -251,6 +253,64 @@ def train_ratio(
     """
     TRAINING LOOP
     """
+    filename_prefix = (
+        "random_weight_"
+        + str(random_weight)
+        + "-"
+        + "discount_factor_"
+        + str(gamma)
+        + "-"
+        + "buffer_size_"
+        + str(buffer_size)
+        + "-"
+        + "link_"
+        + str(link)
+        + "-"
+        + "batch_size_"
+        + str(batch_size)
+        + "-"
+        + "bootstrap_target_"
+        + str(bootstrap_target)
+        + "-"
+        + "lr_"
+        + str(lr)
+        + "-"
+        + "alpha_"
+        + str(alpha)
+        + "seed_"
+        + str(seed)
+    )
+
+    baseline = None
+    check_best = lambda obj_test, curr_best, steps: curr_best
+
+    if save_path:
+        os.makedirs(save_path, exist_ok=True)
+
+    if baseline_path and os.path.isfile(baseline_path):
+        baseline = pickle.load(open(baseline_path, "rb"))[seed][gamma][0]
+
+        def check_best(obj_test, curr_best, steps):
+            loss = (obj_test - baseline) ** 2
+            if loss < curr_best:
+                curr_best = loss
+                if save_path:
+                    torch.save(
+                        weight.state_dict(),
+                        open(
+                            os.path.join(
+                                save_path,
+                                "{}-curr_best_at_step_{}.pt".format(
+                                    filename_prefix,
+                                    steps
+                                )
+                            )
+                        )
+                    )
+            return curr_best
+
+
+    curr_best = np.inf
     for fold_num in range(cv_fold):
         objs, objs_test = [], []
         for steps in range(epoch * checkpoint):
@@ -261,4 +321,14 @@ def train_ratio(
                 obj, obj_test = eval(buf), eval(buf_test)
                 objs.append(obj)
                 objs_test.append(obj_test)
+                curr_best = check_best(obj_test, curr_best, steps)
+
+    if save_path:
+        torch.save(
+            weight.state_dict(),
+            open(
+                os.path.join(save_path, "{}-final.pt".format(filename_prefix))
+            )
+        )
+
     return objs, objs_test

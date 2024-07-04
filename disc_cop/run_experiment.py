@@ -20,6 +20,7 @@ def main(args):
     for seed in tqdm(experiment_info["seeds"]):
         experiment_info["results"][seed] = train_ratio(
             **experiment_info["hyperparameters"],
+            seed=seed,
             load_dataset=os.path.join(
                 args.dataset_dir,
                 "{}-seed_{}".format(

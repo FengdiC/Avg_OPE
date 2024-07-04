@@ -19,11 +19,12 @@ def main(args):
     env_name = args.env_name
     env_family = ENV_TO_FAMILY[env_name]
     env_config = ENVS[env_family][env_name]
+    res = dict()
     for seed in tqdm(HYPERPARAMETERS["seeds"]):
         set_seed(seed)
-        res = dict()
+        res[seed] = dict()
         for gamma in HYPERPARAMETERS["discount_factors"]:
-            res[gamma] = policy_evaluation(
+            res[seed][gamma] = policy_evaluation(
                 env_name=env_config[0],
                 policy_path=env_config[1],
                 gamma=gamma,
@@ -31,10 +32,10 @@ def main(args):
                 total_trajs=args.total_trajs,
             )
 
-        pickle.dump(
-            res,
-            open(os.path.join(LOG_DIR, "baseline-{}.pkl".format(env_name)), "wb"),
-        )
+    pickle.dump(
+        res,
+        open(os.path.join(LOG_DIR, "baseline-{}.pkl".format(env_name)), "wb"),
+    )
 
 
 if __name__ == "__main__":

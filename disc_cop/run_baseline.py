@@ -4,12 +4,14 @@ import inspect
 import os
 import sys
 
+from tqdm import tqdm
+
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 
 from disc_cop.constants import HYPERPARAMETERS, LOG_DIR
-from disc_cop.envs import ENVS, ENV_FAMILY_SPECIFICS
+from disc_cop.envs import ENVS, ENV_FAMILY_SPECIFICS, ENV_TO_FAMILY
 from disc_cop.utils import set_seed, policy_evaluation
 
 

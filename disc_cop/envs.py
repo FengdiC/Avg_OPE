@@ -23,7 +23,7 @@ ENVS = {
         "acrobot": ("Acrobot-v1", "{}/exper/acrobot.pth".format(REPO_PATH)),
         "cartpole": ("CartPole-v1", "{}/exper/cartpole.pth".format(REPO_PATH)),
         "mountain_car": (
-            "MountainCar-v0",
+            "MountainCarContinuous-v0",
             "{}/exper/mountaincar.pth".format(REPO_PATH),
         ),
     },

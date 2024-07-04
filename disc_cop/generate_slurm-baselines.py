@@ -44,7 +44,7 @@ sbatch_content += "echo ${SLURM_ARRAY_TASK_ID}\n"
 sbatch_content += 'echo "Current working directory is `pwd`"\n'
 sbatch_content += 'echo "Running on hostname `hostname`"\n'
 sbatch_content += 'echo "Starting run at: `date`"\n'
-sbatch_content += "python3 {}/run_baseline.py \\\n".format(REPO_PATH)
+sbatch_content += "python3 {}/disc_cop/run_baseline.py \\\n".format(REPO_PATH)
 sbatch_content += "  --env_name=${env_name}\n"
 sbatch_content += 'echo "Program test finished with exit code $? at: `date`"\n'
 

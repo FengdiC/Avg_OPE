@@ -1,9 +1,21 @@
+"""
+This script simply iterates through the saved models
+"""
+
+import inspect
 import os
+import sys
+
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0, parentdir)
+
+from constants import LOG_DIR
 
 from tqdm import tqdm
 from pprint import pprint
 
-dir_path = "/home/chanb/scratch/results/disc_cop/saved_models"
+dir_path = f"{LOG_DIR}/saved_models"
 env_name = "halfcheetah"
 
 complete_dir_path = os.path.join(dir_path, env_name)

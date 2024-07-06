@@ -280,10 +280,7 @@ def train_ratio(
         + str(l1_lambda)
     )
 
-    seed_prefix = (
-        + "seed_"
-        + str(seed)
-    )
+    seed_prefix = "seed_{}".format(seed)
     baseline = None
     check_best = lambda obj_test, curr_best, steps: curr_best
 

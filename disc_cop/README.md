@@ -123,7 +123,7 @@ ant: done
 halfcheetah: done
 hopper: running
 swimmer: running
-walker:
+walker: running
 acrobot:
 cartpole:
 mountain_car:

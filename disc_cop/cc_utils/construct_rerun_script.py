@@ -128,7 +128,7 @@ for env_name, variants in rerun_variants.items():
         )
         num_runs += 1
 
-with open(os.path.join(LOG_DIR, "rerun.dat"), "w+") as f:
+with open(os.path.join(LOG_DIR, "reruns.dat"), "w+") as f:
     f.writelines(dat_content)
 
 sbatch_content = ""

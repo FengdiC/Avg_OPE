@@ -121,12 +121,12 @@ You may simply do `sbatch run_all-<FILE>.sh` to kick off the run.
 ```
 ant: done
 halfcheetah: done
-hopper: running
-swimmer: running
+hopper: done
+swimmer: done
 walker: running
-acrobot:
-cartpole:
-mountain_car:
+acrobot: done
+cartpole: done
+mountain_car: done
 ```
 
 Need rerunning:
@@ -179,4 +179,66 @@ halfcheetah:
  'random_weight_0.3-discount_factor_0.995-buffer_size_200-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
  'random_weight_0.7-discount_factor_0.99-buffer_size_200-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
  'random_weight_0.7-discount_factor_0.995-buffer_size_200-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0']
+
+hopper:
+['random_weight_0.3-discount_factor_0.995-buffer_size_200-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.5-discount_factor_0.8-buffer_size_80-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.3-discount_factor_0.99-buffer_size_200-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.7-discount_factor_0.99-buffer_size_80-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.5-discount_factor_0.8-buffer_size_200-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.7-discount_factor_0.8-buffer_size_40-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.5-discount_factor_0.995-buffer_size_40-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.3-discount_factor_0.8-buffer_size_200-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.7-discount_factor_0.995-buffer_size_80-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.3-discount_factor_0.8-buffer_size_40-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.3-discount_factor_0.995-buffer_size_40-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.7-discount_factor_0.8-buffer_size_80-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.7-discount_factor_0.995-buffer_size_40-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.5-discount_factor_0.995-buffer_size_200-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.3-discount_factor_0.99-buffer_size_80-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.5-discount_factor_0.8-buffer_size_40-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0']
+16
+(avg_ope) [chanb@beluga1 cc_utils]$ python check_runs.py 
+100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 432/432 [00:00<00:00, 2094.79it/s]
+['random_weight_0.7-discount_factor_0.995-buffer_size_80-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.3-discount_factor_0.995-buffer_size_200-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.5-discount_factor_0.995-buffer_size_40-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.5-discount_factor_0.99-buffer_size_40-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.3-discount_factor_0.995-buffer_size_80-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.7-discount_factor_0.8-buffer_size_80-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.3-discount_factor_0.8-buffer_size_40-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.5-discount_factor_0.8-buffer_size_40-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.3-discount_factor_0.99-buffer_size_200-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.7-discount_factor_0.99-buffer_size_80-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.3-discount_factor_0.8-buffer_size_200-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.7-discount_factor_0.99-buffer_size_200-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.7-discount_factor_0.99-buffer_size_40-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.5-discount_factor_0.8-buffer_size_80-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.5-discount_factor_0.99-buffer_size_200-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.7-discount_factor_0.8-buffer_size_200-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.5-discount_factor_0.99-buffer_size_80-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.5-discount_factor_0.995-buffer_size_200-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.5-discount_factor_0.995-buffer_size_80-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.7-discount_factor_0.8-buffer_size_40-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.3-discount_factor_0.8-buffer_size_80-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.3-discount_factor_0.995-buffer_size_40-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.3-discount_factor_0.99-buffer_size_80-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0']
+
+swimmer:
+['random_weight_0.3-discount_factor_0.995-buffer_size_200-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.5-discount_factor_0.8-buffer_size_80-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.3-discount_factor_0.99-buffer_size_200-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.7-discount_factor_0.99-buffer_size_80-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.5-discount_factor_0.8-buffer_size_200-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.7-discount_factor_0.8-buffer_size_40-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.5-discount_factor_0.995-buffer_size_40-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.3-discount_factor_0.8-buffer_size_200-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.7-discount_factor_0.995-buffer_size_80-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.3-discount_factor_0.8-buffer_size_40-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.3-discount_factor_0.995-buffer_size_40-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.7-discount_factor_0.8-buffer_size_80-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.7-discount_factor_0.995-buffer_size_40-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.5-discount_factor_0.995-buffer_size_200-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.3-discount_factor_0.99-buffer_size_80-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0',
+ 'random_weight_0.5-discount_factor_0.8-buffer_size_40-link_default-batch_size_512-bootstrap_target_cross_q-lr_0.005-alpha_0.0']
 ```

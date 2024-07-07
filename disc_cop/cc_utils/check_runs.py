@@ -16,7 +16,7 @@ from tqdm import tqdm
 from pprint import pprint
 
 dir_path = f"{LOG_DIR}/saved_models"
-env_name = "halfcheetah"
+env_name = "mountain_car"
 
 complete_dir_path = os.path.join(dir_path, env_name)
 

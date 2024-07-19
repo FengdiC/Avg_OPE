@@ -106,10 +106,26 @@ class TFAgentsOnpolicyDataset(OnpolicyDataset):
     kwargs = {'episode_step_limit': self._episode_step_limit}
     return args, kwargs
 
+  def debug_print_shapes(self, time_step):
+    print("time_step.reward shape:", time_step.reward.shape)
+    print("time_step.discount shape:", time_step.discount.shape)
+    print("time_step.observation shape:", time_step.observation.shape)
+    print("time_step.step_type shape:", time_step.step_type.shape)
+
+  def ensure_batch_dimension(self, time_step):
+    # Add a batch dimension if it is missing
+    if len(time_step.discount.shape) == 0:
+      time_step = tf.nest.map_structure(lambda x: tf.expand_dims(x, 0), time_step)
+    return time_step
+
   def _start_new_episode(self):
     self._time_step = self._env.reset()
     if self._env.batch_size is not None:
       self._time_step = nest_utils.unbatch_nested_tensors(self._time_step)
+    # self.debug_print_shapes(self._time_step)
+    # self._time_step = self.ensure_batch_dimension(self._time_step)
+    # self.debug_print_shapes(self._time_step)
+
     self._step_type = self._time_step.step_type
     self._discount = self._time_step.discount
     self._first_step_type = self._step_type

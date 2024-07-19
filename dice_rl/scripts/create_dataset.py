@@ -36,6 +36,7 @@ from dice_rl.data.dataset import Dataset, EnvStep, StepType
 from dice_rl.data.tf_offpolicy_dataset import TFOffpolicyDataset
 
 
+
 FLAGS = flags.FLAGS
 
 flags.DEFINE_string('env_name', 'taxi', 'Environment name.')
@@ -52,7 +53,9 @@ flags.DEFINE_string('save_dir', None, 'Directory to save dataset to.')
 flags.DEFINE_string('load_dir', None, 'Directory to load policies from.')
 flags.DEFINE_bool('force', False,
                   'Whether to force overwriting any existing dataset.')
-
+flags.DEFINE_float('gamma', 0.99, 'Discount factor.')
+flags.DEFINE_float('random_weight', 0.2,
+                   'random policy')
 
 def get_onpolicy_dataset(load_dir, env_name, tabular_obs, max_trajectory_length,
                          alpha, seed):
@@ -96,15 +99,19 @@ def main(argv):
   save_dir = FLAGS.save_dir
   load_dir = FLAGS.load_dir
   force = FLAGS.force
-
+  gamma = FLAGS.gamma
+  random_weight =FLAGS.random_weight
+  
   hparam_str = ('{ENV_NAME}_tabular{TAB}_alpha{ALPHA}_seed{SEED}_'
-                'numtraj{NUM_TRAJ}_maxtraj{MAX_TRAJ}').format(
-                    ENV_NAME=env_name,
-                    TAB=tabular_obs,
-                    ALPHA=alpha,
-                    SEED=seed,
-                    NUM_TRAJ=num_trajectory,
-                    MAX_TRAJ=max_trajectory_length)
+                'numtraj{NUM_TRAJ}_maxtraj{MAX_TRAJ}_gamma{GAMMA}_random{RANDOM_WEIGHT}').format(
+      ENV_NAME=env_name,
+      TAB=tabular_obs,
+      ALPHA=alpha,
+      SEED=seed,
+      NUM_TRAJ=num_trajectory,
+      MAX_TRAJ=max_trajectory_length,
+      GAMMA=gamma,
+      RANDOM_WEIGHT=random_weight)
   directory = os.path.join(save_dir, hparam_str)
   if tf.io.gfile.isdir(directory) and not force:
     raise ValueError('Directory %s already exists. Use --force to overwrite.' %

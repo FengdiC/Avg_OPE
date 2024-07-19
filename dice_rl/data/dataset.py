@@ -223,16 +223,19 @@ class Dataset(object):
 
     pickle_filename = os.path.join(directory, CONSTRUCTOR_PREFIX)
     checkpoint_filename = os.path.join(directory, CHECKPOINT_PREFIX)
-
+    print("***enter the saving")
     with tf.io.gfile.GFile(pickle_filename, 'w') as f:
+
       try:
         pickle.dump(constructor_info, f)
+        print("***constructor")
       except pickle.PicklingError:
         raise ValueError('Dataset constructor info does not pickle: %s' %
                          constructor_info)
 
     if checkpoint is None:
       checkpoint = tf.train.Checkpoint(dataset=self)
+      print("***checkpoint")
 
     checkpoint.save(checkpoint_filename)
 

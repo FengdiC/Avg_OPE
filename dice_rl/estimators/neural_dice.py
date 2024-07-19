@@ -324,6 +324,9 @@ class NeuralDice(object):
 
     constraint, f_nu, f_zeta = self._eval_constraint_and_regs(
         dataset, target_policy)
+    eval_policy =  self._eval_policy(
+        dataset, target_policy)
+    true_policy = (1-self._gamma) * self.average_discounted_rewards_over_all_episodes(dataset)
     lagrangian = nu_zero + self._norm_regularizer * self._lam + constraint
     overall = (
         lagrangian + self._primal_regularizer * f_nu -
@@ -333,14 +336,49 @@ class NeuralDice(object):
     tf.summary.scalar('zeta_reg', self._dual_regularizer * f_zeta)
     tf.summary.scalar('lagrangian', lagrangian)
     tf.summary.scalar('overall', overall)
+    tf.summary.scalar('eval_policy', eval_policy)
+    tf.summary.scalar('true_policy', true_policy)
+
     tf.print('step', tf.summary.experimental.get_step(), 'nu_zero =', nu_zero,
              'lam =', self._norm_regularizer * self._lam, 'dual_step =',
              dual_step, 'constraint =', constraint, 'preg =',
              self._primal_regularizer * f_nu, 'dreg =',
              self._dual_regularizer * f_zeta, 'lagrangian =', lagrangian,
-             'overall =', overall)
+             'overall =', overall, 'eval_policy=', eval_policy,
+             'true_policy=', true_policy)
 
-    return dual_step
+
+    return dual_step, eval_policy
+
+  def eval_policy_csv(self, dataset: dataset_lib.OffpolicyDataset,
+                              target_policy: tf_policy.TFPolicy):
+    eval_policy =  self._eval_policy(dataset, target_policy)
+    return eval_policy
+
+  def average_discounted_rewards_over_all_episodes(self, dataset, truncate_episode_at=None):
+    discounted_rewards = dataset.get_all_episode_rewards(truncate_episode_at, self._gamma)
+    average_discounted_reward = np.mean(discounted_rewards)
+    return average_discounted_reward
+
+  def calculate_discounted_rewards(self, steps, valid_steps, gamma=0.99):
+    rewards = steps.reward.numpy()
+    discounted_rewards = []
+    for episode_rewards, valid in zip(rewards, valid_steps):
+      episode_discounted_reward = 0.0
+      discount_factor = 1.0
+      for reward, is_valid in zip(episode_rewards, valid):
+        if not is_valid:
+          break
+        episode_discounted_reward += reward * discount_factor
+        discount_factor *= gamma
+      discounted_rewards.append(episode_discounted_reward)
+    return discounted_rewards
+
+  def average_discounted_rewards_over_episodes(self, dataset, batch_size=None, truncate_episode_at=None):
+    steps, valid_steps, episode_lengths = dataset.get_all_episodes(truncate_episode_at=truncate_episode_at)
+    discounted_rewards = self.calculate_discounted_rewards(steps, valid_steps, gamma=self._gamma)
+    average_discounted_reward = np.mean(discounted_rewards)
+    return average_discounted_reward
 
   def _eval_constraint_and_regs(self, dataset: dataset_lib.OffpolicyDataset,
                                 target_policy: tf_policy.TFPolicy):
@@ -374,3 +412,26 @@ class NeuralDice(object):
     f_zeta = tf.reduce_mean(self._f_fn(zeta_values))
 
     return constraint, f_nu, f_zeta
+
+
+  def _eval_policy(self, dataset: dataset_lib.OffpolicyDataset,
+                                target_policy: tf_policy.TFPolicy):
+    """Get the residual term and the primal and dual regularizers during eval.
+
+    Args:
+      dataset: The dataset to sample experience from.
+      target_policy: The policy whose value we want to estimate.
+
+    Returns:
+      The residual term (weighted by zeta), primal, and dual reg values.
+    """
+
+    experience = dataset.get_all_steps(num_steps=1)
+    env_step = tf.nest.map_structure(lambda t: t[:, 0, ...], experience)
+
+    zeta_values = self._get_value(self._zeta_network, env_step)
+
+    est = tf.reduce_mean(zeta_values * self._reward_fn(env_step))
+
+
+    return est

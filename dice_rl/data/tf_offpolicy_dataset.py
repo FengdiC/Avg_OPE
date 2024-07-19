@@ -89,6 +89,27 @@ class TFOffpolicyDataset(tf.Module, OffpolicyDataset):
             [self._last_step_id, self._last_episode_id,
              self._last_valid_steps_id])
 
+
+
+  def save_constructor_info(self, directory):
+    CONSTRUCTOR_PREFIX = 'dataset-ctr.pkl'
+    import os
+    import pickle
+
+    constructor_info = {
+      'type': self.__class__,
+      'args': self.constructor_args_and_kwargs[0],
+      'kwargs': self.constructor_args_and_kwargs[1]
+    }
+    with open(os.path.join(directory, CONSTRUCTOR_PREFIX), 'wb') as f:
+      pickle.dump(constructor_info, f)
+
+  def save_checkpoint(self, directory):
+    CHECKPOINT_PREFIX = 'ckpt'
+    import os
+    checkpoint = tf.train.Checkpoint(dataset=self)
+    checkpoint.save(file_prefix=os.path.join(directory, CHECKPOINT_PREFIX))
+
   @property
   def spec(self):
     # TF wraps EnvStep in a TupleWrapper. We need to put it back as an EnvStep.
@@ -244,6 +265,24 @@ class TFOffpolicyDataset(tf.Module, OffpolicyDataset):
                    episode_lengths[:, None])
     return steps, valid_steps
 
+  def _get_episodes_reward(self, episode_ids, truncate_episode_at=None):
+    # Determine number of steps to return for each episode.
+    episode_infos = self._episode_info_table.read(episode_ids)
+    episode_lengths = 1 + tf.maximum(
+      0, episode_infos.episode_end_id - episode_infos.episode_start_id)
+    num_steps = tf.reduce_max(episode_lengths)
+    if truncate_episode_at is not None:
+      num_steps = tf.minimum(num_steps, truncate_episode_at)
+
+    rows_to_get = (episode_infos.episode_start_id[:, None] +
+                   tf.range(num_steps, dtype=tf.int64)[None, :])
+    rows_to_get = tf.math.mod(rows_to_get, self._last_step_id + 1)
+    steps = self._data_table.read(rows_to_get)
+    self._last_rows_read = rows_to_get
+    valid_steps = (tf.range(num_steps, dtype=tf.int64)[None, :] <
+                   episode_lengths[:, None])
+    return steps, valid_steps, episode_lengths
+
   @tf.Module.with_name_scope
   def get_episode(self, batch_size: Optional[int] = None,
                   truncate_episode_at: Optional[int] = None) -> Tuple[
@@ -313,3 +352,31 @@ class TFOffpolicyDataset(tf.Module, OffpolicyDataset):
       max_range = tf.minimum(max_range, tf.cast(limit, tf.int64))
     episode_ids = tf.range(max_range)
     return self._get_episodes(episode_ids, truncate_episode_at)
+
+  def get_all_episode_rewards(self, truncate_episode_at: Optional[int] = None,
+                              gamma: float = 0.99) -> List[float]:
+
+    def calculate_discounted_rewards(steps, valid_steps, gamma=0.99):
+      rewards = steps.reward.numpy()
+      discounted_rewards = []
+      for episode_rewards, valid in zip(rewards, valid_steps):
+        episode_discounted_reward = 0.0
+        discount_factor = 1.0
+        for reward, is_valid in zip(episode_rewards, valid):
+          if not is_valid:
+            break
+          episode_discounted_reward += reward * discount_factor
+          discount_factor *= gamma
+        discounted_rewards.append(episode_discounted_reward)
+      return discounted_rewards
+
+
+    if self._last_episode_id < 0:
+      raise ValueError('No episodes in the dataset.')
+
+    max_range = self._last_episode_id + 1
+    episode_ids = tf.range(max_range)
+    steps, valid_steps, = self._get_episodes(episode_ids, truncate_episode_at)
+
+    discounted_rewards = calculate_discounted_rewards(steps, valid_steps, gamma)
+    return discounted_rewards

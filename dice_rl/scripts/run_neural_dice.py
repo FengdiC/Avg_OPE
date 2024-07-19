@@ -44,6 +44,7 @@ from dice_rl.data.tf_offpolicy_dataset import TFOffpolicyDataset
 FLAGS = flags.FLAGS
 
 flags.DEFINE_string('load_dir', None, 'Directory to load dataset from.')
+flags.DEFINE_string('load_dir_policy', None, 'Directory to load dataset from.')
 flags.DEFINE_string('save_dir', None,
                     'Directory to save the model and estimation results.')
 flags.DEFINE_string('env_name', 'grid', 'Environment name.')
@@ -80,7 +81,8 @@ flags.DEFINE_float('shift_reward', 0., 'Reward shift factor.')
 flags.DEFINE_string(
     'transform_reward', None, 'Non-linear reward transformation'
     'One of [exp, cuberoot, None]')
-
+flags.DEFINE_float('random_weight', 0.2,
+                   'random policy')
 
 def main(argv):
   load_dir = FLAGS.load_dir
@@ -112,6 +114,9 @@ def main(argv):
   shift_reward = FLAGS.shift_reward
   transform_reward = FLAGS.transform_reward
 
+  random_weight = FLAGS.random_weight
+  load_dir_policy = FLAGS.load_dir_policy
+
   def reward_fn(env_step):
     reward = env_step.reward * scale_reward + shift_reward
     if transform_reward is None:
@@ -125,13 +130,25 @@ def main(argv):
     return reward
 
   hparam_str = ('{ENV_NAME}_tabular{TAB}_alpha{ALPHA}_seed{SEED}_'
-                'numtraj{NUM_TRAJ}_maxtraj{MAX_TRAJ}').format(
-                    ENV_NAME=env_name,
-                    TAB=tabular_obs,
-                    ALPHA=alpha,
-                    SEED=seed,
-                    NUM_TRAJ=num_trajectory,
-                    MAX_TRAJ=max_trajectory_length)
+                'numtraj{NUM_TRAJ}_maxtraj{MAX_TRAJ}_gamma{GAMMA}_random{RANDOM_WEIGHT}').format(
+      ENV_NAME=env_name,
+      TAB=tabular_obs,
+      ALPHA=alpha,
+      SEED=seed,
+      NUM_TRAJ=num_trajectory,
+      MAX_TRAJ=max_trajectory_length,
+      GAMMA=gamma,
+      RANDOM_WEIGHT=random_weight)
+  hparam_str2 = ('{ENV_NAME}_tabular{TAB}_alpha{ALPHA}_seed{SEED}_'
+                'numtraj{NUM_TRAJ}_maxtraj{MAX_TRAJ}_gamma{GAMMA}_random{RANDOM_WEIGHT}').format(
+      ENV_NAME=env_name,
+      TAB=tabular_obs,
+      ALPHA=alpha,
+      SEED=seed+100,
+      NUM_TRAJ=num_trajectory,
+      MAX_TRAJ=max_trajectory_length,
+      GAMMA=gamma,
+      RANDOM_WEIGHT=random_weight)
   train_hparam_str = (
       'nlr{NLR}_zlr{ZLR}_zeror{ZEROR}_preg{PREG}_dreg{DREG}_nreg{NREG}_'
       'pform{PFORM}_fexp{FEXP}_zpos{ZPOS}_'
@@ -158,6 +175,11 @@ def main(argv):
   directory = os.path.join(load_dir, hparam_str)
   print('Loading dataset from', directory)
   dataset = Dataset.load(directory)
+
+  directory2 = os.path.join(load_dir, hparam_str2)
+  print('Loading dataset from', directory2)
+  dataset2 = Dataset.load(directory2)
+
   all_steps = dataset.get_all_steps()
   max_reward = tf.reduce_max(all_steps.reward)
   min_reward = tf.reduce_min(all_steps.reward)
@@ -217,9 +239,19 @@ def main(argv):
   global_step = tf.Variable(0, dtype=tf.int64)
   tf.summary.experimental.set_step(global_step)
 
-  target_policy = get_target_policy(load_dir, env_name, tabular_obs)
+  target_policy = get_target_policy(load_dir_policy, env_name, tabular_obs)
   running_losses = []
   running_estimates = []
+
+  import csv
+  csv_file = os.path.join(save_dir, 'evaluation_results.csv')
+  print("write", csv_file)
+
+  # Ensure to initialize the CSV file with headers
+  with open(csv_file, mode='w', newline='') as file:
+      writer = csv.writer(file)
+      writer.writerow(['Step', 'Eval_Obj', 'Eval_Obj2'])
+
   for step in range(num_steps):
     transitions_batch = dataset.get_step(batch_size, num_steps=2)
     initial_steps_batch, _ = dataset.get_episode(
@@ -229,11 +261,41 @@ def main(argv):
     losses = estimator.train_step(initial_steps_batch, transitions_batch,
                                   target_policy)
     running_losses.append(losses)
+
+    # Function to save the evaluation objects and step to a CSV file
+    def save_to_csv(step, eval_obj, eval_obj2, filename=csv_file):
+        with open(filename, mode='a', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow([step, eval_obj, eval_obj2])
+
     if step % 500 == 0 or step == num_steps - 1:
-      estimate = estimator.estimate_average_reward(dataset, target_policy)
+      estimate, eval_obj = estimator.estimate_average_reward(dataset, target_policy)
+      estimate2, eval_obj2 = estimator.estimate_average_reward(dataset2, target_policy)
       running_estimates.append(estimate)
+
       running_losses = []
+    if step % 5 == 0 or step == num_steps - 1:
+      eval_obj = estimator.eval_policy_csv(dataset, target_policy)
+      eval_obj2 = estimator.eval_policy_csv(dataset2, target_policy)
+      save_to_csv(step, eval_obj, eval_obj2, csv_file)
+
     global_step.assign_add(1)
+
+    # Save the model at the end of training
+  if save_dir is not None:
+      model_save_path = os.path.join(save_dir, 'model_weights')
+
+      # Create a checkpoint object
+      checkpoint = tf.train.Checkpoint(nu_network=nu_network,
+                                       zeta_network=zeta_network,
+                                       nu_optimizer=nu_optimizer,
+                                       zeta_optimizer=zeta_optimizer,
+                                       lam_optimizer=lam_optimizer)
+
+      # Save the checkpoint
+      checkpoint.save(os.path.join(model_save_path, 'checkpoint'))
+
+      print(f"Model saved at {model_save_path}")
 
   print('Done!')
 

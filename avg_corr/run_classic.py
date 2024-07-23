@@ -37,14 +37,19 @@ def run_classic():
     if args.array>135:
         return -1
 
-    discount_factor = [0.8, 0.9,0.95, 0.99, 0.995]
-    buffer = [40, 80, 200]
-    random_weight = [0.3, 0.5, 0.7]
+    # discount_factor = [0.8, 0.9,0.95, 0.99, 0.995]
+    # buffer = [40, 80, 200]
+    # random_weight = [0.3, 0.5, 0.7]
     env = ['CartPole-v1','Acrobot-v1','MountainCarContinuous-v0']
     path = ['./exper/cartpole.pth','./exper/acrobot.pth', './exper/mountaincar.pth']
     idx = np.unravel_index(args.array, (3, 3, 5, 3))
-    random_weight, buffer, discount_factor = random_weight[idx[0]], buffer[idx[1]], discount_factor[idx[2]]
-    env, path = env[idx[3]], path[idx[3]]
+    # random_weight, buffer, discount_factor = random_weight[idx[0]], buffer[idx[1]], discount_factor[idx[2]]
+
+    # DEBUG
+    discount_factor, buffer, random_weight = 0.95, 40, 0.7
+    env,path = 'CartPole-v1','./exper/cartpole.pth'
+
+    # env, path = env[idx[3]], path[idx[3]]
     batch, link, alpha, lr, loss = 512,'identity',0.0005,0.0005,'mse'
 
     filename = args.log_dir + 'final-classic-' + str(env) +'-discount-'+str(discount_factor)\
@@ -59,15 +64,17 @@ def run_classic():
     result_train, result_test = [], []
     for seed in seeds:
         if loss=='mse':
+            print("loss: mse!")
             train, test = train_mse(lr=lr, env=env, seed=seed, path=path, hyper_choice=args.seed,
                    link=link, random_weight=random_weight, l1_lambda=alpha, discount = discount_factor,
-                   checkpoint=args.steps, epoch=args.epoch, cv_fold=1,
+                   checkpoint=args.steps, epoch=args.epoch, cv_fold=10,
                    batch_size=batch, buffer_size=buffer,
                    max_len=args.max_len)
         elif loss=='gamma':
+            print("loss: gamma!")
             train, test = train_gamma(lr=lr, env=env, seed=seed, path=args.path, hyper_choice=args.seed,
                    link=link, random_weight=random_weight, l1_lambda=alpha, discount = discount_factor,
-                   checkpoint=args.steps, epoch=args.epoch, cv_fold=1,
+                   checkpoint=args.steps, epoch=args.epoch, cv_fold=10,
                    batch_size=batch, buffer_size=buffer,
                    max_len=args.max_len)
         result_train.append(train)

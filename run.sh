@@ -4,7 +4,7 @@
 #SBATCH --time=0-3:00
 #SBATCH --output=%N-%j.out
 #SBATCH --account=def-ashique
-#SBATCH --array=1-315
+# hahah SBATCH --array=1-315
 
 # salloc --cpus-per-task=1 --mem=3600M --time=0-3:00 --account=def-ashique
 # Did not tune for three discount factors
@@ -19,8 +19,8 @@ echo
 python avg_corr/run_classic.py --log_dir $SCRATCH/avg_corr/classic/ \
 --array $SLURM_ARRAY_TASK_ID --steps 5 --epoch 2000 --max_len 50 &
 
-python avg_corr/run_mujoco.py --log_dir $SCRATCH/avg_corr/classic/ \
---array $SLURM_ARRAY_TASK_ID --steps 5 --epoch 50000 --max_len 100 &
+#python avg_corr/run_mujoco.py --log_dir $SCRATCH/avg_corr/classic/ \
+#--array $SLURM_ARRAY_TASK_ID --steps 5 --epoch 50000 --max_len 100 &
 
 echo "Baseline job $seed took $SECONDS"
 sleep 72h

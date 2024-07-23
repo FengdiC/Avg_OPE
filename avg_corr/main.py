@@ -220,6 +220,7 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda, discount=
                             random_weight=random_weight,fold = 1)
     buf_test = collect_dataset(env, gamma,buffer_size=buffer_size,max_len=max_len,
                                       path=path,random_weight=random_weight,fold=1)
+    print(buf.obs_buf[100],":::",buf_test.obs_buf[100])
     if link=='inverse' or link=='identity':
         weight = WeightNet(env.observation_space.shape[0], hidden_sizes=(256,256),activation=nn.ReLU)
     else:
@@ -392,6 +393,6 @@ def tune():
 # plt.plot(range(len(objs)),0.327*np.ones(len(objs)))
 # plt.savefig('hopper.png')
 
-# tune()
+tune()
 
-print(eval_policy(path='./exper/cartpole.pth',env='CartPole-v1',gamma=0.99))
+# print(eval_policy(path='./exper/mountaincar.pth',env='MountainCarContinuous-v0',gamma=0.99))

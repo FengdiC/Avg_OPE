@@ -179,7 +179,7 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
         next_o, r, d, _ = env.step(a)
         ep_len += 1
 
-        done_bool = float(d) if ep_len < max_len else 0.0
+        done_bool = 1.0 if ep_len < max_len else 0.0
 
         # save and log
         buf.store(o, a, r, ep_len - 1, logbev, logtarg, next_o, done_bool)
@@ -277,7 +277,7 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda, discount=
         for steps in range(epoch*checkpoint):
             update(fold_num)
             if steps%checkpoint==0:
-                obj  = eval()
+                obj  = eval() 
                 objs.append(obj)
     return objs
 
@@ -296,7 +296,7 @@ def argsparser():
     parser.add_argument('--lr', type=float, default=3e-4)
     parser.add_argument('--batch_size', type=int, default=256)
     parser.add_argument('--buffer_size', type=int, default=20)
-    parser.add_argument('--max_len', type=int, default=50)
+    parser.add_argument('--max_len', type=int, default=100)
     parser.add_argument('--link', type=str, default='log')
     parser.add_argument('--l1_lambda', type=float, default=1.0)
     parser.add_argument('--random_weight', type=float, default=0.3)
@@ -314,7 +314,7 @@ def tune():
     idx = np.unravel_index(args.array, (3,2,2,3))
     random_weight,batch_size = random_weight[idx[0]],batch_size[idx[1]]
     buffer_size = buffer[idx[3]]
-    filename = args.log_dir+'mse-tune-' + str(random_weight)+\
+    filename = args.log_dir+'mse-tune-' + str(args.env) + '-' + str(random_weight)+\
                '-'+str(buffer_size)+'-'+str(batch_size)+'.csv'
     os.makedirs(args.log_dir, exist_ok=True)
     mylist = [str(i) for i in range(0,args.epoch*args.steps,args.steps)] + ['hyperparam']
@@ -338,9 +338,8 @@ def tune():
                 print(f'Time: {t2 - t1}')
                 result.append(cv)
 
-                break
+                print(cv)
 
-            break
 
             result = np.array(result)
             ret = np.around(np.mean(result,axis=0),decimals=4)
@@ -354,10 +353,8 @@ def tune():
             with open(filename, 'a', newline='') as file:
                 # Step 4: Using csv.writer to write the list to the CSV file
                 writer = csv.writer(file)
-                writer.writerow(mylist)  # Use writerow for single list
+                writer.writerow(mylist)  # Use writerow for single list 
             print('-'.join(name_1))
-        
-        break
+         
     
-
 tune()

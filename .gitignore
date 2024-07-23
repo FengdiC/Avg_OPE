@@ -1,4 +1,5 @@
 commands
-avg_corr/mse-tune-0.3-80-256.csv
-**/__pycache__/*
+*.csv
+**/__pycache__/
 
+ppo/algo/__pycache__/core.cpython-310.pyc

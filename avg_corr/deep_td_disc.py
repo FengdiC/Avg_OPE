@@ -180,10 +180,10 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
         next_o, r, d, _ = env.step(a)
         ep_len += 1
 
-        done_bool = float(d) if ep_len < max_len else 0.0
+        not_done = 1.0 if ep_len < max_len else 0.0
 
         # save and log
-        buf.store(o, a, r, ep_len - 1, logbev, logtarg, next_o, done_bool)
+        buf.store(o, a, r, ep_len - 1, logbev, logtarg, next_o, not_done)
 
         # Update obs (critical!)
         o = next_o
@@ -282,7 +282,7 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda, discount=
             update(fold_num)
             if steps%checkpoint==0:
                 obj  = eval()
-                objs.append(obj)
+                objs.append(obj) 
     return objs
 
 
@@ -318,7 +318,7 @@ def tune():
     idx = np.unravel_index(args.array, (3,2,2,3))
     random_weight,batch_size = random_weight[idx[0]],batch_size[idx[1]]
     buffer_size = buffer[idx[3]]
-    filename = args.log_dir+'mse-tune-' + str(random_weight)+\
+    filename = args.log_dir+'mse-tune-' + str(args.env) + '-' + str(random_weight)+\
                '-'+str(buffer_size)+'-'+str(batch_size)+'.csv'
     os.makedirs(args.log_dir, exist_ok=True)
     mylist = [str(i) for i in range(0,args.epoch*args.steps,args.steps)] + ['hyperparam']
@@ -339,12 +339,9 @@ def tune():
                                max_len=args.max_len)
                 # print("Return result shape: ",cv.shape,":::", args.steps,":::",seeds)
                 t2 = time.time()
-                print(f'Time: {t2 - t1}')
+                print(f'Time: {t2 - t1}, Alpha: {alpha}, LR: {lr}, Seed: {seed}')
                 result.append(cv)
-
-                break
-
-            break
+                print(cv)
 
             result = np.array(result)
             ret = np.around(np.mean(result,axis=0),decimals=4)
@@ -358,10 +355,37 @@ def tune():
             with open(filename, 'a', newline='') as file:
                 # Step 4: Using csv.writer to write the list to the CSV file
                 writer = csv.writer(file)
-                writer.writerow(mylist)  # Use writerow for single list
+                writer.writerow(mylist)  # Use writerow for single list 
             print('-'.join(name_1))
-        
-        break
-    
+            
 
 tune()
+            
+# def eval_policy(path='./exper/cartpole.pth',env='CartPole-v1',gamma=0.8):
+#     env = gym.make(env)
+#     ac = load(path, env)
+
+#     o, ep_len, ep_ret, ep_avg_ret = env.reset(), 0 ,0, 0
+#     num_traj=0
+#     rets = []
+#     avg_rets = []
+
+#     while num_traj<100:
+#         a, _,logtarg = ac.step(torch.as_tensor(o, dtype=torch.float32))
+#         next_o, r, d, _ = env.step(a)
+#         ep_ret += r * gamma ** ep_len
+#         ep_avg_ret += r
+#         ep_len += 1
+#         # Update obs (critical!)
+#         o = next_o
+
+#         terminal = d
+
+#         if terminal:
+#             num_traj+=1
+#             rets.append(ep_ret)
+#             avg_rets.append(ep_avg_ret)
+#             o, ep_ret, ep_len, ep_avg_ret = env.reset(), 0, 0, 0
+#     return (1-gamma)*np.mean(rets),np.var(rets),np.mean(avg_rets)
+
+# print(eval_policy(path='../exper/cartpole.pth',env='CartPole-v1',gamma=0.99))

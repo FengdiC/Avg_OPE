@@ -393,6 +393,6 @@ def tune():
 # plt.plot(range(len(objs)),0.327*np.ones(len(objs)))
 # plt.savefig('hopper.png')
 
-tune()
+# tune()
 
 # print(eval_policy(path='./exper/mountaincar.pth',env='MountainCarContinuous-v0',gamma=0.99))

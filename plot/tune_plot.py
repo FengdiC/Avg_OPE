@@ -68,8 +68,8 @@ def top_five(data,best_value):
 
 def plot_cartpole():
     result = []
-    for filename in os.listdir('./tune_log/first_result'):
-        f = os.path.join('./tune_log/first_result/', filename)
+    for filename in os.listdir('./tune_log/cartpole_cv'):
+        f = os.path.join('./tune_log/cartpole_cv/', filename)
         # checking if it is a file
         if not f.endswith('.csv'):
             continue

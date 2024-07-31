@@ -17,7 +17,7 @@ SECONDS=0
 echo
 
 python avg_corr/run_classic.py --log_dir $SCRATCH/avg_corr/classic/ \
---array $SLURM_ARRAY_TASK_ID --steps 5 --epoch 2000 --max_len 50 &
+--array 0 --steps 5 --epoch 2000 --max_len 50 &
 
 #python avg_corr/run_mujoco.py --log_dir $SCRATCH/avg_corr/classic/ \
 #--array $SLURM_ARRAY_TASK_ID --steps 5 --epoch 50000 --max_len 100 &

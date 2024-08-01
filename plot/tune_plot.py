@@ -68,17 +68,18 @@ def top_five(data,best_value):
 
 def plot_cartpole():
     result = []
-    for filename in os.listdir('./tune_log/cartpole_cv'):
-        f = os.path.join('./tune_log/cartpole_cv/', filename)
+    for filename in os.listdir('./tune_log/cartpole'):
+        f = os.path.join('./tune_log/cartpole/', filename)
         # checking if it is a file
         if not f.endswith('.csv'):
             continue
-        if '0.7' in filename and '0.95' in filename and '40' in filename and 'CartPole' in filename:
+        # if '0.7' in filename and '0.95' in filename and '40' in filename and 'CartPole' in filename:
+        if '0.7' in filename and '40' in filename and '512' in filename and 'identity' in filename:
             data = pd.read_csv(f, header=0, index_col='hyperparam')
             data.columns = data.columns.astype(int)
             data = data.sort_index(axis=1, ascending=True)
             for name in data.index.to_list():
-                if 'train' in name:
+                if 'lr-0.005-alpha-0.005-mean' in name:
                     print(name)
                     result.append(data.loc[name].to_list())
     mean_avg = np.mean(result,axis=0)

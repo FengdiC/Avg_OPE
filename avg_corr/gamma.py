@@ -294,8 +294,8 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,discount,
         for steps in range(epoch * checkpoint):
             update(fold_num)
             if steps % checkpoint == 0:
-                # obj_cv = eval_cv(buf,fold_num)
-                obj, obj_test = eval(buf), eval(buf_test)
+                obj, obj_test = eval_cv(buf, fold_num), eval_cv(buf_test, fold_num)
+                # obj, obj_test = eval(buf), eval(buf_test)
                 objs.append(obj)
                 objs_test.append(obj_test)
                 # objs_cv.append(np.around(obj_cv,decimals=4))
@@ -327,20 +327,21 @@ def argsparser():
     return args
 
 def tune():
-    random_weight = [0.3, 0.5, 0.7]
+    alpha = [0, 0.0005, 0.001, 0.002, 0.005, 0.01]
     batch_size = [256, 512]
     link = ['inverse', 'identity']
-    buffer = [40, 80, 200]
+    lr = [0.0001, 0.0005, 0.001, 0.005]
 
     args = argsparser()
-    seeds = range(3)
-    idx = np.unravel_index(args.array, (3, 2, 2, 3))
-    random_weight, batch_size = random_weight[idx[0]], batch_size[idx[1]]
-    link, buffer_size = link[idx[2]], buffer[idx[3]]
+    seeds = range(5)
+    idx = np.unravel_index(args.array, (6, 2, 2, 4))
 
-    filename = args.log_dir + 'gamma-tune-' + str(random_weight) + \
-               '-' + str(buffer_size) + '-' + str(link) + \
-               '-' + str(batch_size) + '.csv'
+    random_weight, buffer_size = 0.7, 40
+    discount_factor = 0.95
+    alpha, lr = alpha[idx[0]], lr[idx[3]]
+    link, batch_size = link[idx[1]], batch_size[idx[2]]
+    filename = args.log_dir + 'gamma-tune-alpha-' + str(alpha) + '-lr-' \
+               + str(lr) + '-' + str(link) + '-' + str(batch_size) + '.csv'
     os.makedirs(args.log_dir, exist_ok=True)
     mylist = [str(i) for i in range(0, args.epoch * args.steps, args.steps)] + ['hyperparam']
     with open(filename, 'w+', newline='') as file:
@@ -348,48 +349,31 @@ def tune():
         writer = csv.writer(file)
         writer.writerow(mylist)  # Use writerow for single list
 
-    for alpha in [0.0005, 0.001, 0.002, 0.005, 0.01]:
-        for lr in [0.0001, 0.0005, 0.001, 0.005]:
-            result = []
-            print("Finish one combination of hyperparameters!")
-            for seed in seeds:
-                cv = train(lr=lr,env=args.env,seed=seed,path=args.path,hyper_choice=args.seed,
-                               link=link,random_weight=random_weight,l1_lambda=alpha,
-                               checkpoint=args.steps,epoch=args.epoch, cv_fold=10,
-                               batch_size=batch_size,buffer_size=buffer_size,
-                               max_len=args.max_len)
-                print("Return result shape: ", cv.shape, ":::", args.steps)
-                result.append(cv)
-                # name = ['lr', lr, 'alpha', alpha]
-                # name = [str(s) for s in name]
-                # name.append(str(seed))
-                # print("hyperparam", '-'.join(name))
-                # logger.logkv("hyperparam", '-'.join(name) )
-                # for n in range(cv.shape[0]):
-                #     logger.logkv(str(n * args.steps), cv[n])
-                # logger.dumpkvs()
-            result = np.array(result)
-            ret = np.around(np.mean(result, axis=0), decimals=4)
-            var = np.around(np.var(result, axis=0), decimals=4)
-            print("Mean shape: ", ret.shape, ":::", var.shape)
-            name = ['lr', lr, 'alpha', alpha]
-            name = [str(s) for s in name]
-            name_1 = name + ['mean']
-            name_2 = name + ['var']
-            mylist = [str(i) for i in list(ret)] + ['-'.join(name_1)]
-            with open(filename, 'a', newline='') as file:
-                # Step 4: Using csv.writer to write the list to the CSV file
-                writer = csv.writer(file)
-                writer.writerow(mylist)  # Use writerow for single list
-            # logger.logkv("hyperparam", '-'.join(name_1))
-            # for n in range(ret.shape[0]):
-            #     logger.logkv(str(n * args.steps), ret[n])
-            # logger.dumpkvs()
-            #
-            # logger.logkv("hyperparam", '-'.join(name_2) )
-            # for n in range(ret.shape[0]):
-            #     logger.logkv(str(n * args.steps), var[n])
-            # logger.dumpkvs()
+    result = []
+    print("Finish one combination of hyperparameters!")
+    for seed in seeds:
+        cv,_ = train(lr=lr,env=args.env,seed=seed,path=args.path,hyper_choice=args.seed,
+                       link=link,random_weight=random_weight,l1_lambda=alpha,discount=discount_factor,
+                       checkpoint=args.steps,epoch=args.epoch, cv_fold=10,
+                       batch_size=batch_size,buffer_size=buffer_size,
+                       max_len=args.max_len)
+        print("Return result shape: ", cv.shape, ":::", args.steps)
+        result.append(cv)
+        name = ['seed', seed]
+        name = [str(s) for s in name]
+        cv, cv_test = np.around(np.mean(cv, axis=0), decimals=4)
+        mylist = [str(i) for i in list(cv)] + ['-'.join(name)]
+        with open(filename, 'a', newline='') as file:
+            # Step 4: Using csv.writer to write the list to the CSV file
+            writer = csv.writer(file)
+            writer.writerow(mylist)  # Use writerow for single list
+    result = np.array(result)
+    ret = np.around(np.mean(result, axis=0), decimals=4)
+    mylist = [str(i) for i in list(ret)] + ['mean']
+    with open(filename, 'a', newline='') as file:
+        # Step 4: Using csv.writer to write the list to the CSV file
+        writer = csv.writer(file)
+        writer.writerow(mylist)  # Use writerow for single list
 
 # print(eval_policy('/scratch/fengdic/avg_discount/mountaincar/model-1epoch-30.pth'))
 # objs = train(0.001,env='CartPole-v1',seed=2,
@@ -402,4 +386,4 @@ def tune():
 # plt.ylim((0,5))
 # plt.show()
 
-# tune()
+tune()

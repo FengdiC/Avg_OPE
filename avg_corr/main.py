@@ -253,7 +253,7 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,reg_lambda
             loss = ((torch.exp(weight(obs)) - (np.log(gamma) * tim + prod)) ** 2).mean()
             ratio = torch.exp(weight(obs))
 
-        regularizer = np.mean(ratio * np.exp(logtarg- logbev)*max_len*(1-gamma)-1)
+        regularizer = torch.mean(ratio * torch.exp(logtarg- logbev)*max_len*(1-gamma)-1)
 
         l1_norm = sum(torch.linalg.norm(p, 1) for p in weight.parameters())
         loss = loss + l1_lambda * l1_norm+ reg_lambda * regularizer
@@ -364,11 +364,11 @@ def tune():
                        checkpoint=args.steps,epoch=args.epoch, cv_fold=10,
                        batch_size=batch_size,buffer_size=buffer_size,
                        max_len=args.max_len)
-        print("Return result shape: ",cv.shape,":::", args.steps,":::",seeds)
+        print("Return result shape: ",len(cv),":::", args.steps,":::",seeds)
         result.append(cv)
         name = ['seed',seed]
         name = [str(s) for s in name]
-        cv = np.around(np.mean(cv, axis=0), decimals=4)
+        cv = np.around(cv, decimals=4)
         mylist = [str(i) for i in list(cv)] + ['-'.join(name)]
         with open(filename, 'a', newline='') as file:
             # Step 4: Using csv.writer to write the list to the CSV file

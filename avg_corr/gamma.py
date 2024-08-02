@@ -218,7 +218,7 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,reg_lambda
     buf = collect_dataset(env,gamma,buffer_size=buffer_size,max_len=max_len,path=path,
                             random_weight=random_weight,fold = cv_fold)
     buf_test = collect_dataset(env, gamma,buffer_size=20,max_len=max_len,
-                                      path=path,random_weight=random_weight,fold=1)
+                                      path=path,random_weight=random_weight,fold=cv_fold)
     if link=='inverse' or link=='identity':
         weight = WeightNet(env.observation_space.shape[0], hidden_sizes=(256,256),activation=nn.ReLU)
     else:

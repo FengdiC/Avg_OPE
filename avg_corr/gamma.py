@@ -202,7 +202,7 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
     return buf
 
 # train weight net
-def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,discount,
+def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,reg_lambda=0,discount=0.95,
           checkpoint=5,epoch=1000,cv_fold=10,batch_size=256,buffer_size=20,max_len=50):
     hyperparam = random_search(hyper_choice)
     gamma = discount
@@ -235,21 +235,27 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,discount,
 
         obs, act = data['obs'], data['act']
         tim, prod = data['tim'], data['prod']
+        logtarg, logbev = data['logtarg'], data['logbev']
 
         f = weight(obs)
         label = np.exp(np.log(gamma) * tim + prod)
         if link == "inverse":
             loss = (-torch.log(f) + f * label).mean()
+            ratio = 1/(f+0.0001)
         elif link == "identity":
             loss = (torch.log(weight(obs)) + label/f).mean()
+            ratio = f
         elif link == 'loglog':
             loss = (torch.log(torch.exp(torch.exp(f))-1)+label/torch.exp(torch.exp(f))-1).mean()
+            ratio = torch.exp(torch.exp(f))
         else:
             loss = (f + label/ torch.exp(f)).mean()
+            ratio = torch.exp(f)
 
-        # print(loss)
+        regularizer = torch.mean(ratio * torch.exp(logtarg - logbev) * max_len * (1 - gamma) - 1)
+
         l1_norm = sum(torch.linalg.norm(p, 1) for p in weight.parameters())
-        loss = loss + l1_lambda * l1_norm
+        loss = loss + l1_lambda * l1_norm + reg_lambda * regularizer
 
         optimizer.zero_grad()
         loss.backward()
@@ -331,17 +337,19 @@ def tune():
     batch_size = [256, 512]
     link = ['inverse', 'identity']
     lr = [0.0001, 0.0005, 0.001, 0.005]
+    reg_lambda = [0, 0.001, 0.01, 0.1, 0.5]
 
     args = argsparser()
     seeds = range(5)
-    idx = np.unravel_index(args.array, (6, 2, 2, 4))
+    idx = np.unravel_index(args.array, (6, 2, 2, 4, 5))
 
     random_weight, buffer_size = 0.7, 40
     discount_factor = 0.95
-    alpha, lr = alpha[idx[0]], lr[idx[3]]
+    alpha, lr, reg_lambda = alpha[idx[0]], lr[idx[3]], reg_lambda[idx[4]]
     link, batch_size = link[idx[1]], batch_size[idx[2]]
+
     filename = args.log_dir + 'gamma-tune-alpha-' + str(alpha) + '-lr-' \
-               + str(lr) + '-' + str(link) + '-' + str(batch_size) + '.csv'
+               + str(lr) + '-lambda-' + str(reg_lambda) + '-' + str(link) + '-' + str(batch_size) + '.csv'
     os.makedirs(args.log_dir, exist_ok=True)
     mylist = [str(i) for i in range(0, args.epoch * args.steps, args.steps)] + ['hyperparam']
     with open(filename, 'w+', newline='') as file:
@@ -353,15 +361,16 @@ def tune():
     print("Finish one combination of hyperparameters!")
     for seed in seeds:
         cv,_ = train(lr=lr,env=args.env,seed=seed,path=args.path,hyper_choice=args.seed,
-                       link=link,random_weight=random_weight,l1_lambda=alpha,discount=discount_factor,
+                       link=link,random_weight=random_weight,l1_lambda=alpha,
+                       reg_lambda=reg_lambda,discount=discount_factor,
                        checkpoint=args.steps,epoch=args.epoch, cv_fold=10,
                        batch_size=batch_size,buffer_size=buffer_size,
                        max_len=args.max_len)
-        print("Return result shape: ", cv.shape, ":::", args.steps)
+        print("Return result shape: ", len(cv), ":::", args.steps)
         result.append(cv)
         name = ['seed', seed]
         name = [str(s) for s in name]
-        cv = np.around(np.mean(cv, axis=0), decimals=4)
+        cv = np.around(cv, decimals=4)
         mylist = [str(i) for i in list(cv)] + ['-'.join(name)]
         with open(filename, 'a', newline='') as file:
             # Step 4: Using csv.writer to write the list to the CSV file

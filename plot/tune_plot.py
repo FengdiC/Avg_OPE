@@ -4,20 +4,22 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 def tune_result(env):
-    result={}
+    result = {}
+    result_var = {}
     for filename in os.listdir('./tune_log/'+env+'/'):
         f = os.path.join('./tune_log/'+env+'/', filename)
         # checking if it is a file
         if not f.endswith('.csv'):
             continue
-        if '0.7-40' in filename:
-            data = pd.read_csv(f, header=0,index_col='hyperparam')
-            data.columns = data.columns.astype(int)
-            data = data.sort_index(axis=1, ascending=True)
-            for name in data.index.to_list():
-                if 'mean' in name:
-                    print(name)
-                    result[filename + '-'+ name] = data.loc[name].to_list()
+        data = pd.read_csv(f, header=0,index_col='hyperparam')
+        data.columns = data.columns.astype(int)
+        data = data.sort_index(axis=1, ascending=True)
+        for name in data.index.to_list():
+            if 'mean' in name:
+                result[filename + '-'+ name] = data.loc[name].to_list()
+        data = data.loc[['seed-0','seed-1','seed-2','seed-3','seed-4']]
+        result_var[filename + '-' + name] = data.var(axis=0).to_list()
+
     # for filename in os.listdir('./tune_log/'+env+'/gamma/'):
     #     f = os.path.join('./tune_log/'+env+'/gamma/', filename)
     #     # checking if it is a file
@@ -32,9 +34,10 @@ def tune_result(env):
     #                 print(name)
     #                 result[filename + '-'+ name] = data[name].to_list()
     data = pd.DataFrame.from_dict(result, orient='index')
-    return data
+    var = pd.DataFrame.from_dict(result_var, orient='index')
+    return data,var
 
-def top_five(data,best_value):
+def top_five(data,var,best_value):
     # # average top five
     # avg = (data-best_value).abs()
     # avg = avg.mean(axis=1)
@@ -54,10 +57,18 @@ def top_five(data,best_value):
     last = data.iloc[:, n-100:n]
     last = (last - best_value).abs()
     avg = last.mean(axis=1)
-    top_five = avg.nsmallest(5)
+    top_five = avg.nsmallest(30)
     top_five = top_five.index
-    results = data.loc[top_five].to_numpy()
+
+    var = var.loc[top_five]
+    var = var.iloc[:, n-100:n]
+    var = var.mean(axis=1)
+    top_five = var.nsmallest(5)
+    top_five = top_five.index
+
     top_five = list(top_five)
+    results = data.loc[top_five].to_numpy()
+
     print('hyper: ',top_five)
     plt.figure()
     for i in range(results.shape[0]):
@@ -139,7 +150,7 @@ def plot_hopper():
     plt.title('last')
     plt.show()
 
-# data = tune_result('cartpole')
-# top_five(data,1)
-plot_cartpole()
+data,var = tune_result('cartpole')
+top_five(data,var,0.998)
+# plot_cartpole()
 # plot_hopper()

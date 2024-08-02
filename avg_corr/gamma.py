@@ -361,7 +361,7 @@ def tune():
         result.append(cv)
         name = ['seed', seed]
         name = [str(s) for s in name]
-        cv, cv_test = np.around(np.mean(cv, axis=0), decimals=4)
+        cv = np.around(np.mean(cv, axis=0), decimals=4)
         mylist = [str(i) for i in list(cv)] + ['-'.join(name)]
         with open(filename, 'a', newline='') as file:
             # Step 4: Using csv.writer to write the list to the CSV file

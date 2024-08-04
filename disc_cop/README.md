@@ -19,8 +19,8 @@ module load StdEnv/2020
 module load mujoco/2.2.2
 # ========================================================================
 
-python -m venv ~/avg_ope
-source ~/avg_ope/bin/activate
+python -m venv ~/icl_env
+source ~/icl_env/bin/activate
 
 # ========================================================================
 # If not Compute Canada:

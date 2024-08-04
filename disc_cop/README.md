@@ -19,8 +19,8 @@ module load StdEnv/2020
 module load mujoco/2.2.2
 # ========================================================================
 
-python -m venv ~/icl_env
-source ~/icl_env/bin/activate
+python -m venv ~/avg_ope
+source ~/avg_ope/bin/activate
 
 # ========================================================================
 # If not Compute Canada:
@@ -115,8 +115,6 @@ run_all-walker.sh
 ```
 
 You may simply do `sbatch run_all-<FILE>.sh` to kick off the run.
-
-The results can be parsed through `plot.ipynb` and setting the corresponding `env_name` and `result_dir`.
 
 
 ## Experimental Status

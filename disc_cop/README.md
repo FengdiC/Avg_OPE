@@ -116,6 +116,8 @@ run_all-walker.sh
 
 You may simply do `sbatch run_all-<FILE>.sh` to kick off the run.
 
+The results can be parsed through `plot.ipynb` and setting the corresponding `env_name` and `result_dir`.
+
 
 ## Experimental Status
 ```

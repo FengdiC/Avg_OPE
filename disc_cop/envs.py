@@ -55,7 +55,7 @@ ENV_FAMILY_SPECIFICS = {
     "mujoco": {
         "max_len": 100,
         "train_steps": 250_000,
-        "run_time": "23:59:00",
+        "run_time": "36:00:00",
     },
     "classic_control": {
         "max_len": 50,

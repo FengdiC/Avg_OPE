@@ -17,8 +17,6 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.mujoco/mujoco210/bin:/usr/lib/nvidia
 module load python/3.10
 module load StdEnv/2020
 module load mujoco/2.2.2
-
-pip install torch --no-index
 # ========================================================================
 
 python -m venv ~/avg_ope
@@ -28,6 +26,8 @@ source ~/avg_ope/bin/activate
 # If not Compute Canada:
 pip install mujoco matplotlib numpy torch
 pip install mujoco==2.3.3
+#Otherwise
+pip install torch --no-index
 # ========================================================================
 
 pip install tqdm
@@ -128,5 +128,5 @@ acrobot: done
 cartpole: done
 mountain_car: done
 
-rerun: running
+rerun: done
 ```

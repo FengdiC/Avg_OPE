@@ -252,7 +252,7 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,reg_lambda
             loss = (f + label/ torch.exp(f)).mean()
             ratio = torch.exp(f)
 
-        regularizer = torch.mean(ratio * torch.exp(logtarg - logbev) * max_len * (1 - gamma) - 1)
+        regularizer = torch.mean((ratio * torch.exp(logtarg - logbev) * max_len * (1 - gamma) - 1)**2)
 
         l1_norm = sum(torch.linalg.norm(p, 1) for p in weight.parameters())
         loss = loss + l1_lambda * l1_norm + reg_lambda * regularizer
@@ -348,7 +348,7 @@ def tune():
     alpha, lr, reg_lambda = alpha[idx[0]], lr[idx[3]], reg_lambda[idx[4]]
     link, batch_size = link[idx[1]], batch_size[idx[2]]
 
-    filename = args.log_dir + 'gamma-tune-alpha-' + str(alpha) + '-lr-' \
+    filename = args.log_dir + 'gamma-tune-square-reg-alpha-' + str(alpha) + '-lr-' \
                + str(lr) + '-lambda-' + str(reg_lambda) + '-' + str(link) + '-' + str(batch_size) + '.csv'
     os.makedirs(args.log_dir, exist_ok=True)
     mylist = [str(i) for i in range(0, args.epoch * args.steps, args.steps)] + ['hyperparam']

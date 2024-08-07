@@ -71,6 +71,7 @@ class PPOBuffer:
         self.prod_buf[path_slice] = np.append(0,core.discount_cumsum(deltas[path_slice], 1)[:-1])
 
         self.path_start_idx = self.ptr
+        print(self.ptr)
 
     def sample(self,batch_size,fold_num):
         """
@@ -188,14 +189,26 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
         o = next_o
 
         terminal = d
-        epoch_ended = ep_len == max_len - 1
+        epoch_ended = ep_len == max_len
 
         if terminal or epoch_ended:
             if terminal and not (epoch_ended):
-                # print('Warning: trajectory ends early at %d steps.' % ep_len, flush=True)
-                buf.delete_last_traj()
-                o, ep_ret, ep_len = env.reset(), 0, 0
-                continue
+                targ_a, _, _ = ac.step(torch.as_tensor(o, dtype=torch.float32))
+                if np.random.random() < random_weight:
+                    # random behaviour policy
+                    a = env.action_space.sample()
+                else:
+                    a = targ_a
+                pi = ac.pi._distribution(torch.as_tensor(o, dtype=torch.float32))
+                logtarg = ac.pi._log_prob_from_distribution(pi, torch.as_tensor(a)).detach().numpy()
+                logbev = np.log(random_weight * unif + (1 - random_weight) * np.exp(logtarg))
+
+                repeat = max_len - ep_len
+                print('Warning: trajectory ends early at %d steps and the left steps are %d.' % (ep_len,repeat),
+                      flush=True)
+                for _ in range(repeat):
+                    ep_len += 1
+                    buf.store(o, a, r, ep_len - 1, logbev, logtarg)
             o, ep_ret, ep_len = env.reset(), 0, 0
             num_traj += 1
             buf.finish_path()
@@ -394,3 +407,9 @@ def tune():
 # tune()
 
 # print(eval_policy(path='./exper/mountaincar.pth',env='MountainCarContinuous-v0',gamma=0.99))
+
+# gamma = 0.95
+# env = gym.make('CartPole-v1')
+#
+# buf = collect_dataset(env,gamma,buffer_size=40,max_len=50,path='./exper/cartpole.pth',
+#                             random_weight=0.5,fold =10)

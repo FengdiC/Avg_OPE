@@ -364,9 +364,10 @@ def tune():
         writer.writerow(mylist)  # Use writerow for single list
 
     result = []
+    result_val = []
     print("Finish one combination of hyperparameters!")
     for seed in seeds:
-        cv, _ = train(lr=lr,env=args.env,seed=seed,path=args.path,hyper_choice=args.seed,
+        cv, cv_val = train(lr=lr,env=args.env,seed=seed,path=args.path,hyper_choice=args.seed,
                        link=link,random_weight=random_weight,l1_lambda=alpha,
                        reg_lambda=reg_lambda,discount = discount_factor,
                        checkpoint=args.steps,epoch=args.epoch, cv_fold=10,
@@ -374,7 +375,8 @@ def tune():
                        max_len=args.max_len)
         print("Return result shape: ",len(cv),":::", args.steps,":::",seeds)
         result.append(cv)
-        name = ['seed',seed]
+        result_val.append(cv_val)
+        name = ['seed',seed,'train']
         name = [str(s) for s in name]
         cv = np.around(cv, decimals=4)
         mylist = [str(i) for i in list(cv)] + ['-'.join(name)]
@@ -382,9 +384,25 @@ def tune():
             # Step 4: Using csv.writer to write the list to the CSV file
             writer = csv.writer(file)
             writer.writerow(mylist)  # Use writerow for single list
+
+        name = ['seed', seed, 'val']
+        name = [str(s) for s in name]
+        cv_val = np.around(cv_val, decimals=4)
+        mylist = [str(i) for i in list(cv_val)] + ['-'.join(name)]
+        with open(filename, 'a', newline='') as file:
+            # Step 4: Using csv.writer to write the list to the CSV file
+            writer = csv.writer(file)
+            writer.writerow(mylist)  # Use writerow for single list
     result = np.array(result)
     ret = np.around(np.mean(result,axis=0),decimals=4)
-    mylist = [str(i) for i in list(ret)] + ['mean']
+    mylist = [str(i) for i in list(ret)] + ['mean-train']
+    with open(filename, 'a', newline='') as file:
+        # Step 4: Using csv.writer to write the list to the CSV file
+        writer = csv.writer(file)
+        writer.writerow(mylist)  # Use writerow for single list
+    result_val = np.array(result_val)
+    ret = np.around(np.mean(result_val, axis=0), decimals=4)
+    mylist = [str(i) for i in list(ret)] + ['mean-val']
     with open(filename, 'a', newline='') as file:
         # Step 4: Using csv.writer to write the list to the CSV file
         writer = csv.writer(file)

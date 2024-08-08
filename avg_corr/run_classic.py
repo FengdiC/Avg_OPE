@@ -47,11 +47,11 @@ def run_classic():
     # random_weight, buffer, discount_factor = random_weight[idx[0]], buffer[idx[1]], discount_factor[idx[2]]
 
     # DEBUG
-    discount_factor, buffer, random_weight = 0.95, 40, 0.7
+    discount_factor, buffer, random_weight = 0.95, 200, 0.7
     env,path = 'CartPole-v1','./exper/cartpole.pth'
 
     # env, path = env[idx[3]], path[idx[3]]
-    batch, link, alpha, lr, loss, reg_lambda = 256,'identity',0,0.0001,'mse', 0.5
+    batch, link, alpha, lr, loss, reg_lambda = 256,'identity',0.001,0.0001,'mse', 0.5
 
     filename = args.log_dir + 'final-classic-' + str(env) +'-discount-'+str(discount_factor)\
                +'-buffer-'+str(buffer)+'-random-'+str(random_weight)+'.csv'
@@ -69,14 +69,14 @@ def run_classic():
             train, test = train_mse(lr=lr, env=env, seed=seed, path=path, hyper_choice=args.seed,
                    link=link, random_weight=random_weight, l1_lambda=alpha,reg_lambda=reg_lambda,
                    discount = discount_factor,
-                   checkpoint=args.steps, epoch=args.epoch, cv_fold=10,
+                   checkpoint=args.steps, epoch=args.epoch, cv_fold=1,
                    batch_size=batch, buffer_size=buffer,
                    max_len=args.max_len)
         elif loss=='gamma':
             print("loss: gamma!")
             train, test = train_gamma(lr=lr, env=env, seed=seed, path=args.path, hyper_choice=args.seed,
                    link=link, random_weight=random_weight, l1_lambda=alpha, discount = discount_factor,
-                   checkpoint=args.steps, epoch=args.epoch, cv_fold=10,
+                   checkpoint=args.steps, epoch=args.epoch, cv_fold=1,
                    batch_size=batch, buffer_size=buffer,
                    max_len=args.max_len)
         result_train.append(train)

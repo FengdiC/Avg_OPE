@@ -300,8 +300,8 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,reg_lambda
         for steps in range(epoch*checkpoint):
             update(fold_num)
             if steps%checkpoint==0:
-                obj, obj_test = eval_cv(buf,fold_num), eval_cv(buf_test,fold_num)
-                # obj, obj_test  = eval(buf), eval(buf_test)
+                # obj, obj_test = eval_cv(buf,fold_num), eval_cv(buf_test,fold_num)
+                obj, obj_test  = eval(buf), eval(buf_test)
                 objs.append(obj)
                 objs_test.append(obj_test)
                 # objs_cv.append(np.around(obj_cv,decimals=4))

@@ -73,6 +73,8 @@ def top_five(data,var,best_value):
     plt.figure()
     for i in range(results.shape[0]):
         plt.plot(range(results.shape[1]), results[i, :], label=top_five[i])
+
+    plt.plot(range(results.shape[1]), np.ones(results.shape[1]), label=top_five[i])
     plt.legend()
     plt.title('last')
     plt.show()

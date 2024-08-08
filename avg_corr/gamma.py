@@ -188,7 +188,7 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
         o = next_o
 
         terminal = d
-        epoch_ended = ep_len == max_len - 1
+        epoch_ended = ep_len == max_len
 
         if terminal or epoch_ended:
             if terminal and not (epoch_ended):
@@ -337,7 +337,7 @@ def tune():
     batch_size = [256, 512]
     link = ['inverse', 'identity']
     lr = [0.0001, 0.0005, 0.001, 0.005]
-    reg_lambda = [0, 0.001, 0.01, 0.1, 0.5]
+    reg_lambda = [0.1,0.5,1,2,5]
 
     args = argsparser()
     seeds = range(5)

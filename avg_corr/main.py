@@ -140,7 +140,9 @@ def eval_policy(path='./exper/cartpole.pth',env='CartPole-v1',gamma=0.8):
         terminal = d
 
         if terminal:
-            num_traj+=1
+            o = env.reset()
+        if ep_len==499:
+            num_traj += 1
             rets.append(ep_ret)
             avg_rets.append(ep_avg_ret)
             o, ep_ret, ep_len, ep_avg_ret = env.reset(), 0, 0, 0
@@ -192,13 +194,11 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
 
         if terminal or epoch_ended:
             if terminal and not (epoch_ended):
-                # print('Warning: trajectory ends early at %d steps.' % ep_len, flush=True)
-                buf.delete_last_traj()
+                o = env.reset()
+            else:
+                buf.finish_path()
                 o, ep_ret, ep_len = env.reset(), 0, 0
-                continue
-            o, ep_ret, ep_len = env.reset(), 0, 0
-            num_traj += 1
-            buf.finish_path()
+                num_traj += 1
     return buf
 
 # train weight net
@@ -282,7 +282,9 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,reg_lambda
     def eval_cv(buffer,fold_num):
         interval = int(buffer.ptr/buffer.fold)
         ind = range(fold_num* interval,(fold_num+1)* interval,1)
-        ratio = weight(torch.as_tensor(buffer.obs_buf[ind],dtype=torch.float32)).detach().numpy()
+        other = np.ones(buffer.ptr)
+        other[ind] = 0
+        ratio = weight(torch.as_tensor(buffer.obs_buf,dtype=torch.float32)).detach().numpy()
         if link == "inverse":
             ratio = 1 / (ratio + 0.001)
         elif link == 'identity':
@@ -291,24 +293,30 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,reg_lambda
             ratio = np.exp(np.exp(ratio))-1
         else:
             ratio = np.exp(ratio)
-        obj = np.mean(ratio * np.exp(buffer.logtarg_buf[ind]
-                                     - buffer.logbev_buf[ind])*buffer.rew_buf[ind])
-        return obj*max_len*(1-gamma)
 
-    objs_cv_mean = []
+        obj = np.mean(ratio[ind] * np.exp(buffer.logtarg_buf[ind]
+                                          - buffer.logbev_buf[ind]) * buffer.rew_buf[ind])
+        obj_other = np.mean(ratio[other] * np.exp(buffer.logtarg_buf[other]
+                                                  - buffer.logbev_buf[other]) * buffer.rew_buf[other])
+        return obj * max_len * (1 - gamma), obj_other * max_len * (1 - gamma)
+
+    objs_mean = []
+    objs_val_mean = []
     for fold_num in range(cv_fold):
-        objs, objs_test, objs_cv = [], [], []
-        for steps in range(epoch*checkpoint):
+        objs, objs_test, objs_val = [], [], []
+        for steps in range(epoch * checkpoint):
             update(fold_num)
-            if steps%checkpoint==0:
-                # obj, obj_test = eval_cv(buf,fold_num), eval_cv(buf_test,fold_num)
-                obj, obj_test  = eval(buf), eval(buf_test)
+            if steps % checkpoint == 0:
+                obj_val, obj = eval_cv(buf, fold_num)
+                # obj, obj_test = eval(buf), eval(buf_test)
                 objs.append(obj)
-                objs_test.append(obj_test)
+                objs_val.append(obj_val)
                 # objs_cv.append(np.around(obj_cv,decimals=4))
-        # objs_cv_mean.append(objs_cv)
-    return objs,objs_test
-    # return np.around(np.mean(objs_cv_mean,axis=0),decimals=4)
+        objs_mean.append(objs)
+        objs_val_mean.append(objs_val)
+    # return objs, objs_test
+    return np.around(np.mean(np.array(objs_mean), axis=0), decimals=4), \
+           np.around(np.mean(np.array(objs_val_mean), axis=0), decimals=4)
 
 def argsparser():
     import argparse
@@ -356,9 +364,10 @@ def tune():
         writer.writerow(mylist)  # Use writerow for single list
 
     result = []
+    result_val = []
     print("Finish one combination of hyperparameters!")
     for seed in seeds:
-        cv, _ = train(lr=lr,env=args.env,seed=seed,path=args.path,hyper_choice=args.seed,
+        cv, cv_val = train(lr=lr,env=args.env,seed=seed,path=args.path,hyper_choice=args.seed,
                        link=link,random_weight=random_weight,l1_lambda=alpha,
                        reg_lambda=reg_lambda,discount = discount_factor,
                        checkpoint=args.steps,epoch=args.epoch, cv_fold=10,
@@ -366,7 +375,8 @@ def tune():
                        max_len=args.max_len)
         print("Return result shape: ",len(cv),":::", args.steps,":::",seeds)
         result.append(cv)
-        name = ['seed',seed]
+        result_val.append(cv_val)
+        name = ['seed',seed,'train']
         name = [str(s) for s in name]
         cv = np.around(cv, decimals=4)
         mylist = [str(i) for i in list(cv)] + ['-'.join(name)]
@@ -374,9 +384,25 @@ def tune():
             # Step 4: Using csv.writer to write the list to the CSV file
             writer = csv.writer(file)
             writer.writerow(mylist)  # Use writerow for single list
+
+        name = ['seed', seed, 'val']
+        name = [str(s) for s in name]
+        cv_val = np.around(cv_val, decimals=4)
+        mylist = [str(i) for i in list(cv_val)] + ['-'.join(name)]
+        with open(filename, 'a', newline='') as file:
+            # Step 4: Using csv.writer to write the list to the CSV file
+            writer = csv.writer(file)
+            writer.writerow(mylist)  # Use writerow for single list
     result = np.array(result)
     ret = np.around(np.mean(result,axis=0),decimals=4)
-    mylist = [str(i) for i in list(ret)] + ['mean']
+    mylist = [str(i) for i in list(ret)] + ['mean-train']
+    with open(filename, 'a', newline='') as file:
+        # Step 4: Using csv.writer to write the list to the CSV file
+        writer = csv.writer(file)
+        writer.writerow(mylist)  # Use writerow for single list
+    result_val = np.array(result_val)
+    ret = np.around(np.mean(result_val, axis=0), decimals=4)
+    mylist = [str(i) for i in list(ret)] + ['mean-val']
     with open(filename, 'a', newline='') as file:
         # Step 4: Using csv.writer to write the list to the CSV file
         writer = csv.writer(file)
@@ -391,6 +417,6 @@ def tune():
 # plt.plot(range(len(objs)),0.327*np.ones(len(objs)))
 # plt.savefig('hopper.png')
 
-# tune()
+tune()
 
-# print(eval_policy(path='./exper/mountaincar.pth',env='MountainCarContinuous-v0',gamma=0.99))
+# print(eval_policy(path='./exper/cartpole.pth',env='CartPole-v1',gamma=0.95))

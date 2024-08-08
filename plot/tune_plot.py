@@ -153,7 +153,7 @@ def plot_hopper():
     plt.show()
 
 def compare_data_procedure():
-    filename = 'final-classic-CartPole-v1-discount-0.95-buffer-40-random-0.7.csv'
+    filename = 'final-classic-CartPole-v1-discount-0.95-buffer-200-random-0.7.csv'
     f = os.path.join('./tune_log/', filename)
     result = []
     result_extend = []
@@ -162,10 +162,10 @@ def compare_data_procedure():
     data.columns = data.columns.astype(int)
     data = data.sort_index(axis=1, ascending=True)
     for name in data.index.to_list():
-        if 'test' and 'extend' in name:
+        if 'train' and 'extend' in name:
             print(name)
             result_extend.append(data.loc[name].to_list())
-        elif 'test' in name:
+        elif 'train' in name:
             print(name)
             result.append(data.loc[name].to_list())
     mean_resample = np.mean(result, axis=0)
@@ -178,9 +178,9 @@ def compare_data_procedure():
     plt.title('last')
     plt.show()
 
-data,var = tune_result('cartpole')
-top_five(data,var,0.998)
+# data,var = tune_result('cartpole')
+# top_five(data,var,0.998)
 # plot_cartpole()
 # plot_hopper()
 
-# compare_data_procedure()
+compare_data_procedure()

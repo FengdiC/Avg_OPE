@@ -5,7 +5,6 @@ sys.path.insert(0, parentdir)
 import numpy as np
 import csv
 from avg_corr.main import train as train_mse
-from avg_corr.main_extend import train as train_extend
 from avg_corr.gamma import train as train_gamma
 from arguments import classic
 
@@ -69,14 +68,14 @@ def run_classic():
             train, test = train_mse(lr=lr, env=env, seed=seed, path=path, hyper_choice=args.seed,
                    link=link, random_weight=random_weight, l1_lambda=alpha,reg_lambda=reg_lambda,
                    discount = discount_factor,
-                   checkpoint=args.steps, epoch=args.epoch, cv_fold=1,
+                   checkpoint=args.steps, epoch=args.epoch, cv_fold=10,
                    batch_size=batch, buffer_size=buffer,
                    max_len=args.max_len)
         elif loss=='gamma':
             print("loss: gamma!")
             train, test = train_gamma(lr=lr, env=env, seed=seed, path=args.path, hyper_choice=args.seed,
                    link=link, random_weight=random_weight, l1_lambda=alpha, discount = discount_factor,
-                   checkpoint=args.steps, epoch=args.epoch, cv_fold=1,
+                   checkpoint=args.steps, epoch=args.epoch, cv_fold=10,
                    batch_size=batch, buffer_size=buffer,
                    max_len=args.max_len)
         result_train.append(train)
@@ -87,22 +86,6 @@ def run_classic():
             writer = csv.writer(file)
             writer.writerow(mylist)  # Use writerow for single list
         mylist = [str(i) for i in list(test)] + ['-'.join(['test', 'seed', str(seed)])]
-        with open(filename, 'a', newline='') as file:
-            # Step 4: Using csv.writer to write the list to the CSV file
-            writer = csv.writer(file)
-            writer.writerow(mylist)  # Use writerow for single list
-
-        train, test = train_extend(lr=lr, env=env, seed=seed, path=path, hyper_choice=args.seed,
-                                link=link, random_weight=random_weight, l1_lambda=alpha, reg_lambda=reg_lambda,
-                                discount=discount_factor,checkpoint=args.steps, epoch=args.epoch, cv_fold=10,
-                                batch_size=batch, buffer_size=buffer,max_len=args.max_len)
-
-        mylist = [str(i) for i in list(train)] + ['-'.join(['train','extend', 'seed', str(seed)])]
-        with open(filename, 'a', newline='') as file:
-            # Step 4: Using csv.writer to write the list to the CSV file
-            writer = csv.writer(file)
-            writer.writerow(mylist)  # Use writerow for single list
-        mylist = [str(i) for i in list(test)] + ['-'.join(['test','extend',  'seed', str(seed)])]
         with open(filename, 'a', newline='') as file:
             # Step 4: Using csv.writer to write the list to the CSV file
             writer = csv.writer(file)

@@ -192,26 +192,12 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
         epoch_ended = ep_len == max_len
 
         if terminal or epoch_ended:
-            if terminal and not (epoch_ended):
-                targ_a, _, _ = ac.step(torch.as_tensor(o, dtype=torch.float32))
-                if np.random.random() < random_weight:
-                    # random behaviour policy
-                    a = env.action_space.sample()
-                else:
-                    a = targ_a
-                pi = ac.pi._distribution(torch.as_tensor(o, dtype=torch.float32))
-                logtarg = ac.pi._log_prob_from_distribution(pi, torch.as_tensor(a)).detach().numpy()
-                logbev = np.log(random_weight * unif + (1 - random_weight) * np.exp(logtarg))
-
-                repeat = max_len - ep_len
-                print('Warning: trajectory ends early at %d steps and the left steps are %d.' % (ep_len,repeat),
-                      flush=True)
-                for _ in range(repeat):
-                    ep_len += 1
-                    buf.store(o, a, 0, ep_len - 1, logbev, logtarg)
-            o, ep_ret, ep_len = env.reset(), 0, 0
-            num_traj += 1
             buf.finish_path()
+            if terminal and not (epoch_ended):
+                o = env.reset()
+            else:
+                o, ep_ret, ep_len = env.reset(), 0, 0
+                num_traj += 1
     return buf
 
 # train weight net

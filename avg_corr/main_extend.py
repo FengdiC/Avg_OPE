@@ -208,7 +208,7 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
                       flush=True)
                 for _ in range(repeat):
                     ep_len += 1
-                    buf.store(o, a, r, ep_len - 1, logbev, logtarg)
+                    buf.store(o, a, 0, ep_len - 1, logbev, logtarg)
             o, ep_ret, ep_len = env.reset(), 0, 0
             num_traj += 1
             buf.finish_path()

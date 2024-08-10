@@ -282,7 +282,7 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,reg_lambda
     def eval_cv(buffer,fold_num):
         interval = int(buffer.ptr/buffer.fold)
         ind = range(fold_num* interval,(fold_num+1)* interval,1)
-        other = np.ones(buffer.ptr)
+        other = np.ones(buffer.ptr,dtype=np.int32)
         other[ind] = 0
         ratio = weight(torch.as_tensor(buffer.obs_buf,dtype=torch.float32)).detach().numpy()
         if link == "inverse":

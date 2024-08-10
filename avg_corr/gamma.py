@@ -191,12 +191,20 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
         epoch_ended = ep_len == max_len
 
         if terminal or epoch_ended:
+            # if terminal and not (epoch_ended):
+            #     o = env.reset()
+            # else:
+            #     buf.finish_path()
+            #     o, ep_ret, ep_len = env.reset(), 0, 0
+            #     num_traj += 1
             if terminal and not (epoch_ended):
-                o = env.reset()
-            else:
-                buf.finish_path()
+                # print('Warning: trajectory ends early at %d steps.' % ep_len, flush=True)
+                buf.delete_last_traj()
                 o, ep_ret, ep_len = env.reset(), 0, 0
-                num_traj += 1
+                continue
+            o, ep_ret, ep_len = env.reset(), 0, 0
+            num_traj += 1
+            buf.finish_path()
     return buf
 
 # train weight net

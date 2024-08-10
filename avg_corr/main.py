@@ -193,13 +193,35 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
         epoch_ended = ep_len == max_len
 
         if terminal or epoch_ended:
+            # if terminal and not (epoch_ended):
+            #     o = env.reset()
+            # else:
+            #     buf.finish_path()
+            #     o, ep_ret, ep_len = env.reset(), 0, 0
+            #     num_traj += 1
             if terminal and not (epoch_ended):
-                o = env.reset()
-            else:
-                buf.finish_path()
+                # print('Warning: trajectory ends early at %d steps.' % ep_len, flush=True)
+                buf.delete_last_traj()
                 o, ep_ret, ep_len = env.reset(), 0, 0
-                num_traj += 1
+                continue
+            o, ep_ret, ep_len = env.reset(), 0, 0
+            num_traj += 1
+            buf.finish_path()
     return buf
+
+# def temporal_error(buf,weight,len,gamma,env='CartPole-v1'):
+#     # current dataset error
+#     ratio = weight(torch.as_tensor(buf.obs_buf, dtype=torch.float32)).detach().numpy()
+#     next_ratio = weight(torch.as_tensor(buf.next_obs_buf, dtype=torch.float32)).detach().numpy()
+#
+#     if env == 'CartPole-v1':
+#         # CartPole has observations of dimension four
+#         # states are initialized randomly among the interval -0.05 to 0.05
+#         initial = np.all(np.abs(buf.next_obs_buf)<0.05,axis=1)* (10**4)
+#     mse = np.mean((gamma* ratio * len * (1-gamma) * np.exp(buf.logtarg_buf - buf.logbev_buf) -
+#                    next_ratio* len * (1-gamma) + (1-gamma)*initial) ** 2)
+#
+#     return mse
 
 # train weight net
 def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,reg_lambda=0, discount=0.95,

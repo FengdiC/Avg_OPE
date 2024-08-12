@@ -37,22 +37,22 @@ def run_classic():
     if args.array>135:
         return -1
 
-    # discount_factor = [0.8, 0.9,0.95, 0.99, 0.995]
-    # buffer = [40, 80, 200]
-    # random_weight = [0.3, 0.5, 0.7]
+    discount_factor = [0.8, 0.9,0.95, 0.99, 0.995]
+    buffer = [40, 80, 200]
+    random_weight = [0.3, 0.5, 0.7]
     env = ['CartPole-v1','Acrobot-v1','MountainCarContinuous-v0']
     path = ['./exper/cartpole.pth','./exper/acrobot.pth', './exper/mountaincar.pth']
     idx = np.unravel_index(args.array, (3, 3, 5, 3))
-    # random_weight, buffer, discount_factor = random_weight[idx[0]], buffer[idx[1]], discount_factor[idx[2]]
+    random_weight, buffer, discount_factor = random_weight[idx[0]], buffer[idx[1]], discount_factor[idx[2]]
 
     # DEBUG
-    discount_factor, buffer, random_weight = 0.95, 200, 0.7
-    env,path = 'CartPole-v1','./exper/cartpole.pth'
+    # discount_factor, buffer, random_weight = 0.95, 200, 0.7
+    # env,path = 'CartPole-v1','./exper/cartpole.pth'
 
-    # env, path = env[idx[3]], path[idx[3]]
-    batch, link, alpha, lr, loss, reg_lambda = 256,'identity',0.001,0.0001,'mse', 0.5
+    env, path = env[idx[3]], path[idx[3]]
+    batch, link, alpha, lr, loss, reg_lambda = 512,'identity',0.001,0.0001,'mse', 2
 
-    filename = args.log_dir + 'final-classic-' + str(env) +'-discount-'+str(discount_factor)\
+    filename = args.log_dir + 'final-classic-mse-' + str(env) +'-discount-'+str(discount_factor)\
                +'-buffer-'+str(buffer)+'-random-'+str(random_weight)+'.csv'
     os.makedirs(args.log_dir, exist_ok=True)
     mylist = [str(i) for i in range(0, args.epoch * args.steps, args.steps)] + ['hyperparam']
@@ -68,14 +68,14 @@ def run_classic():
             train, test = train_mse(lr=lr, env=env, seed=seed, path=path, hyper_choice=args.seed,
                    link=link, random_weight=random_weight, l1_lambda=alpha,reg_lambda=reg_lambda,
                    discount = discount_factor,
-                   checkpoint=args.steps, epoch=args.epoch, cv_fold=10,
+                   checkpoint=args.steps, epoch=args.epoch, cv_fold=1,
                    batch_size=batch, buffer_size=buffer,
                    max_len=args.max_len)
         elif loss=='gamma':
             print("loss: gamma!")
             train, test = train_gamma(lr=lr, env=env, seed=seed, path=args.path, hyper_choice=args.seed,
                    link=link, random_weight=random_weight, l1_lambda=alpha, discount = discount_factor,
-                   checkpoint=args.steps, epoch=args.epoch, cv_fold=10,
+                   checkpoint=args.steps, epoch=args.epoch, cv_fold=1,
                    batch_size=batch, buffer_size=buffer,
                    max_len=args.max_len)
         result_train.append(train)
@@ -91,19 +91,45 @@ def run_classic():
             writer = csv.writer(file)
             writer.writerow(mylist)  # Use writerow for single list
 
-    # result = np.array(result)
-    # ret = np.around(np.mean(result, axis=0), decimals=4)
-    # var = np.around(np.var(result, axis=0), decimals=4)
-    # print("Mean shape: ", ret.shape, ":::", var.shape)
-    # name = ['lr', lr, 'alpha', alpha]
-    # name = [str(s) for s in name]
-    # name_1 = name + ['mean']
-    # name_2 = name + ['var']
-    # mylist = [str(i) for i in list(ret)] + ['-'.join(name_1)]
-    # with open(filename, 'a', newline='') as file:
-    #     # Step 4: Using csv.writer to write the list to the CSV file
-    #     writer = csv.writer(file)
-    #     writer.writerow(mylist)  # Use writerow for single list
-    # print('-'.join(name_1))
+    batch, link, alpha, lr, loss, reg_lambda = 512, 'inverse',0.005 , 0.001, 'gamma', 5
+
+    filename = args.log_dir + 'final-classic-gamma-' + str(env) + '-discount-' + str(discount_factor) \
+               + '-buffer-' + str(buffer) + '-random-' + str(random_weight) + '.csv'
+    os.makedirs(args.log_dir, exist_ok=True)
+    mylist = [str(i) for i in range(0, args.epoch * args.steps, args.steps)] + ['hyperparam']
+    with open(filename, 'w+', newline='') as file:
+        # Step 4: Using csv.writer to write the list to the CSV file
+        writer = csv.writer(file)
+        writer.writerow(mylist)  # Use writerow for single list
+
+    result_train, result_test = [], []
+    for seed in seeds:
+        if loss == 'mse':
+            print("loss: mse!")
+            train, test = train_mse(lr=lr, env=env, seed=seed, path=path, hyper_choice=args.seed,
+                                    link=link, random_weight=random_weight, l1_lambda=alpha, reg_lambda=reg_lambda,
+                                    discount=discount_factor,
+                                    checkpoint=args.steps, epoch=args.epoch, cv_fold=1,
+                                    batch_size=batch, buffer_size=buffer,
+                                    max_len=args.max_len)
+        elif loss == 'gamma':
+            print("loss: gamma!")
+            train, test = train_gamma(lr=lr, env=env, seed=seed, path=args.path, hyper_choice=args.seed,
+                                      link=link, random_weight=random_weight, l1_lambda=alpha, discount=discount_factor,
+                                      checkpoint=args.steps, epoch=args.epoch, cv_fold=1,
+                                      batch_size=batch, buffer_size=buffer,
+                                      max_len=args.max_len)
+        result_train.append(train)
+        result_test.append(test)
+        mylist = [str(i) for i in list(train)] + ['-'.join(['train', 'seed', str(seed)])]
+        with open(filename, 'a', newline='') as file:
+            # Step 4: Using csv.writer to write the list to the CSV file
+            writer = csv.writer(file)
+            writer.writerow(mylist)  # Use writerow for single list
+        mylist = [str(i) for i in list(test)] + ['-'.join(['test', 'seed', str(seed)])]
+        with open(filename, 'a', newline='') as file:
+            # Step 4: Using csv.writer to write the list to the CSV file
+            writer = csv.writer(file)
+            writer.writerow(mylist)  # Use writerow for single list
 
 run_classic()

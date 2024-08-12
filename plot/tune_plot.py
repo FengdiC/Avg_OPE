@@ -7,35 +7,37 @@ def tune_result(env):
     result = {}
     result_var = {}
     result_train = {}
-    for filename in os.listdir('./tune_log/'+env+'/'):
-        f = os.path.join('./tune_log/'+env+'/', filename)
-        # checking if it is a file
-        if not f.endswith('.csv'):
-            continue
-        data = pd.read_csv(f, header=0,index_col='hyperparam')
-        data.columns = data.columns.astype(int)
-        data = data.sort_index(axis=1, ascending=True)
-        for name in data.index.to_list():
-            if 'mean' in name and 'val' in name:
-                result[filename] = data.loc[name].to_list()
-            if 'mean' in name and 'train' in name:
-                result_train[filename] = data.loc[name].to_list()
-        data = data.loc[['seed-0-val','seed-1-val','seed-2-val','seed-3-val','seed-4-val']]
-        result_var[filename] = data.var(axis=0).to_list()
-
-    # for filename in os.listdir('./tune_log/'+env+'/gamma/'):
-    #     f = os.path.join('./tune_log/'+env+'/gamma/', filename)
+    # for filename in os.listdir('./tune_log/'+env+'/'):
+    #     f = os.path.join('./tune_log/'+env+'/', filename)
     #     # checking if it is a file
     #     if not f.endswith('.csv'):
     #         continue
-    #     if '0.3-20' in filename:
-    #         data = pd.read_csv(f, header=0,index_col='hyperparam')
-    #         data.columns = data.columns.astype(int)
-    #         data = data.sort_index(axis=1, ascending=True)
-    #         for name in data.index.to_list():
-    #             if 'mean' in name:
-    #                 print(name)
-    #                 result[filename + '-'+ name] = data[name].to_list()
+    #     if 'gamma' not in filename:
+    #         continue
+    #     data = pd.read_csv(f, header=0,index_col='hyperparam')
+    #     data.columns = data.columns.astype(int)
+    #     data = data.sort_index(axis=1, ascending=True)
+    #     for name in data.index.to_list():
+    #         if 'mean' in name and 'val' in name:
+    #             result[filename] = data.loc[name].to_list()
+    #         if 'mean' in name and 'train' in name:
+    #             result_train[filename] = data.loc[name].to_list()
+    #     data = data.loc[['seed-0-val','seed-1-val','seed-2-val','seed-3-val','seed-4-val']]
+    #     result_var[filename] = data.var(axis=0).to_list()
+
+    for filename in os.listdir('./tune_log/'+env):
+        f = os.path.join('./tune_log/'+env, filename)
+        # checking if it is a file
+        if not f.endswith('.csv'):
+            continue
+        if '0.3-20' in filename:
+            data = pd.read_csv(f, header=0,index_col='hyperparam')
+            data.columns = data.columns.astype(int)
+            data = data.sort_index(axis=1, ascending=True)
+            for name in data.index.to_list():
+                if 'mean' in name:
+                    print(name)
+                    result[filename + '-'+ name] = data[name].to_list()
     data = pd.DataFrame.from_dict(result, orient='index')
     var = pd.DataFrame.from_dict(result_var, orient='index')
     data_train = pd.DataFrame.from_dict(result_train, orient='index')
@@ -58,17 +60,17 @@ def top_five(data,var,data_train,best_value):
 
     # last few steps top five
     n = data.shape[1]
-    last = data.iloc[:, n-100:n]
+    last = data.iloc[:, n-800:n]
     last = (last - best_value).abs()
     avg = last.mean(axis=1)
-    top_five = avg.nsmallest(8)
+    top_five = avg.nsmallest(10)
     top_five = top_five.index
 
-    # var = var.loc[top_five]
-    # var = var.iloc[:, n-100:n]
-    # var = var.mean(axis=1)
-    # top_five = var.nsmallest(5)
-    # top_five = top_five.index
+    var = var.loc[top_five]
+    var = var.iloc[:, n-200:n]
+    var = var.mean(axis=1)
+    top_five = var.nsmallest(5)
+    top_five = top_five.index
 
     top_five = list(top_five)
     results = data.loc[top_five].to_numpy()
@@ -189,7 +191,7 @@ def compare_data_procedure():
     plt.title('last')
     plt.show()
 
-data,var,data_train = tune_result('cartpole_restart')
+data,var,data_train = tune_result('hopper')
 top_five(data,var,data_train,0.998)
 # plot_cartpole()
 # plot_hopper()

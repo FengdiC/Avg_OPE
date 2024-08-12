@@ -329,16 +329,16 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,reg_lambda
         for steps in range(epoch * checkpoint):
             update(fold_num)
             if steps % checkpoint == 0:
-                obj_val, obj = eval_cv(buf, fold_num)
-                # obj, obj_test = eval(buf), eval(buf_test)
+                # obj_val, obj = eval_cv(buf, fold_num)
+                obj, obj_test = eval(buf), eval(buf_test)
                 objs.append(obj)
-                objs_val.append(obj_val)
-                # objs_cv.append(np.around(obj_cv,decimals=4))
-        objs_mean.append(objs)
-        objs_val_mean.append(objs_val)
-    # return objs, objs_test
-    return np.around(np.mean(np.array(objs_mean), axis=0), decimals=4), \
-           np.around(np.mean(np.array(objs_val_mean), axis=0), decimals=4)
+                # objs_val.append(obj_val)
+                obj_test.append(obj_test)
+        # objs_mean.append(objs)
+        # objs_val_mean.append(objs_val)
+    return objs, objs_test
+    # return np.around(np.mean(np.array(objs_mean), axis=0), decimals=4), \
+    #        np.around(np.mean(np.array(objs_val_mean), axis=0), decimals=4)
 
 def argsparser():
     import argparse
@@ -439,6 +439,6 @@ def tune():
 # plt.plot(range(len(objs)),0.327*np.ones(len(objs)))
 # plt.savefig('hopper.png')
 
-tune()
+# tune()
 
 # print(eval_policy(path='./exper/cartpole.pth',env='CartPole-v1',gamma=0.95))

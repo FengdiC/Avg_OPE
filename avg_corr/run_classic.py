@@ -78,6 +78,7 @@ def run_classic():
                    checkpoint=args.steps, epoch=args.epoch, cv_fold=1,
                    batch_size=batch, buffer_size=buffer,
                    max_len=args.max_len)
+        train,test = np.around(train,decimals=4),np.around(test,decimals=4)
         result_train.append(train)
         result_test.append(test)
         mylist = [str(i) for i in list(train)] + ['-'.join(['train','seed',str(seed)])]
@@ -90,6 +91,19 @@ def run_classic():
             # Step 4: Using csv.writer to write the list to the CSV file
             writer = csv.writer(file)
             writer.writerow(mylist)  # Use writerow for single list
+
+    train = np.around(np.mean(np.array(result_train),axis=0),decimals=4)
+    test = np.around(np.mean(np.array(result_test),axis=0),decimals=4)
+    mylist = [str(i) for i in list(train)] + ['-'.join(['train', 'mean'])]
+    with open(filename, 'a', newline='') as file:
+        # Step 4: Using csv.writer to write the list to the CSV file
+        writer = csv.writer(file)
+        writer.writerow(mylist)  # Use writerow for single list
+    mylist = [str(i) for i in list(test)] + ['-'.join(['test', 'mean'])]
+    with open(filename, 'a', newline='') as file:
+        # Step 4: Using csv.writer to write the list to the CSV file
+        writer = csv.writer(file)
+        writer.writerow(mylist)  # Use writerow for single list
 
     batch, link, alpha, lr, loss, reg_lambda = 512, 'inverse',0.005 , 0.001, 'gamma', 5
 
@@ -119,6 +133,7 @@ def run_classic():
                                       checkpoint=args.steps, epoch=args.epoch, cv_fold=1,
                                       batch_size=batch, buffer_size=buffer,
                                       max_len=args.max_len)
+        train, test = np.around(train, decimals=4), np.around(test, decimals=4)
         result_train.append(train)
         result_test.append(test)
         mylist = [str(i) for i in list(train)] + ['-'.join(['train', 'seed', str(seed)])]
@@ -131,5 +146,18 @@ def run_classic():
             # Step 4: Using csv.writer to write the list to the CSV file
             writer = csv.writer(file)
             writer.writerow(mylist)  # Use writerow for single list
+
+    train = np.around(np.mean(np.array(result_train), axis=0), decimals=4)
+    test = np.around(np.mean(np.array(result_test), axis=0), decimals=4)
+    mylist = [str(i) for i in list(train)] + ['-'.join(['train', 'mean'])]
+    with open(filename, 'a', newline='') as file:
+        # Step 4: Using csv.writer to write the list to the CSV file
+        writer = csv.writer(file)
+        writer.writerow(mylist)  # Use writerow for single list
+    mylist = [str(i) for i in list(test)] + ['-'.join(['test', 'mean'])]
+    with open(filename, 'a', newline='') as file:
+        # Step 4: Using csv.writer to write the list to the CSV file
+        writer = csv.writer(file)
+        writer.writerow(mylist)  # Use writerow for single list
 
 run_classic()

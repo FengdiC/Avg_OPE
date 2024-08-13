@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --cpus-per-task=1  # Cores proportional to GPUs: 6 on Cedar, 16 on Graham.
 #SBATCH --mem=3600M       # Memory proportional to GPUs: 32000 Cedar, 64000 Graham.
-#SBATCH --time=0-12:00
+#SBATCH --time=0-3:00
 #SBATCH --output=%N-%j.out
 #SBATCH --account=def-ashique
 #SBATCH --array=1-135
@@ -25,4 +25,4 @@ python avg_corr/run_classic.py --log_dir $SCRATCH/avg_corr/classic/ \
 echo "Baseline job $seed took $SECONDS"
 sleep 72h
 
-#python avg_corr/main.py --path './exper/cartpole.pth' --env 'CartPole-v1' --log_dir $SCRATCH/avg_mse/cartpole/ --steps 5 --epoch 500 --max_len 50 --seed 32 --array 15
+#python avg_corr/run_classic.py --log_dir $SCRATCH/avg_corr/classic/ --array 10  --steps 5 --epoch 2000 --max_len 50

@@ -128,8 +128,8 @@ def run_classic():
                                     max_len=args.max_len)
         elif loss == 'gamma':
             print("loss: gamma!")
-            train, test = train_gamma(lr=lr, env=env, seed=seed, path=args.path, hyper_choice=args.seed,
-                                      link=link, random_weight=random_weight, l1_lambda=alpha, discount=discount_factor,
+            train, test = train_gamma(lr=lr, env=env, seed=seed, path=path, hyper_choice=args.seed,
+                                      link=link, random_weight=random_weight, l1_lambda=alpha,reg_lambda=reg_lambda, discount=discount_factor,
                                       checkpoint=args.steps, epoch=args.epoch, cv_fold=1,
                                       batch_size=batch, buffer_size=buffer,
                                       max_len=args.max_len)

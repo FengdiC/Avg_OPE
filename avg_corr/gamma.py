@@ -315,7 +315,7 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,reg_lambda
                 obj, obj_test = eval(buf), eval(buf_test)
                 objs.append(obj)
                 # objs_val.append(obj_val)
-                obj_test.append(obj_test)
+                objs_test.append(obj_test)
         # objs_mean.append(objs)
         # objs_val_mean.append(objs_val)
     return objs, objs_test

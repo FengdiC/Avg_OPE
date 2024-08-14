@@ -94,32 +94,35 @@ def top_five(data,var,data_train,best_value):
 
 def plot_cartpole():
     result = []
-    for filename in os.listdir('./tune_log/cartpole'):
-        f = os.path.join('./tune_log/cartpole/', filename)
+    for filename in os.listdir('./tune_log/classic'):
+        f = os.path.join('./tune_log/classic/', filename)
         # checking if it is a file
         if not f.endswith('.csv'):
             continue
-        # if '0.7' in filename and '0.95' in filename and '40' in filename and 'CartPole' in filename:
-        if '0.7' in filename and '40' in filename and '512' in filename and 'identity' in filename:
+        if '0.3' in filename and '0.95' in filename and '200' in filename and 'MountainCar' in filename and 'mse' in filename:
+        # if '0.7' in filename and '40' in filename and '512' in filename and 'identity' in filename:
             data = pd.read_csv(f, header=0, index_col='hyperparam')
             data.columns = data.columns.astype(int)
             data = data.sort_index(axis=1, ascending=True)
             for name in data.index.to_list():
-                if 'lr-0.005-alpha-0.005-mean' in name:
-                    print(name)
+                if 'train-mean' in name:
+                    print(filename)
                     result.append(data.loc[name].to_list())
     mean_avg = np.mean(result,axis=0)
-    var_avg = np.var(result, axis=0)
+    print(mean_avg.shape)
+    # var_avg = np.var(result, axis=0)
 
     result = []
-    for filename in os.listdir('./tune_log/dice_cartpole'):
-        f = os.path.join('./tune_log/dice_cartpole', filename)
+    for filename in os.listdir('./tune_log/bestdice_cartpole'):
+        f = os.path.join('./tune_log/bestdice_cartpole', filename)
         # checking if it is a file
         if not f.endswith('.csv'):
             continue
-        if '0.7' in filename and '0.95' in filename and '40' in filename and 'test' in filename:
+        if '0.3' in filename and '0.95' in filename and '200' in filename and 'train' in filename:
             data = pd.read_csv(f, header=0)
-            mean_dice = data.loc[:,'Mean MSE']
+            mean_dice = data.loc[:,'MSE']
+            result.append(mean_dice.to_list())
+        mean_dice = np.mean(result,axis=0)
 
     plt.figure()
     plt.plot(range(mean_avg.shape[0]), mean_avg, label='avg_corr')
@@ -191,9 +194,9 @@ def compare_data_procedure():
     plt.title('last')
     plt.show()
 
-data,var,data_train = tune_result('hopper')
-top_five(data,var,data_train,0.998)
-# plot_cartpole()
+# data,var,data_train = tune_result('hopper')
+# top_five(data,var,data_train,0.998)
+plot_cartpole()
 # plot_hopper()
 
 # compare_data_procedure()

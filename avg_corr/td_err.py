@@ -106,7 +106,7 @@ def temporal_error(buf,second_buf,gamma,weight=None):
 
     index = np.ravel_multi_index(index, (22, 22, 22, 22), order='C')
     unique, counts = np.unique(index, return_counts=True)
-    err = np.sum(values[unique]*counts) / next_states.shape[0]
+    err = np.sum((values[unique]**2)*counts) / next_states.shape[0]
 
     return err
 

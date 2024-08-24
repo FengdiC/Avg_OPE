@@ -11,6 +11,7 @@ import torch.nn as nn
 from torch.optim import Adam
 import ppo.algo.core as core
 from ppo.algo.random_search import random_search
+from avg_corr.td_err import temporal_error
 import ppo.utils.logger as logger
 import matplotlib.pyplot as plt
 import csv
@@ -25,6 +26,7 @@ class PPOBuffer:
 
     def __init__(self, obs_dim, act_dim, size, fold, gamma=0.99):
         self.obs_buf = np.zeros(core.combined_shape(size, obs_dim), dtype=np.float32)
+        self.next_obs_buf = np.zeros(core.combined_shape(size, obs_dim), dtype=np.float32)
         self.act_buf = np.zeros(core.combined_shape(size, act_dim), dtype=np.float32)
         self.rew_buf = np.zeros(size, dtype=np.float32)
         self.tim_buf = np.zeros(size, dtype=np.int32)
@@ -35,12 +37,13 @@ class PPOBuffer:
         self.fold = fold
         self.ptr, self.path_start_idx, self.max_size = 0, 0, size
 
-    def store(self, obs, act, rew, tim, logbev, logtarg):
+    def store(self, obs, next_obs,act, rew, tim, logbev, logtarg):
         """
         Append one timestep of agent-environment interaction to the buffer.
         """
         assert self.ptr < self.max_size  # buffer has to have room so you can store
         self.obs_buf[self.ptr] = obs
+        self.next_obs_buf[self.ptr] = next_obs
         self.act_buf[self.ptr] = act
         self.rew_buf[self.ptr] = rew
         self.tim_buf[self.ptr] = tim
@@ -85,8 +88,8 @@ class PPOBuffer:
         else:
             ind = np.random.randint(self.ptr, size=batch_size)
 
-        data = dict(obs=self.obs_buf[ind], act=self.act_buf[ind], prod=self.prod_buf[ind],
-                    tim=self.tim_buf[ind],
+        data = dict(obs=self.obs_buf[ind], act=self.act_buf[ind],
+                    prod=self.prod_buf[ind],tim=self.tim_buf[ind],
                     logbev=self.logbev_buf[ind], logtarg=self.logtarg_buf[ind])
         return {k: torch.as_tensor(v, dtype=torch.float32) for k, v in data.items()}
 
@@ -184,7 +187,7 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
         ep_len += 1
 
         # save and log
-        buf.store(o, a, r, ep_len - 1, logbev, logtarg)
+        buf.store(o, next_o,a, r, ep_len - 1, logbev, logtarg)
 
         # Update obs (critical!)
         o = next_o
@@ -209,20 +212,6 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
             buf.finish_path()
     return buf
 
-# def temporal_error(buf,weight,len,gamma,env='CartPole-v1'):
-#     # current dataset error
-#     ratio = weight(torch.as_tensor(buf.obs_buf, dtype=torch.float32)).detach().numpy()
-#     next_ratio = weight(torch.as_tensor(buf.next_obs_buf, dtype=torch.float32)).detach().numpy()
-#
-#     if env == 'CartPole-v1':
-#         # CartPole has observations of dimension four
-#         # states are initialized randomly among the interval -0.05 to 0.05
-#         initial = np.all(np.abs(buf.next_obs_buf)<0.05,axis=1)* (10**4)
-#     mse = np.mean((gamma* ratio * len * (1-gamma) * np.exp(buf.logtarg_buf - buf.logbev_buf) -
-#                    next_ratio* len * (1-gamma) + (1-gamma)*initial) ** 2)
-#
-#     return mse
-
 # train weight net
 def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,reg_lambda=0, discount=0.95,
           checkpoint=5,epoch=1000,cv_fold=1,batch_size=256,buffer_size=20,max_len=50):
@@ -242,7 +231,11 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,reg_lambda
                             random_weight=random_weight,fold =cv_fold)
     buf_test = collect_dataset(env, gamma,buffer_size=buffer_size,max_len=max_len,
                                       path=path,random_weight=random_weight,fold=cv_fold)
-    print(buf.obs_buf[100],":::",buf_test.obs_buf[100])
+
+    buf_td = collect_dataset(env, gamma, buffer_size=2000, max_len=50, path=path,
+                          random_weight=random_weight, fold=1)
+    second_buf_td = collect_dataset(env, gamma, buffer_size=2000, max_len=50,
+                               path=path, random_weight=random_weight, fold=1)
     if link=='inverse' or link=='identity':
         weight = WeightNet(env.observation_space.shape[0], hidden_sizes=(256,256),activation=nn.ReLU)
     else:
@@ -326,19 +319,22 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,reg_lambda
     objs_val_mean = []
     for fold_num in range(cv_fold):
         objs, objs_test, objs_val = [], [], []
+        err = []
         for steps in range(epoch * checkpoint):
             update(fold_num)
             if steps % checkpoint == 0:
-                obj_val, obj = eval_cv(buf, fold_num)
-                # obj, obj_test = eval(buf), eval(buf_test)
+                # obj_val, obj = eval_cv(buf, fold_num)
+                obj, obj_test = eval(buf), eval(buf_test)
+                td_err = temporal_error(buf_td,second_buf_td,gamma,weight)
                 objs.append(obj)
-                objs_val.append(obj_val)
-                # objs_test.append(obj_test)
-        objs_mean.append(objs)
-        objs_val_mean.append(objs_val)
-    # return objs, objs_test
-    return np.around(np.mean(np.array(objs_mean), axis=0), decimals=4), \
-           np.around(np.mean(np.array(objs_val_mean), axis=0), decimals=4)
+                # objs_val.append(obj_val)
+                objs_test.append(obj_test)
+                err.append(td_err)
+        # objs_mean.append(objs)
+        # objs_val_mean.append(objs_val)
+    return objs, objs_test, err
+    # return np.around(np.mean(np.array(objs_mean), axis=0), decimals=4), \
+    #        np.around(np.mean(np.array(objs_val_mean), axis=0), decimals=4)
 
 def argsparser():
     import argparse
@@ -439,6 +435,6 @@ def tune():
 # plt.plot(range(len(objs)),0.327*np.ones(len(objs)))
 # plt.savefig('hopper.png')
 
-tune()
+# tune()
 
 # print(eval_policy(path='./exper/cartpole.pth',env='CartPole-v1',gamma=0.95))

@@ -4,37 +4,37 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 import numpy as np
 import torch
-from avg_corr.main import collect_dataset
+# from avg_corr.main import collect_dataset
 import gym
 import matplotlib.pyplot as plt
 import itertools
 
-def plot_state_range():
-    env = gym.make('CartPole-v1')
-    buf = collect_dataset(env, 0.95, buffer_size=80, max_len=50, path='./exper/cartpole.pth',
-                          random_weight=0.5, fold=1)
-    states = buf.obs_buf
-    interval = [0.3/10,1.8/10,0.2095/10,1.5/10]
-    interval = np.tile(np.array(interval),(states.shape[0],1))
-    # bottom = [-2.4,-10.0,-0.2095,-10.0]
-    # bottom = np.tile(np.array(bottom),(1,states.shape[0]))
-    index = (states / interval).astype(np.int32)
-    index = np.where(index < -10, -11 * np.ones(index.shape), index)
-    index = np.where(index > 10, 11 * np.ones(index.shape), index)
-
-    plt.subplot(411)
-    unique, counts = np.unique(index[:,0], return_counts=True, axis=0)
-    plt.bar(unique,counts)
-    plt.subplot(412)
-    unique, counts = np.unique(index[:, 1], return_counts=True, axis=0)
-    plt.bar(unique, counts)
-    plt.subplot(413)
-    unique, counts = np.unique(index[:, 2], return_counts=True, axis=0)
-    plt.bar(unique, counts)
-    plt.subplot(414)
-    unique, counts = np.unique(index[:, 3], return_counts=True, axis=0)
-    plt.bar(unique, counts)
-    plt.show()
+# def plot_state_range():
+#     env = gym.make('CartPole-v1')
+#     buf = collect_dataset(env, 0.95, buffer_size=80, max_len=50, path='./exper/cartpole.pth',
+#                           random_weight=0.5, fold=1)
+#     states = buf.obs_buf
+#     interval = [0.3/10,1.8/10,0.2095/10,1.5/10]
+#     interval = np.tile(np.array(interval),(states.shape[0],1))
+#     # bottom = [-2.4,-10.0,-0.2095,-10.0]
+#     # bottom = np.tile(np.array(bottom),(1,states.shape[0]))
+#     index = (states / interval).astype(np.int32)
+#     index = np.where(index < -10, -11 * np.ones(index.shape), index)
+#     index = np.where(index > 10, 11 * np.ones(index.shape), index)
+# 
+#     plt.subplot(411)
+#     unique, counts = np.unique(index[:,0], return_counts=True, axis=0)
+#     plt.bar(unique,counts)
+#     plt.subplot(412)
+#     unique, counts = np.unique(index[:, 1], return_counts=True, axis=0)
+#     plt.bar(unique, counts)
+#     plt.subplot(413)
+#     unique, counts = np.unique(index[:, 2], return_counts=True, axis=0)
+#     plt.bar(unique, counts)
+#     plt.subplot(414)
+#     unique, counts = np.unique(index[:, 3], return_counts=True, axis=0)
+#     plt.bar(unique, counts)
+#     plt.show()
 
 def temporal_error(buf,second_buf,gamma,weight=None):
     # current dataset error

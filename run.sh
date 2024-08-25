@@ -16,7 +16,7 @@ module load gcc opencv intel/2023.2.1 cuda/11.8 python/3.10 mpi4py
 SECONDS=0
 echo
 
-python avg_corr/run_cartpole_td.py --log_dir $SCRATCH/avg_corr/td_err/ --steps 5 --epoch 2000 --max_len 50 
+python avg_corr/run_cartpole_td.py --log_dir $SCRATCH/avg_corr/td_err/ --steps 5 --epoch 2000 --max_len 50
 
 #python avg_corr/run_classic.py --log_dir $SCRATCH/avg_corr/classic/ \
 #--array $SLURM_ARRAY_TASK_ID  --steps 5 --epoch 2000 --max_len 50 &

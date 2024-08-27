@@ -385,7 +385,7 @@ def tune():
     result_val = []
     print("Finish one combination of hyperparameters!")
     for seed in seeds:
-        cv, cv_val = train(lr=lr,env=args.env,seed=seed,path=args.path,hyper_choice=args.seed,
+        cv, cv_val,_ = train(lr=lr,env=args.env,seed=seed,path=args.path,hyper_choice=args.seed,
                        link=link,random_weight=random_weight,l1_lambda=alpha,
                        reg_lambda=reg_lambda,discount = discount_factor,
                        checkpoint=args.steps,epoch=args.epoch, cv_fold=10,
@@ -437,4 +437,4 @@ def tune():
 
 # tune()
 
-# print(eval_policy(path='./exper/cartpole.pth',env='CartPole-v1',gamma=0.95))
+print(eval_policy(path='./exper/hopper.pth',env='Hopper-v1',gamma=0.95))

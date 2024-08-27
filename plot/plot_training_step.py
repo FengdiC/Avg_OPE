@@ -79,31 +79,36 @@ def plot_err():
         data = pd.read_csv(f, header=0, index_col='hyperparam')
         data.columns = data.columns.astype(int)
         data = data.sort_index(axis=1, ascending=True)
+        result = []
         for name in data.index.to_list():
             if 'err' in name and 'mean' not in name:
-                result = []
                 result.append(data.loc[name].to_list())
-                mean = np.mean(result,axis=0)
-                std = np.std(result,axis=0)
-                plt.subplot(311)
-                plt.fill_between(range(mean.shape[0]), mean + std, mean-std, alpha=0.1)
-                plt.plot(range(mean.shape[0]),mean)
+        mean = np.mean(result,axis=0)
+        std = np.std(result,axis=0)
+        plt.subplot(311)
+        plt.fill_between(range(mean.shape[0]), mean + std, mean-std, alpha=0.1)
+        plt.plot(range(mean.shape[0]),mean)
+
+        result = []
+        for name in data.index.to_list():
             if 'train' in name and 'mean' not in name:
-                result = []
                 result.append(data.loc[name].to_list())
-                mean = np.mean(result, axis=0)
-                std = np.std(result, axis=0)
-                plt.subplot(312)
-                plt.fill_between(range(mean.shape[0]), mean + std, mean - std, alpha=0.1)
-                plt.plot(range(mean.shape[0]), mean)
+        mean = np.mean(result, axis=0)
+        std = np.std(result, axis=0)
+        plt.subplot(312)
+        plt.fill_between(range(mean.shape[0]), mean + std, mean - std, alpha=0.1)
+        plt.plot(range(mean.shape[0]), mean)
+
+        result = []
+        for name in data.index.to_list():
             if 'test' in name and 'mean' not in name:
-                result = []
                 result.append(data.loc[name].to_list())
-                mean = np.mean(result, axis=0)
-                std = np.std(result, axis=0)
-                plt.subplot(313)
-                plt.fill_between(range(mean.shape[0]), mean + std, mean - std, alpha=0.1)
-                plt.plot(range(mean.shape[0]), mean)
+        mean = np.mean(result, axis=0)
+        std = np.std(result, axis=0)
+        plt.subplot(313)
+        plt.fill_between(range(mean.shape[0]), mean + std, mean - std, alpha=0.1)
+        plt.plot(range(mean.shape[0]), mean)
+
     plt.show()
 
 plot_err()

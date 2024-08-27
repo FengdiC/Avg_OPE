@@ -143,8 +143,6 @@ def eval_policy(path='./exper/cartpole.pth',env='CartPole-v1',gamma=0.8):
         terminal = d
 
         if terminal:
-            o = env.reset()
-        if ep_len==499:
             num_traj += 1
             rets.append(ep_ret)
             avg_rets.append(ep_avg_ret)
@@ -437,4 +435,4 @@ def tune():
 
 # tune()
 
-# print(eval_policy(path='./exper/hopper.pth',env='Hopper-v4',gamma=0.95))
+print(eval_policy(path='./exper/hopper.pth',env='Hopper-v4',gamma=0.95))

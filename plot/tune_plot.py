@@ -63,19 +63,27 @@ def top_five(data,var,data_train,best_value):
     # plt.title('avg')
     # plt.show()
 
-    # last few steps top five
     n = data.shape[1]
-    last = data.iloc[:, n-800:n]
+    # check the training error
+    last = data_train.iloc[:, n - 800:n]
     last = (last - best_value).abs()
     avg = last.mean(axis=1)
-    top_five = avg.nsmallest(10)
+    top_five = avg.nsmallest(20)
     top_five = top_five.index
 
-    var = var.loc[top_five]
-    var = var.iloc[:, n-200:n]
-    var = var.mean(axis=1)
-    top_five = var.nsmallest(5)
+    # last few steps top five
+    last = data.loc[top_five]
+    last = last.iloc[:, n-800:n]
+    last = (last - best_value).abs()
+    avg = last.mean(axis=1)
+    top_five = avg.nsmallest(5)
     top_five = top_five.index
+
+    # var = var.loc[top_five]
+    # var = var.iloc[:, n-200:n]
+    # var = var.mean(axis=1)
+    # top_five = var.nsmallest(5)
+    # top_five = top_five.index
 
     top_five = list(top_five)
     results = data.loc[top_five].to_numpy()

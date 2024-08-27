@@ -437,4 +437,4 @@ def tune():
 
 # tune()
 
-print(eval_policy(path='./exper/hopper.pth',env='Hopper-v1',gamma=0.95))
+# print(eval_policy(path='./exper/hopper.pth',env='Hopper-v4',gamma=0.95))

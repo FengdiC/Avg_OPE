@@ -86,13 +86,13 @@ def top_five(data,var,data_train,best_value):
     for i in range(results.shape[0]):
         plt.plot(range(results.shape[1]), results[i, :], label=top_five[i])
 
-    plt.plot(range(results.shape[1]), np.ones(results.shape[1]), label='one')
+    plt.plot(range(results.shape[1]), best_value*np.ones(results.shape[1]), label='one')
 
     plt.subplot(212)
     for i in range(results_train.shape[0]):
         plt.plot(range(results_train.shape[1]), results_train[i, :], label=top_five[i])
 
-    plt.plot(range(results_train.shape[1]), np.ones(results_train.shape[1]), label='one')
+    plt.plot(range(results_train.shape[1]), best_value*np.ones(results_train.shape[1]), label='one')
     plt.legend()
     plt.title('train')
     plt.show()
@@ -100,4 +100,4 @@ def top_five(data,var,data_train,best_value):
 
 # compare hyperparamters
 data,var,data_train = tune_result('hopper')
-top_five(data,var,data_train,2.7)
+top_five(data,var,data_train,1.6973)

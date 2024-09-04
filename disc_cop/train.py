@@ -134,9 +134,9 @@ def train_ratio(
             logbev, logtarg = data["logbev"], data["logtarg"]
             first_timestep = data["first_timestep"]
 
-            c_next_obs = target_weight(next_obs)
+            c_next_obs = weight(next_obs)
             with torch.no_grad():
-                c_obs = weight(obs)
+                c_obs = target_weight(obs)
 
             if link == "inverse":
                 raise NotImplementedError

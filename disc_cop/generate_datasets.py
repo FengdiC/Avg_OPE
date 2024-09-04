@@ -39,7 +39,7 @@ def main(args):
         ) in product(
             HYPERPARAMETERS["discount_factors"],
             HYPERPARAMETERS["buffer_sizes"],
-            [ENV_FAMILY_SPECIFICS[env_family]["max_len"]],
+            HYPERPARAMETERS["max_lens"],
             [env_config[1]],
             HYPERPARAMETERS["random_weights"],
         ):
@@ -59,7 +59,7 @@ def main(args):
                 fold=1,
                 load_dataset=os.path.join(
                     load_dataset,
-                    "train-gamma_{}-random_weight_{}.pkl".format(gamma, random_weight),
+                    "train-gamma_{}-random_weight_{}-max_len_{}-buffer_size_{}.pkl".format(gamma, random_weight, max_len, buffer_size),
                 ),
             )
             maybe_collect_dataset(
@@ -72,7 +72,7 @@ def main(args):
                 fold=1,
                 load_dataset=os.path.join(
                     load_dataset,
-                    "test-gamma_{}-random_weight_{}.pkl".format(gamma, random_weight),
+                    "test-gamma_{}-random_weight_{}-max_len_{}-buffer_size_{}.pkl".format(gamma, random_weight, max_len, buffer_size),
                 ),
             )
 

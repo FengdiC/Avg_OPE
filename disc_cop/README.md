@@ -130,3 +130,11 @@ mountain_car: done
 
 rerun: done
 ```
+
+New experiments to run
+```
+discount factor = [0.8, 0.9, 0.95, 0.99 ,0.995]
+random weight = [0.3,0.4,0.5,0.6,0.7]
+buffer size = [2000/len,4000/len,8000/len,16000/len, 32000/len]
+len = [20,50,100,200,400]
+```

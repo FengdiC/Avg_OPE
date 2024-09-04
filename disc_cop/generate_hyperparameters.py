@@ -32,6 +32,7 @@ def generate_experiment_configs():
     tau = HYPERPARAMETERS["tau"]
     seeds = HYPERPARAMETERS["seeds"]
     step_frequency = HYPERPARAMETERS["step_frequency"]
+    max_lens = HYPERPARAMETERS["max_lens"]
 
     for env_family in ENVS:
         env_specific = ENV_FAMILY_SPECIFICS[env_family]
@@ -46,6 +47,7 @@ def generate_experiment_configs():
                 bootstrap_target,
                 lr,
                 alpha,
+                max_len,
             ) in tqdm(
                 product(
                     random_weights,
@@ -56,6 +58,7 @@ def generate_experiment_configs():
                     bootstrap_targets,
                     lrs,
                     alphas,
+                    max_lens,
                 ),
                 postfix="Hyperparameter sweep for environment: {}".format(env_name),
             ):
@@ -68,7 +71,7 @@ def generate_experiment_configs():
                     + str(discount_factor)
                     + "-"
                     + "buffer_size_"
-                    + str(buffer_size)
+                    + str(buffer_size // max_len)
                     + "-"
                     + "link_"
                     + str(link)
@@ -84,6 +87,8 @@ def generate_experiment_configs():
                     + "-"
                     + "alpha_"
                     + str(alpha)
+                    + "max_len_"
+                    + str(max_len)
                     + ".pkl"
                 )
                 os.makedirs(os.path.join(LOG_DIR, env_name), exist_ok=True)
@@ -102,8 +107,8 @@ def generate_experiment_configs():
                         epoch=math.ceil(env_specific["train_steps"] / step_frequency),
                         cv_fold=1,
                         batch_size=batch_size,
-                        buffer_size=buffer_size,
-                        max_len=env_specific["max_len"],
+                        buffer_size=buffer_size // max_len,
+                        max_len=max_len,
                         use_batch_norm=bootstrap_target != "target_network",
                         use_target_network=bootstrap_target == "target_network",
                         discount=discount_factor,

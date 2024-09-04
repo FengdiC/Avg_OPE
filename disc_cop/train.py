@@ -84,7 +84,7 @@ def train_ratio(
         fold=1,
         load_dataset=os.path.join(
             load_dataset,
-            "train-gamma_{}-random_weight_{}.pkl".format(gamma, random_weight),
+            "train-gamma_{}-random_weight_{}-max_len_{}-buffer_size_{}.pkl".format(gamma, random_weight, max_len, buffer_size),
         ),
     )
     buf_test = maybe_collect_dataset(
@@ -97,7 +97,7 @@ def train_ratio(
         fold=1,
         load_dataset=os.path.join(
             load_dataset,
-            "test-gamma_{}-random_weight_{}.pkl".format(gamma, random_weight),
+            "test-gamma_{}-random_weight_{}-max_len_{}-buffer_size_{}.pkl".format(gamma, random_weight, max_len, buffer_size),
         ),
     )
 

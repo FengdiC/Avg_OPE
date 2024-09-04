@@ -22,6 +22,7 @@ for env_name in ENV_TO_FAMILY:
         DATASET_DIR,
     )
 
+os.makedirs(LOG_DIR, exist_ok=True)
 with open(os.path.join(LOG_DIR, "generate_datasets.dat"), "w+") as f:
     f.writelines(dat_content)
 

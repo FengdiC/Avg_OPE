@@ -20,10 +20,10 @@ def main(args):
     env_family = ENV_TO_FAMILY[env_name]
     env_config = ENVS[env_family][env_name]
     res = dict()
-    for seed in tqdm(HYPERPARAMETERS["seeds"]):
+    for seed in tqdm(HYPERPARAMETERS[env_family]["seeds"]):
         set_seed(seed)
         res[seed] = dict()
-        for gamma in HYPERPARAMETERS["discount_factors"]:
+        for gamma in HYPERPARAMETERS[env_family]["discount_factors"]:
             res[seed][gamma] = policy_evaluation(
                 env_name=env_config[0],
                 policy_path=env_config[1],

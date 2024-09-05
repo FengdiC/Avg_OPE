@@ -21,7 +21,7 @@ def main(args):
     env_name = args.env_name
     env_family = ENV_TO_FAMILY[env_name]
     env_config = ENVS[env_family][env_name]
-    for seed in tqdm(HYPERPARAMETERS["seeds"]):
+    for seed in tqdm(HYPERPARAMETERS[env_family]["seeds"]):
         load_dataset = os.path.join(
             args.dataset_dir,
             "{}-seed_{}".format(
@@ -37,11 +37,11 @@ def main(args):
             policy_path,
             random_weight,
         ) in product(
-            HYPERPARAMETERS["discount_factors"],
-            HYPERPARAMETERS["buffer_sizes"],
-            HYPERPARAMETERS["max_lens"],
+            HYPERPARAMETERS[env_family]["discount_factors"],
+            HYPERPARAMETERS[env_family]["buffer_sizes"],
+            HYPERPARAMETERS[env_family]["max_lens"],
             [env_config[1]],
-            HYPERPARAMETERS["random_weights"],
+            HYPERPARAMETERS[env_family]["random_weights"],
         ):
 
             set_seed(seed)

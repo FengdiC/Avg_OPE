@@ -21,20 +21,20 @@ def generate_experiment_configs():
     This outputs a directory of pickle files that specifies the hyperparameters
     """
 
-    random_weights = HYPERPARAMETERS["random_weights"]
-    discount_factors = HYPERPARAMETERS["discount_factors"]
-    batch_sizes = HYPERPARAMETERS["batch_sizes"]
-    links = HYPERPARAMETERS["links"]
-    buffer_sizes = HYPERPARAMETERS["buffer_sizes"]
-    bootstrap_targets = HYPERPARAMETERS["bootstrap_targets"]
-    lrs = HYPERPARAMETERS["lrs"]
-    alphas = HYPERPARAMETERS["alphas"]
-    tau = HYPERPARAMETERS["tau"]
-    seeds = HYPERPARAMETERS["seeds"]
-    step_frequency = HYPERPARAMETERS["step_frequency"]
-    max_lens = HYPERPARAMETERS["max_lens"]
-
     for env_family in ENVS:
+        random_weights = HYPERPARAMETERS[env_family]["random_weights"]
+        discount_factors = HYPERPARAMETERS[env_family]["discount_factors"]
+        batch_sizes = HYPERPARAMETERS[env_family]["batch_sizes"]
+        links = HYPERPARAMETERS[env_family]["links"]
+        buffer_sizes = HYPERPARAMETERS[env_family]["buffer_sizes"]
+        bootstrap_targets = HYPERPARAMETERS[env_family]["bootstrap_targets"]
+        lrs = HYPERPARAMETERS[env_family]["lrs"]
+        alphas = HYPERPARAMETERS[env_family]["alphas"]
+        tau = HYPERPARAMETERS[env_family]["tau"]
+        seeds = HYPERPARAMETERS[env_family]["seeds"]
+        step_frequency = HYPERPARAMETERS[env_family]["step_frequency"]
+        max_lens = HYPERPARAMETERS[env_family]["max_lens"]
+
         env_specific = ENV_FAMILY_SPECIFICS[env_family]
         for env_name, env_config in ENVS[env_family].items():
             dat_content = ""

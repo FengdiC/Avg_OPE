@@ -76,7 +76,6 @@ def train_ratio(
 
     buf = maybe_collect_dataset(
         env,
-        gamma,
         max_ep=max_ep,
         max_len=max_len,
         policy_path=policy_path,
@@ -84,12 +83,11 @@ def train_ratio(
         fold=1,
         load_dataset=os.path.join(
             load_dataset,
-            "train-gamma_{}-random_weight_{}.pkl".format(gamma, random_weight),
+            "train-random_weight_{}.pkl".format(random_weight),
         ),
     )
     buf_test = maybe_collect_dataset(
         env,
-        gamma,
         max_ep=max_ep,
         max_len=max_len,
         policy_path=policy_path,
@@ -97,7 +95,7 @@ def train_ratio(
         fold=1,
         load_dataset=os.path.join(
             load_dataset,
-            "test-gamma_{}-random_weight_{}.pkl".format(gamma, random_weight),
+            "test-random_weight_{}.pkl".format(random_weight),
         ),
     )
 
@@ -261,8 +259,11 @@ def train_ratio(
         + "discount_factor_"
         + str(gamma)
         + "-"
-        + "buffer_size_"
-        + str(buffer_size)
+        + "max_ep_"
+        + str(max_ep)
+        + "-"
+        + "max_len_"
+        + str(max_len)
         + "-"
         + "link_"
         + str(link)

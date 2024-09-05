@@ -33,11 +33,9 @@ def main(args):
         max_num_samples = max(HYPERPARAMETERS[env_family]["buffer_sizes"])
         min_max_len = min(HYPERPARAMETERS[env_family]["max_lens"])
         for (
-            gamma,
             policy_path,
             random_weight,
         ) in product(
-            HYPERPARAMETERS[env_family]["discount_factors"],
             [env_config[1]],
             HYPERPARAMETERS[env_family]["random_weights"],
         ):
@@ -50,7 +48,6 @@ def main(args):
 
             maybe_collect_dataset(
                 env,
-                gamma,
                 max_ep=max_ep,
                 max_len=min_max_len,
                 policy_path=policy_path,
@@ -58,12 +55,11 @@ def main(args):
                 fold=1,
                 load_dataset=os.path.join(
                     load_dataset,
-                    "train-gamma_{}-random_weight_{}.pkl".format(gamma, random_weight),
+                    "train-random_weight_{}.pkl".format(random_weight),
                 ),
             )
             maybe_collect_dataset(
                 env,
-                gamma,
                 max_ep=max_ep,
                 max_len=min_max_len,
                 policy_path=policy_path,
@@ -71,7 +67,7 @@ def main(args):
                 fold=1,
                 load_dataset=os.path.join(
                     load_dataset,
-                    "test-gamma_{}-random_weight_{}.pkl".format(gamma, random_weight),
+                    "test-random_weight_{}.pkl".format(random_weight),
                 ),
             )
 

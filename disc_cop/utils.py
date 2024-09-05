@@ -30,18 +30,17 @@ class Buffer:
     for calculating the advantages of state-action pairs.
     """
 
-    def __init__(self, obs_dim, act_dim, max_ep, max_len, fold, gamma=0.99):
-        self.obs_buf = np.zeros((max_ep, max_len, obs_dim), dtype=np.float32)
+    def __init__(self, obs_dim, act_dim, max_ep, max_len, fold):
+        self.obs_buf = np.zeros((max_ep, max_len, obs_dim[0]), dtype=np.float32)
         self.next_obs_buf = np.zeros(
-            (max_ep, max_len, obs_dim), dtype=np.float32
+            (max_ep, max_len, obs_dim[0]), dtype=np.float32
         )
-        self.act_buf = np.zeros((max_ep, max_len, act_dim), dtype=np.float32)
+        self.act_buf = np.zeros((max_ep, max_len, act_dim[0]), dtype=np.float32)
         self.rew_buf = np.zeros((max_ep, max_len), dtype=np.float32)
         self.tim_buf = np.zeros((max_ep, max_len), dtype=np.int32)
         self.logtarg_buf = np.zeros((max_ep, max_len), dtype=np.float32)
         self.prod_buf = np.zeros((max_ep, max_len), dtype=np.float32)
         self.logbev_buf = np.zeros((max_ep, max_len), dtype=np.float32)
-        self.gamma = gamma
         self.fold = fold
         self.ptr = 0
         self.max_ep = max_ep
@@ -85,7 +84,7 @@ class Buffer:
 
         # the next two lines implement GAE-Lambda advantage calculation
         deltas = self.logtarg_buf[self.ep_i] - self.logbev_buf[self.ep_i]
-        self.prod_buf[deltas] = np.append(
+        self.prod_buf[self.ep_i] = np.append(
             0, core.discount_cumsum(deltas, 1)[:-1]
         )
 
@@ -144,7 +143,6 @@ def load_policy(path, env):
 
 def maybe_collect_dataset(
     env,
-    gamma,
     max_ep,
     max_len,
     policy_path,
@@ -165,7 +163,7 @@ def maybe_collect_dataset(
     obs_dim = env.observation_space.shape
     act_dim = env.action_space.shape
 
-    buf = Buffer(obs_dim, act_dim, max_ep, max_len, fold, gamma)
+    buf = Buffer(obs_dim, act_dim, max_ep, max_len, fold)
 
     (o, _), ep_len = env.reset(), 0
     num_traj = 0

@@ -46,33 +46,34 @@ def main(args):
 
             set_seed(seed)
 
+            true_buffer_size = buffer_size // max_len
             env = gym.make(env_config[0])
             env.reset(seed=seed)
 
             maybe_collect_dataset(
                 env,
                 gamma,
-                buffer_size=buffer_size,
+                buffer_size=true_buffer_size,
                 max_len=max_len,
                 policy_path=policy_path,
                 random_weight=random_weight,
                 fold=1,
                 load_dataset=os.path.join(
                     load_dataset,
-                    "train-gamma_{}-random_weight_{}-max_len_{}-buffer_size_{}.pkl".format(gamma, random_weight, max_len, buffer_size),
+                    "train-gamma_{}-random_weight_{}-max_len_{}-buffer_size_{}.pkl".format(gamma, random_weight, max_len, true_buffer_size),
                 ),
             )
             maybe_collect_dataset(
                 env,
                 gamma,
-                buffer_size=buffer_size,
+                buffer_size=true_buffer_size,
                 max_len=max_len,
                 policy_path=policy_path,
                 random_weight=random_weight,
                 fold=1,
                 load_dataset=os.path.join(
                     load_dataset,
-                    "test-gamma_{}-random_weight_{}-max_len_{}-buffer_size_{}.pkl".format(gamma, random_weight, max_len, buffer_size),
+                    "test-gamma_{}-random_weight_{}-max_len_{}-buffer_size_{}.pkl".format(gamma, random_weight, max_len, true_buffer_size),
                 ),
             )
 

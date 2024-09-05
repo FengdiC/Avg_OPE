@@ -31,48 +31,47 @@ def main(args):
         )
 
         max_num_samples = max(HYPERPARAMETERS[env_family]["buffer_sizes"])
+        min_max_len = min(HYPERPARAMETERS[env_family]["max_lens"])
         for (
             gamma,
-            max_len,
             policy_path,
             random_weight,
         ) in product(
             HYPERPARAMETERS[env_family]["discount_factors"],
-            HYPERPARAMETERS[env_family]["max_lens"],
             [env_config[1]],
             HYPERPARAMETERS[env_family]["random_weights"],
         ):
 
             set_seed(seed)
 
-            buffer_size = max_num_samples // max_len
+            max_ep = max_num_samples // min_max_len
             env = gym.make(env_config[0])
             env.reset(seed=seed)
 
             maybe_collect_dataset(
                 env,
                 gamma,
-                buffer_size=buffer_size,
-                max_len=max_len,
+                max_ep=max_ep,
+                max_len=min_max_len,
                 policy_path=policy_path,
                 random_weight=random_weight,
                 fold=1,
                 load_dataset=os.path.join(
                     load_dataset,
-                    "train-gamma_{}-random_weight_{}-max_len_{}.pkl".format(gamma, random_weight, max_len),
+                    "train-gamma_{}-random_weight_{}.pkl".format(gamma, random_weight),
                 ),
             )
             maybe_collect_dataset(
                 env,
                 gamma,
-                buffer_size=buffer_size,
-                max_len=max_len,
+                max_ep=max_ep,
+                max_len=min_max_len,
                 policy_path=policy_path,
                 random_weight=random_weight,
                 fold=1,
                 load_dataset=os.path.join(
                     load_dataset,
-                    "test-gamma_{}-random_weight_{}-max_len_{}.pkl".format(gamma, random_weight, max_len),
+                    "test-gamma_{}-random_weight_{}.pkl".format(gamma, random_weight),
                 ),
             )
 

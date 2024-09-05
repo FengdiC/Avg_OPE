@@ -55,7 +55,7 @@ def train_ratio(
     epoch=1000,
     cv_fold=1,
     batch_size=256,
-    buffer_size=20,
+    max_ep=20,
     max_len=50,
     use_batch_norm=False,
     use_target_network=False,
@@ -77,27 +77,27 @@ def train_ratio(
     buf = maybe_collect_dataset(
         env,
         gamma,
-        buffer_size=buffer_size,
+        max_ep=max_ep,
         max_len=max_len,
         policy_path=policy_path,
         random_weight=random_weight,
         fold=1,
         load_dataset=os.path.join(
             load_dataset,
-            "train-gamma_{}-random_weight_{}-max_len_{}-buffer_size_{}.pkl".format(gamma, random_weight, max_len, buffer_size),
+            "train-gamma_{}-random_weight_{}.pkl".format(gamma, random_weight),
         ),
     )
     buf_test = maybe_collect_dataset(
         env,
         gamma,
-        buffer_size=buffer_size,
+        max_ep=max_ep,
         max_len=max_len,
         policy_path=policy_path,
         random_weight=random_weight,
         fold=1,
         load_dataset=os.path.join(
             load_dataset,
-            "test-gamma_{}-random_weight_{}-max_len_{}-buffer_size_{}.pkl".format(gamma, random_weight, max_len, buffer_size),
+            "test-gamma_{}-random_weight_{}.pkl".format(gamma, random_weight),
         ),
     )
 

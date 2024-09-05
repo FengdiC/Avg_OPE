@@ -70,7 +70,7 @@ def generate_experiment_configs():
                     + "discount_factor_"
                     + str(discount_factor)
                     + "-"
-                    + "buffer_size_"
+                    + "max_ep"
                     + str(buffer_size // max_len)
                     + "-"
                     + "link_"
@@ -108,7 +108,7 @@ def generate_experiment_configs():
                         epoch=math.ceil(env_specific["train_steps"] / step_frequency),
                         cv_fold=1,
                         batch_size=batch_size,
-                        buffer_size=buffer_size // max_len,
+                        max_ep=buffer_size // max_len,
                         max_len=max_len,
                         use_batch_norm=bootstrap_target != "target_network",
                         use_target_network=bootstrap_target == "target_network",

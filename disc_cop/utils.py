@@ -23,41 +23,48 @@ def set_seed(seed):
     torch.backends.cudnn.deterministic = True
 
 
-class PPOBuffer:
+class Buffer:
     """
     A buffer for storing trajectories experienced by a PPO agent interacting
     with the environment, and using Generalized Advantage Estimation (GAE-Lambda)
     for calculating the advantages of state-action pairs.
     """
 
-    def __init__(self, obs_dim, act_dim, size, fold, gamma=0.99):
-        self.obs_buf = np.zeros(core.combined_shape(size, obs_dim), dtype=np.float32)
+    def __init__(self, obs_dim, act_dim, max_ep, max_len, fold, gamma=0.99):
+        self.obs_buf = np.zeros((max_ep, max_len, obs_dim), dtype=np.float32)
         self.next_obs_buf = np.zeros(
-            core.combined_shape(size, obs_dim), dtype=np.float32
+            (max_ep, max_len, obs_dim), dtype=np.float32
         )
-        self.act_buf = np.zeros(core.combined_shape(size, act_dim), dtype=np.float32)
-        self.rew_buf = np.zeros(size, dtype=np.float32)
-        self.tim_buf = np.zeros(size, dtype=np.int32)
-        self.logtarg_buf = np.zeros(size, dtype=np.float32)
-        self.prod_buf = np.zeros(size, dtype=np.float32)
-        self.logbev_buf = np.zeros(size, dtype=np.float32)
+        self.act_buf = np.zeros((max_ep, max_len, act_dim), dtype=np.float32)
+        self.rew_buf = np.zeros((max_ep, max_len), dtype=np.float32)
+        self.tim_buf = np.zeros((max_ep, max_len), dtype=np.int32)
+        self.logtarg_buf = np.zeros((max_ep, max_len), dtype=np.float32)
+        self.prod_buf = np.zeros((max_ep, max_len), dtype=np.float32)
+        self.logbev_buf = np.zeros((max_ep, max_len), dtype=np.float32)
         self.gamma = gamma
         self.fold = fold
-        self.ptr, self.path_start_idx, self.max_size = 0, 0, size
+        self.ptr = 0
+        self.max_ep = max_ep
+        self.max_len = max_len
+        self.max_size = max_ep * max_len
         self.ep_start_inds = [0]
+        self.ep_i = 0
 
     def store(self, obs, act, rew, next_obs, tim, logbev, logtarg):
         """
         Append one timestep of agent-environment interaction to the buffer.
         """
         assert self.ptr < self.max_size  # buffer has to have room so you can store
-        self.obs_buf[self.ptr] = obs
-        self.next_obs_buf[self.ptr] = next_obs
-        self.act_buf[self.ptr] = act
-        self.rew_buf[self.ptr] = rew
-        self.tim_buf[self.ptr] = tim
-        self.logbev_buf[self.ptr] = logbev
-        self.logtarg_buf[self.ptr] = logtarg
+        ep_i = self.ptr // self.max_len
+        timestep_i = self.ptr % self.max_len
+
+        self.obs_buf[ep_i, timestep_i] = obs
+        self.next_obs_buf[ep_i, timestep_i] = next_obs
+        self.act_buf[ep_i, timestep_i] = act
+        self.rew_buf[ep_i, timestep_i] = rew
+        self.tim_buf[ep_i, timestep_i] = tim
+        self.logbev_buf[ep_i, timestep_i] = logbev
+        self.logtarg_buf[ep_i, timestep_i] = logtarg
         self.ptr += 1
 
     def finish_path(self):
@@ -76,21 +83,22 @@ class PPOBuffer:
         for timesteps beyond the arbitrary episode horizon (or epoch cutoff).
         """
 
-        path_slice = slice(self.path_start_idx, self.ptr)
-
         # the next two lines implement GAE-Lambda advantage calculation
-        deltas = self.logtarg_buf - self.logbev_buf
-        self.prod_buf[path_slice] = np.append(
-            0, core.discount_cumsum(deltas[path_slice], 1)[:-1]
+        deltas = self.logtarg_buf[self.ep_i] - self.logbev_buf[self.ep_i]
+        self.prod_buf[deltas] = np.append(
+            0, core.discount_cumsum(deltas, 1)[:-1]
         )
 
-        self.path_start_idx = self.ptr
-        self.ep_start_inds.append(self.ptr)
+        self.ep_i += 1
 
-    def set_size(self, size):
-        assert len(self.ep_start_inds) >= size > 0
-        if size < len(self.ep_start_inds):
-            self.ptr = self.ep_start_inds[size]
+    def set_ep_len(self, max_ep, max_len):
+        assert self.max_ep >= max_ep
+        assert self.max_len >= max_len
+
+        self.max_len = max_len
+        self.max_ep = max_ep
+        self.ep_i = max_ep
+        self.ptr = max_ep * max_len
 
     def sample(self, batch_size, fold_num):
         interval = int(self.ptr / self.fold)
@@ -98,30 +106,31 @@ class PPOBuffer:
             ind = np.random.randint(self.ptr - interval, size=batch_size)
             ind = ind + np.where(ind >= fold_num * interval, 1, 0) * interval
         else:
-            ind = np.random.randint(-len(self.ep_start_inds), self.ptr, size=batch_size)
+            ind = np.random.randint(-self.max_ep, self.ptr, size=batch_size)
 
-        samp_ind = np.clip(ind, a_min=0, a_max=np.inf).astype(int)
+        sample_ind = np.clip(sample_ind, a_min=0, a_max=np.inf)
+        ep_i = sample_ind // self.max_len
+        timestep_i = sample_ind % self.max_len
+
         data = dict(
-            obs=self.obs_buf[samp_ind],
-            act=self.act_buf[samp_ind],
-            prod=self.prod_buf[samp_ind],
-            next_obs=self.next_obs_buf[samp_ind],
-            tim=self.tim_buf[samp_ind],
-            logbev=self.logbev_buf[samp_ind],
-            logtarg=self.logtarg_buf[samp_ind],
+            obs=self.obs_buf[ep_i, timestep_i],
+            act=self.act_buf[ep_i, timestep_i],
+            prod=self.prod_buf[ep_i, timestep_i],
+            next_obs=self.next_obs_buf[ep_i, timestep_i],
+            tim=self.tim_buf[ep_i, timestep_i],
+            logbev=self.logbev_buf[ep_i, timestep_i],
+            logtarg=self.logtarg_buf[ep_i, timestep_i],
             first_timestep=ind < 0,
         )
 
         if np.any(ind < 0):
             # Find any s_0 as s' and properly set them.
             start_ind = np.where(ind < 0)[0]
-            data["next_obs"][start_ind] = self.obs_buf[
-                np.asarray(self.ep_start_inds)[-ind[start_ind] - 1]
-            ]
+            data["next_obs"][start_ind] = data["obs"][start_ind]
         return {k: torch.as_tensor(v, dtype=torch.float32) for k, v in data.items()}
 
     def delete_last_traj(self):
-        self.ptr = self.path_start_idx
+        self.ptr = self.ep_i * self.max_len
 
 
 def load_policy(path, env):
@@ -136,7 +145,7 @@ def load_policy(path, env):
 def maybe_collect_dataset(
     env,
     gamma,
-    buffer_size,
+    max_ep,
     max_len,
     policy_path,
     random_weight,
@@ -149,14 +158,14 @@ def maybe_collect_dataset(
             save_buf = False
             print("Loaded from existing buffer.")
             buf = pickle.load(open(load_dataset, "rb"))
-            buf.set_size(buffer_size)
+            buf.set_ep_len(max_ep, max_len)
         os.makedirs(os.path.dirname(load_dataset), exist_ok=True)
 
     ac = load_policy(policy_path, env)
     obs_dim = env.observation_space.shape
     act_dim = env.action_space.shape
 
-    buf = PPOBuffer(obs_dim, act_dim, buffer_size * max_len, fold, gamma)
+    buf = Buffer(obs_dim, act_dim, max_ep, max_len, fold, gamma)
 
     (o, _), ep_len = env.reset(), 0
     num_traj = 0
@@ -168,13 +177,12 @@ def maybe_collect_dataset(
     elif isinstance(env.action_space, Discrete):
         unif = 1 / env.action_space.n
 
-    while num_traj < buffer_size:
-        targ_a, _, _ = ac.step(torch.as_tensor(o, dtype=torch.float32))
+    while num_traj < max_ep:
         if np.random.random() < random_weight:
             # random behaviour policy
             a = env.action_space.sample()
         else:
-            a = targ_a
+            a, _, _ = ac.step(torch.as_tensor(o, dtype=torch.float32))
         pi = ac.pi._distribution(torch.as_tensor(o, dtype=torch.float32))
         logtarg = (
             ac.pi._log_prob_from_distribution(pi, torch.as_tensor(a)).detach().numpy()

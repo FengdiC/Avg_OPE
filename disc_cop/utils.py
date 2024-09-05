@@ -35,7 +35,10 @@ class Buffer:
         self.next_obs_buf = np.zeros(
             (max_ep, max_len, obs_dim[0]), dtype=np.float32
         )
-        self.act_buf = np.zeros((max_ep, max_len, act_dim[0]), dtype=np.float32)
+        try:
+            self.act_buf = np.zeros((max_ep, max_len, act_dim[0]), dtype=np.float32)
+        except:
+            self.act_buf = np.zeros((max_ep, max_len), dtype=np.float32)
         self.rew_buf = np.zeros((max_ep, max_len), dtype=np.float32)
         self.tim_buf = np.zeros((max_ep, max_len), dtype=np.int32)
         self.logtarg_buf = np.zeros((max_ep, max_len), dtype=np.float32)

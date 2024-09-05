@@ -87,6 +87,7 @@ def generate_experiment_configs():
                     + "-"
                     + "alpha_"
                     + str(alpha)
+                    + "-"
                     + "max_len_"
                     + str(max_len)
                     + ".pkl"

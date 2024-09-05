@@ -87,12 +87,12 @@ class PPOBuffer:
         self.path_start_idx = self.ptr
         self.ep_start_inds.append(self.ptr)
 
+    def set_size(self, size):
+        assert len(self.ep_start_inds) >= size > 0
+        if size < len(self.ep_start_inds):
+            self.ptr = self.ep_start_inds[size]
+
     def sample(self, batch_size, fold_num):
-        """
-        Call this at the end of an epoch to get all of the data from
-        the buffer, with advantages appropriately normalized (shifted to have
-        mean zero and std one). Also, resets some pointers in the buffer.
-        """
         interval = int(self.ptr / self.fold)
         if self.fold > 1:
             ind = np.random.randint(self.ptr - interval, size=batch_size)
@@ -148,7 +148,8 @@ def maybe_collect_dataset(
         if os.path.isfile(load_dataset):
             save_buf = False
             print("Loaded from existing buffer.")
-            return pickle.load(open(load_dataset, "rb"))
+            buf = pickle.load(open(load_dataset, "rb"))
+            buf.set_size(buffer_size)
         os.makedirs(os.path.dirname(load_dataset), exist_ok=True)
 
     ac = load_policy(policy_path, env)

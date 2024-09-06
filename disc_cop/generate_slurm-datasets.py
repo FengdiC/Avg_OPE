@@ -29,7 +29,7 @@ with open(os.path.join(LOG_DIR, "generate_datasets.dat"), "w+") as f:
 sbatch_content = ""
 sbatch_content += "#!/bin/bash\n"
 sbatch_content += "#SBATCH --account={}\n".format(CC_ACCOUNT)
-sbatch_content += "#SBATCH --time=01:30:00\n"
+sbatch_content += "#SBATCH --time=03:30:00\n"
 sbatch_content += "#SBATCH --cpus-per-task=1\n"
 sbatch_content += "#SBATCH --mem=3G\n"
 sbatch_content += "#SBATCH --array=1-{}\n".format(len(ENV_TO_FAMILY))

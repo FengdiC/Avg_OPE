@@ -32,6 +32,7 @@ def main(args):
 
         max_num_samples = max(HYPERPARAMETERS[env_family]["buffer_sizes"])
         min_max_len = min(HYPERPARAMETERS[env_family]["max_lens"])
+        max_max_len = max(HYPERPARAMETERS[env_family]["max_lens"])
         for (
             policy_path,
             random_weight,
@@ -49,7 +50,7 @@ def main(args):
             maybe_collect_dataset(
                 env,
                 max_ep=max_ep,
-                max_len=min_max_len,
+                max_len=max_max_len,
                 policy_path=policy_path,
                 random_weight=random_weight,
                 fold=1,
@@ -61,7 +62,7 @@ def main(args):
             maybe_collect_dataset(
                 env,
                 max_ep=max_ep,
-                max_len=min_max_len,
+                max_len=max_max_len,
                 policy_path=policy_path,
                 random_weight=random_weight,
                 fold=1,

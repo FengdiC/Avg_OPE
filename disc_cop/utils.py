@@ -238,9 +238,11 @@ def policy_evaluation(env_name, policy_path, gamma, max_len, total_trajs=100):
         terminal = d
         epoch_ended = ep_len == max_len - 1
 
-        if terminal and epoch_ended:
-            num_traj += 1
-            rets.append(ep_ret)
-            avg_rets.append(ep_avg_ret)
+        if terminal or epoch_ended:
+            if epoch_ended:
+                num_traj += 1
+                rets.append(ep_ret)
+                avg_rets.append(ep_avg_ret)
             (o, _), ep_ret, ep_len, ep_avg_ret = env.reset(), 0, 0, 0
+
     return (1 - gamma) * np.mean(rets), np.var(rets), np.mean(avg_rets)

@@ -16,7 +16,9 @@ module load gcc opencv intel/2023.2.1 cuda/11.8 python/3.10 mpi4py
 SECONDS=0
 echo
 
-python avg_corr/run_cartpole_td.py --log_dir $SCRATCH/avg_corr/td_err/ --steps 5 --epoch 2000 --max_len 50
+python run/eval_policies.py --log_dir $SCRATCH/avg_corr/
+
+#python avg_corr/run_cartpole_td.py --log_dir $SCRATCH/avg_corr/td_err/ --steps 5 --epoch 2000 --max_len 50
 
 #python avg_corr/run_classic.py --log_dir $SCRATCH/avg_corr/classic/ \
 #--array $SLURM_ARRAY_TASK_ID  --steps 5 --epoch 2000 --max_len 50 &
@@ -33,9 +35,9 @@ sleep 72h
 # python -m pip install -U matplotlib
 # wget https://mujoco.org/download/mujoco210-linux-x86_64.tar.gz
 # tar -xvzf mujoco210-linux-x86_64.tar.gz
-mv mujoco210 ./.mujoco/mujoco210
-pip install -U 'mujoco-py<2.2,>=2.1'
-vi .bashrc
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/fengdic/.mujoco/mujoco210/bin
-python
-import mujoco_py
+#  mv mujoco210 ./.mujoco/mujoco210
+#  pip install -U 'mujoco-py<2.2,>=2.1'
+#  vi .bashrc
+#  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/fengdic/.mujoco/mujoco210/bin
+#  python
+#  import mujoco_py

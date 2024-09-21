@@ -158,3 +158,4 @@ def eval_mujoco():
             writer.writerow([key, value])
 
 eval_classic()
+eval_mujoco()

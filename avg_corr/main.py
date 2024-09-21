@@ -11,8 +11,8 @@ import torch.nn as nn
 from torch.optim import Adam
 import ppo.algo.core as core
 from ppo.algo.random_search import random_search
+from torch.distributions.normal import Normal
 from avg_corr.td_err import temporal_error
-import ppo.utils.logger as logger
 import matplotlib.pyplot as plt
 import csv
 
@@ -151,10 +151,9 @@ def eval_policy(path='./exper/cartpole.pth',env='CartPole-v1',gamma=0.8):
 
 # sample behaviour dataset
 # behaviour policy = (1- random_weight) * target_policy + random_weight * random_policy
-# random_weight = 0.3  0.5  0.7
-# classic control max_len=50 number_traj = 40 80 200
+# behaviour policy = Normal(target_mu, torch.exp(random_weight))
 def collect_dataset(env,gamma,buffer_size=20,max_len=200,
-                    path='./exper/cartpole_998.pth', random_weight=0.2,fold=10):
+                    path='./exper/cartpole_998.pth', random_weight=0.2,fold=10,mujoco=False):
     ac = load(path,env)
     obs_dim = env.observation_space.shape
     act_dim = env.action_space.shape
@@ -172,15 +171,25 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
         unif = 1 / env.action_space.n
 
     while num_traj < buffer_size:
-        targ_a, _, _ = ac.step(torch.as_tensor(o, dtype=torch.float32))
-        if np.random.random() < random_weight:
-            # random behaviour policy
-            a = env.action_space.sample()
-        else:
-            a = targ_a
         pi = ac.pi._distribution(torch.as_tensor(o, dtype=torch.float32))
-        logtarg = ac.pi._log_prob_from_distribution(pi, torch.as_tensor(a)).detach().numpy()
-        logbev = np.log(random_weight * unif + (1 - random_weight) * np.exp(logtarg))
+        if mujoco:
+            # target std = e^{-0.5} ~ 0.6
+            std = torch.nn.Parameter(torch.as_tensor(random_weight * np.ones(act_dim, dtype=np.float32)))
+            mu = ac.pi.mu_net(torch.as_tensor(o, dtype=torch.float32))
+            beh_pi = Normal(mu, std)
+            a = beh_pi.sample()
+            logtarg = pi.log_prob(torch.as_tensor(a)).sum(axis=-1).detach().numpy()
+            logbev = beh_pi.log_prob(torch.as_tensor(a)).sum(axis=-1).detach().numpy()
+        else:
+            targ_a, _, _ = ac.step(torch.as_tensor(o, dtype=torch.float32))
+            if np.random.random() < random_weight:
+                # random behaviour policy
+                a = env.action_space.sample()
+            else:
+                a = targ_a
+            logtarg = ac.pi._log_prob_from_distribution(pi, torch.as_tensor(a)).detach().numpy()
+            logbev = np.log(random_weight * unif + (1 - random_weight) * np.exp(logtarg))
+
         next_o, r, d, _ = env.step(a)
         ep_len += 1
 
@@ -212,7 +221,7 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
 
 # train weight net
 def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,reg_lambda=0, discount=0.95,
-          checkpoint=5,epoch=1000,cv_fold=1,batch_size=256,buffer_size=20,max_len=50):
+          checkpoint=5,epoch=1000,cv_fold=1,batch_size=256,buffer_size=20,max_len=50,mujoco=False):
     hyperparam = random_search(hyper_choice)
     # gamma = hyperparam['gamma']
     gamma = discount
@@ -226,14 +235,14 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,reg_lambda
     env.reset(seed=seed)
 
     buf = collect_dataset(env,gamma,buffer_size=buffer_size,max_len=max_len,path=path,
-                            random_weight=random_weight,fold =cv_fold)
+                            random_weight=random_weight,fold =cv_fold,mujoco=mujoco)
     buf_test = collect_dataset(env, gamma,buffer_size=buffer_size,max_len=max_len,
-                                      path=path,random_weight=random_weight,fold=cv_fold)
+                                      path=path,random_weight=random_weight,fold=cv_fold,mujoco=mujoco)
 
-    buf_td = collect_dataset(env, gamma, buffer_size=2000, max_len=50, path=path,
-                          random_weight=random_weight, fold=1)
-    second_buf_td = collect_dataset(env, gamma, buffer_size=2000, max_len=50,
-                               path=path, random_weight=random_weight, fold=1)
+    # buf_td = collect_dataset(env, gamma, buffer_size=2000, max_len=50, path=path,
+    #                       random_weight=random_weight, fold=1)
+    # second_buf_td = collect_dataset(env, gamma, buffer_size=2000, max_len=50,
+    #                            path=path, random_weight=random_weight, fold=1)
     if link=='inverse' or link=='identity':
         weight = WeightNet(env.observation_space.shape[0], hidden_sizes=(256,256),activation=nn.ReLU)
     else:
@@ -317,20 +326,20 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,reg_lambda
     objs_val_mean = []
     for fold_num in range(cv_fold):
         objs, objs_test, objs_val = [], [], []
-        err = []
+        # err = []
         for steps in range(epoch * checkpoint):
             update(fold_num)
             if steps % checkpoint == 0:
                 # obj_val, obj = eval_cv(buf, fold_num)
                 obj, obj_test = eval(buf), eval(buf_test)
-                td_err = temporal_error(buf_td,second_buf_td,gamma,weight)
+                # td_err = temporal_error(buf_td,second_buf_td,gamma,weight)
                 objs.append(obj)
                 # objs_val.append(obj_val)
                 objs_test.append(obj_test)
-                err.append(td_err)
+                # err.append(td_err)
         # objs_mean.append(objs)
         # objs_val_mean.append(objs_val)
-    return objs, objs_test, err
+    return objs, objs_test #, err
     # return np.around(np.mean(np.array(objs_mean), axis=0), decimals=4), \
     #        np.around(np.mean(np.array(objs_val_mean), axis=0), decimals=4)
 

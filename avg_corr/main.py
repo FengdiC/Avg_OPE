@@ -12,7 +12,7 @@ from torch.optim import Adam
 import ppo.algo.core as core
 from ppo.algo.random_search import random_search
 from torch.distributions.normal import Normal
-from avg_corr.td_err import temporal_error
+from avg_corr.td_err import TD_computation
 import matplotlib.pyplot as plt
 import csv
 
@@ -243,6 +243,7 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,reg_lambda
     #                       random_weight=random_weight, fold=1)
     # second_buf_td = collect_dataset(env, gamma, buffer_size=2000, max_len=50,
     #                            path=path, random_weight=random_weight, fold=1)
+    # TD_err = TD_computation(buf_td,second_buf_td,gamma)
     if link=='inverse' or link=='identity':
         weight = WeightNet(env.observation_space.shape[0], hidden_sizes=(256,256),activation=nn.ReLU)
     else:
@@ -332,7 +333,7 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,reg_lambda
             if steps % checkpoint == 0:
                 # obj_val, obj = eval_cv(buf, fold_num)
                 obj, obj_test = eval(buf), eval(buf_test)
-                # td_err = temporal_error(buf_td,second_buf_td,gamma,weight)
+                # td_err = TD_err.compute(weight)
                 objs.append(obj)
                 # objs_val.append(obj_val)
                 objs_test.append(obj_test)
@@ -392,7 +393,7 @@ def tune():
     result_val = []
     print("Finish one combination of hyperparameters!")
     for seed in seeds:
-        cv, cv_val,_ = train(lr=lr,env=args.env,seed=seed,path=args.path,hyper_choice=args.seed,
+        cv, cv_val = train(lr=lr,env=args.env,seed=seed,path=args.path,hyper_choice=args.seed,
                        link=link,random_weight=random_weight,l1_lambda=alpha,
                        reg_lambda=reg_lambda,discount = discount_factor,
                        checkpoint=args.steps,epoch=args.epoch, cv_fold=10,
@@ -444,4 +445,4 @@ def tune():
 
 # tune()
 
-print(eval_policy(path='./exper/hopper.pth',env='Hopper-v4',gamma=0.95))
+# print(eval_policy(path='./exper/hopper.pth',env='Hopper-v4',gamma=0.95))

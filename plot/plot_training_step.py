@@ -86,6 +86,7 @@ def plot_err():
         mean = np.mean(result,axis=0)
         std = np.std(result,axis=0)
         plt.subplot(311)
+        plt.title('err')
         plt.fill_between(range(mean.shape[0]), mean + std, mean-std, alpha=0.1)
         plt.plot(range(mean.shape[0]),mean)
 
@@ -96,6 +97,7 @@ def plot_err():
         mean = np.mean(result, axis=0)
         std = np.std(result, axis=0)
         plt.subplot(312)
+        plt.title('train')
         plt.fill_between(range(mean.shape[0]), mean + std, mean - std, alpha=0.1)
         plt.plot(range(mean.shape[0]), mean)
 
@@ -106,6 +108,7 @@ def plot_err():
         mean = np.mean(result, axis=0)
         std = np.std(result, axis=0)
         plt.subplot(313)
+        plt.title('test')
         plt.fill_between(range(mean.shape[0]), mean + std, mean - std, alpha=0.1)
         plt.plot(range(mean.shape[0]), mean)
 

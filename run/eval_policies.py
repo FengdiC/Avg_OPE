@@ -61,21 +61,14 @@ def eval_behaviour_policy(path='./exper/cartpole.pth',env='CartPole-v1',
     rets = []
     avg_rets = []
 
-    if isinstance(env.action_space, Box):
-        action_range = env.action_space.high - env.action_space.low
-        assert np.any(action_range > 0)
-        unif = 1 / np.prod(action_range)
-    elif isinstance(env.action_space, Discrete):
-        unif = 1 / env.action_space.n
-
     while num_traj<100:
-        pi = ac.pi._distribution(torch.as_tensor(o, dtype=torch.float32))
+        # pi = ac.pi._distribution(torch.as_tensor(o, dtype=torch.float32))
         if mujoco:
             # target std = e^{-0.5} ~ 0.6
             std = torch.nn.Parameter(torch.as_tensor(random_weight * np.ones(act_dim, dtype=np.float32)))
             mu = ac.pi.mu_net(torch.as_tensor(o, dtype=torch.float32))
             beh_pi = Normal(mu, std)
-            a = beh_pi.sample()
+            a = beh_pi.sample().numpy()
         else:
             targ_a, _, _ = ac.step(torch.as_tensor(o, dtype=torch.float32))
             if np.random.random() < random_weight:
@@ -113,7 +106,7 @@ def eval_classic():
             for i in range(len(env)):
                 target_obj,_,target_ret = eval_policy(path[i],env[i],gamma)
                 _,_,beh_ret = eval_behaviour_policy(path[i],env[i],gamma,mujoco=False,random_weight=random)
-                name = [str(env),str(random),str(gamma)]
+                name = [str(env[i]),str(random),str(gamma)]
                 obj['-'.join(name)+'-obj'] = target_obj
                 tar_rets['-'.join(name)+'-tar_ret'] = target_ret
                 beh_rets['-'.join(name)+'-beh_ret'] = beh_ret
@@ -130,7 +123,7 @@ def eval_classic():
 def eval_mujoco():
     args = argsparser()
     discount_factor = [0.8, 0.9,0.95, 0.99, 0.995]
-    random_weight = [0.8,1.1,1.4,1.7,2.0]
+    random_weight = [0.8,1.2,1.6,2.0,2.4,2.8,3.2]
     env = ['MountainCarContinuous-v0','Hopper-v4','HalfCheetah-v4','HalfCheetah-v4','Ant-v4',
            'Swimmer-v4','Walker2d-v4']
     path = ['./exper/mountaincar.pth','./exper/hopper.pth','./exper/halfcheetah_0.pth',
@@ -143,7 +136,7 @@ def eval_mujoco():
             for i in range(len(env)):
                 target_obj, _, target_ret = eval_policy(path[i], env[i], gamma)
                 _, _, beh_ret = eval_behaviour_policy(path[i], env[i], gamma, mujoco=True, random_weight=random)
-                name = [str(env), str(random), str(gamma)]
+                name = [str(env[i]), str(random), str(gamma)]
                 obj['-'.join(name) + '-obj'] = target_obj
                 tar_rets['-'.join(name) + '-tar_ret'] = target_ret
                 beh_rets['-'.join(name) + '-beh_ret'] = beh_ret

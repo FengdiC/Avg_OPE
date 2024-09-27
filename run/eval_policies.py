@@ -123,7 +123,7 @@ def eval_classic():
 def eval_mujoco():
     args = argsparser()
     discount_factor = [0.8, 0.9,0.95, 0.99, 0.995]
-    random_weight = [0.8,1.2,1.6,2.0,2.4,2.8,3.2]
+    random_weight = [np.exp(-0.5),0.65,0.7,0.75,0.8,0.85]
     env = ['MountainCarContinuous-v0','Hopper-v4','HalfCheetah-v4','HalfCheetah-v4','Ant-v4',
            'Swimmer-v4','Walker2d-v4']
     path = ['./exper/mountaincar.pth','./exper/hopper.pth','./exper/halfcheetah_0.pth',
@@ -140,7 +140,7 @@ def eval_mujoco():
                 obj['-'.join(name) + '-obj'] = target_obj
                 tar_rets['-'.join(name) + '-tar_ret'] = target_ret
                 beh_rets['-'.join(name) + '-beh_ret'] = beh_ret
-    filename = args.log_dir + 'mujoco_values.csv'
+    filename = args.log_dir + 'mujoco_values_less_var.csv'
     with open(filename, 'w') as csv_file:
         writer = csv.writer(csv_file)
         for key, value in obj.items():
@@ -150,5 +150,5 @@ def eval_mujoco():
         for key, value in beh_rets.items():
             writer.writerow([key, value])
 
-eval_classic()
+# eval_classic()
 eval_mujoco()

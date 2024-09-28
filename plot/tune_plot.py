@@ -108,4 +108,4 @@ def top_five(data,var,data_train,best_value):
 
 # compare hyperparamters
 data,var,data_train = tune_result('hopper')
-top_five(data,var,data_train,1.6973)
+top_five(data,var,data_train,1.6964)

@@ -4,13 +4,14 @@
 #SBATCH --time=0-72:00
 #SBATCH --output=%N-%j.out
 #SBATCH --account=def-ashique
-#SBATCH --array=1-480
+#SBATCH --array=1-720
 
 # salloc --cpus-per-task=1 --mem=3600M --time=0-3:00 --account=def-ashique
 
 source $HOME/ENV_1/bin/activate
 module load StdEnv/2023
-module load gcc opencv intel/2023.2.1 cuda/11.8 python/3.10 mpi4py
+module load gcc gcccore/.12.3 opencv intel/2023.2.1 cuda/11.8 python/3.10 mpi4py
+module load mujoco
 
 SECONDS=0
 echo

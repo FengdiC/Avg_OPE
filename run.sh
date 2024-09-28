@@ -11,7 +11,8 @@
 
 source $HOME/ENV_1/bin/activate
 module load StdEnv/2023
-module load gcc opencv intel/2023.2.1 cuda/11.8 python/3.10 mpi4py
+module load gcc gcccore/.12.3 opencv intel/2023.2.1 cuda/11.8 python/3.10 mpi4py
+module load mujoco
 
 SECONDS=0
 echo
@@ -30,14 +31,21 @@ echo "Baseline job $seed took $SECONDS"
 sleep 72h
 
 # python avg_corr/run_classic.py --log_dir $SCRATCH/avg_corr/classic/ --array 10  --steps 5 --epoch 2000 --max_len 50
-# pip install torch torchvision numpy gym
+# pip install torch torchvision numpy
 # python -m pip install -U pip
 # python -m pip install -U matplotlib
-# wget https://mujoco.org/download/mujoco210-linux-x86_64.tar.gz
-# tar -xvzf mujoco210-linux-x86_64.tar.gz
+#  pip install pandas scipy gym==0.25.1
+#  wget https://mujoco.org/download/mujoco210-linux-x86_64.tar.gz
+#  tar -xvzf mujoco210-linux-x86_64.tar.gz
+#  mkdir .mujoco
 #  mv mujoco210 ./.mujoco/mujoco210
 #  pip install -U 'mujoco-py<2.2,>=2.1'
 #  vi .bashrc
 #  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/fengdic/.mujoco/mujoco210/bin
+#  source .bashrc
+#  pip install "Cython<3"
 #  python
 #  import mujoco_py
+#  module load mujoco
+#  pip install imageio
+#  pip install gymnasium>=0.29

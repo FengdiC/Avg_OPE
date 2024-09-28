@@ -3,8 +3,8 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 import numpy as np
-from gym.spaces import Box, Discrete
-import gym
+from gymnasium.spaces import Box, Discrete
+import gymnasium as gym
 import time
 import torch
 import torch.nn as nn
@@ -126,21 +126,22 @@ def eval_policy(path='./exper/cartpole.pth',env='CartPole-v1',gamma=0.8):
     env = gym.make(env)
     ac = load(path, env)
 
-    o, ep_len, ep_ret, ep_avg_ret = env.reset(), 0 ,0, 0
+    o , _ = env.reset()
+    ep_len, ep_ret, ep_avg_ret = 0 ,0, 0
     num_traj=0
     rets = []
     avg_rets = []
 
     while num_traj<100:
         a, _,logtarg = ac.step(torch.as_tensor(o, dtype=torch.float32))
-        next_o, r, d, _ = env.step(a)
+        next_o, r, d,truncated, _ = env.step(a)
         ep_ret += r * gamma ** ep_len
         ep_avg_ret += r
         ep_len += 1
         # Update obs (critical!)
         o = next_o
 
-        terminal = d
+        terminal = d or truncated
 
         if terminal:
             num_traj += 1
@@ -160,8 +161,8 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
 
     buf=PPOBuffer(obs_dim, act_dim, buffer_size*max_len,fold, gamma)
 
-    o, ep_len = env.reset(), 0
-    num_traj = 0
+    o, _ = env.reset()
+    num_traj, ep_len = 0, 0
 
     if isinstance(env.action_space, Box):
         action_range = env.action_space.high - env.action_space.low
@@ -173,11 +174,10 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
     while num_traj < buffer_size:
         pi = ac.pi._distribution(torch.as_tensor(o, dtype=torch.float32))
         if mujoco:
-            # target std = e^{-0.5} ~ 0.6
-            std = torch.nn.Parameter(torch.as_tensor(random_weight * np.ones(act_dim, dtype=np.float32)))
+            std = torch.exp(ac.pi.log_std)
             mu = ac.pi.mu_net(torch.as_tensor(o, dtype=torch.float32))
-            beh_pi = Normal(mu, std)
-            a = beh_pi.sample()
+            beh_pi = Normal(mu, std * random_weight)
+            a = beh_pi.sample().numpy()
             logtarg = pi.log_prob(torch.as_tensor(a)).sum(axis=-1).detach().numpy()
             logbev = beh_pi.log_prob(torch.as_tensor(a)).sum(axis=-1).detach().numpy()
         else:
@@ -190,7 +190,7 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
             logtarg = ac.pi._log_prob_from_distribution(pi, torch.as_tensor(a)).detach().numpy()
             logbev = np.log(random_weight * unif + (1 - random_weight) * np.exp(logtarg))
 
-        next_o, r, d, _ = env.step(a)
+        next_o, r, d, truncated, _ = env.step(a)
         ep_len += 1
 
         # save and log
@@ -199,7 +199,7 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
         # Update obs (critical!)
         o = next_o
 
-        terminal = d
+        terminal = d or truncated
         epoch_ended = ep_len == max_len
 
         if terminal or epoch_ended:
@@ -212,9 +212,11 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
             if terminal and not (epoch_ended):
                 # print('Warning: trajectory ends early at %d steps.' % ep_len, flush=True)
                 buf.delete_last_traj()
-                o, ep_ret, ep_len = env.reset(), 0, 0
+                o, _ = env.reset()
+                ep_len, ep_ret, ep_avg_ret = 0, 0, 0
                 continue
-            o, ep_ret, ep_len = env.reset(), 0, 0
+            o, _ = env.reset()
+            ep_len, ep_ret, ep_avg_ret = 0, 0, 0
             num_traj += 1
             buf.finish_path()
     return buf
@@ -236,8 +238,8 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,reg_lambda
 
     buf = collect_dataset(env,gamma,buffer_size=buffer_size,max_len=max_len,path=path,
                             random_weight=random_weight,fold =cv_fold,mujoco=mujoco)
-    buf_test = collect_dataset(env, gamma,buffer_size=buffer_size,max_len=max_len,
-                                      path=path,random_weight=random_weight,fold=cv_fold,mujoco=mujoco)
+    # buf_test = collect_dataset(env, gamma,buffer_size=buffer_size,max_len=max_len,
+    #                                   path=path,random_weight=random_weight,fold=cv_fold,mujoco=mujoco)
 
     # buf_td = collect_dataset(env, gamma, buffer_size=2000, max_len=50, path=path,
     #                       random_weight=random_weight, fold=1)
@@ -331,18 +333,18 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,reg_lambda
         for steps in range(epoch * checkpoint):
             update(fold_num)
             if steps % checkpoint == 0:
-                # obj_val, obj = eval_cv(buf, fold_num)
-                obj, obj_test = eval(buf), eval(buf_test)
+                obj_val, obj = eval_cv(buf, fold_num)
+                # obj, obj_test = eval(buf), eval(buf_test)
                 # td_err = TD_err.compute(weight)
                 objs.append(obj)
-                # objs_val.append(obj_val)
-                objs_test.append(obj_test)
+                objs_val.append(obj_val)
+                # objs_test.append(obj_test)
                 # err.append(td_err)
-        # objs_mean.append(objs)
-        # objs_val_mean.append(objs_val)
-    return objs, objs_test #, err
-    # return np.around(np.mean(np.array(objs_mean), axis=0), decimals=4), \
-    #        np.around(np.mean(np.array(objs_val_mean), axis=0), decimals=4)
+        objs_mean.append(objs)
+        objs_val_mean.append(objs_val)
+    # return objs, objs_test #, err
+    return np.around(np.mean(np.array(objs_mean), axis=0), decimals=4), \
+           np.around(np.mean(np.array(objs_val_mean), axis=0), decimals=4)
 
 def argsparser():
     import argparse
@@ -370,13 +372,13 @@ def tune():
     alpha= [0,0.0005,0.001,0.002,0.005,0.01]
     batch_size= [256,512]
     link = ['inverse','identity']
-    lr = [0.0001,0.0005,0.001,0.005]
-    reg_lambda = [0.1,0.5,1,2,5]
+    lr = [0.00005,0.0001,0.0005,0.001,0.005]
+    reg_lambda = [0.1,0.5,1,2,5,8]
 
     args = argsparser()
     seeds = range(5)
-    idx = np.unravel_index(args.array, (6,2,2,4,5))
-    random_weight, buffer_size = 0.7, 40
+    idx = np.unravel_index(args.array, (6,2,2,5,6))
+    random_weight, buffer_size = 2.0, 80
     discount_factor = 0.95
     alpha, lr, reg_lambda = alpha[idx[0]], lr[idx[3]], reg_lambda[idx[4]]
     link, batch_size = link[idx[1]], batch_size[idx[2]]
@@ -398,7 +400,7 @@ def tune():
                        reg_lambda=reg_lambda,discount = discount_factor,
                        checkpoint=args.steps,epoch=args.epoch, cv_fold=10,
                        batch_size=batch_size,buffer_size=buffer_size,
-                       max_len=args.max_len)
+                       max_len=args.max_len,mujoco=True)
         print("Return result shape: ",len(cv),":::", args.steps,":::",seeds)
         result.append(cv)
         result_val.append(cv_val)
@@ -443,6 +445,6 @@ def tune():
 # plt.plot(range(len(objs)),0.327*np.ones(len(objs)))
 # plt.savefig('hopper.png')
 
-# tune()
+tune()
 
 # print(eval_policy(path='./exper/hopper.pth',env='Hopper-v4',gamma=0.95))

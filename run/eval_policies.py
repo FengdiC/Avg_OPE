@@ -5,8 +5,8 @@ sys.path.insert(0, parentdir)
 import numpy as np
 import csv,pickle
 from avg_corr.main import load
-import gym
-from gym.spaces import Box, Discrete
+from gymnasium.spaces import Box, Discrete
+import gymnasium as gym
 import torch
 from torch.distributions.normal import Normal
 
@@ -27,27 +27,29 @@ def eval_policy(path='./exper/cartpole.pth',env='CartPole-v1',gamma=0.8):
     env = gym.make(env)
     ac = load(path, env)
 
-    o, ep_len, ep_ret, ep_avg_ret = env.reset(), 0 ,0, 0
+    o, _ = env.reset()
+    ep_len, ep_ret, ep_avg_ret = 0, 0, 0
     num_traj=0
     rets = []
     avg_rets = []
 
     while num_traj<100:
         a, _,logtarg = ac.step(torch.as_tensor(o, dtype=torch.float32))
-        next_o, r, d, _ = env.step(a)
+        next_o, r, d, truncated, _ = env.step(a)
         ep_ret += r * gamma ** ep_len
         ep_avg_ret += r
         ep_len += 1
         # Update obs (critical!)
         o = next_o
 
-        terminal = d
+        terminal = d or truncated
 
         if terminal:
             num_traj += 1
             rets.append(ep_ret)
             avg_rets.append(ep_avg_ret)
-            o, ep_ret, ep_len, ep_avg_ret = env.reset(), 0, 0, 0
+            o, _ = env.reset()
+            ep_len, ep_ret, ep_avg_ret = 0, 0, 0
     return (1-gamma)*np.mean(rets),np.var(rets),np.mean(avg_rets)
 
 def eval_behaviour_policy(path='./exper/cartpole.pth',env='CartPole-v1',
@@ -56,7 +58,8 @@ def eval_behaviour_policy(path='./exper/cartpole.pth',env='CartPole-v1',
     ac = load(path, env)
     act_dim = env.action_space.shape
 
-    o, ep_len, ep_ret, ep_avg_ret = env.reset(), 0 ,0, 0
+    o, _ = env.reset()
+    ep_len, ep_ret, ep_avg_ret = 0, 0, 0
     num_traj=0
     rets = []
     avg_rets = []
@@ -64,10 +67,9 @@ def eval_behaviour_policy(path='./exper/cartpole.pth',env='CartPole-v1',
     while num_traj<100:
         # pi = ac.pi._distribution(torch.as_tensor(o, dtype=torch.float32))
         if mujoco:
-            # target std = e^{-0.5} ~ 0.6
-            std = torch.nn.Parameter(torch.as_tensor(random_weight * np.ones(act_dim, dtype=np.float32)))
+            std = torch.exp(ac.pi.log_std)
             mu = ac.pi.mu_net(torch.as_tensor(o, dtype=torch.float32))
-            beh_pi = Normal(mu, std)
+            beh_pi = Normal(mu, std * random_weight)
             a = beh_pi.sample().numpy()
         else:
             targ_a, _, _ = ac.step(torch.as_tensor(o, dtype=torch.float32))
@@ -76,27 +78,28 @@ def eval_behaviour_policy(path='./exper/cartpole.pth',env='CartPole-v1',
                 a = env.action_space.sample()
             else:
                 a = targ_a
-        next_o, r, d, _ = env.step(a)
+        next_o, r, d, truncated, _ = env.step(a)
         ep_ret += r * gamma ** ep_len
         ep_avg_ret += r
         ep_len += 1
         # Update obs (critical!)
         o = next_o
 
-        terminal = d
+        terminal = d or truncated
 
         if terminal:
             num_traj += 1
             rets.append(ep_ret)
             avg_rets.append(ep_avg_ret)
-            o, ep_ret, ep_len, ep_avg_ret = env.reset(), 0, 0, 0
+            o, _ = env.reset()
+            ep_len, ep_ret, ep_avg_ret = 0, 0, 0
     return (1-gamma)*np.mean(rets),np.var(rets),np.mean(avg_rets)
 
 
 def eval_classic():
     args = argsparser()
     discount_factor = [0.8, 0.9,0.95, 0.99, 0.995]
-    random_weight = [0.2, 0.3, 0.4,0.5,0.6, 0.7]
+    random_weight = [0.1, 0.2, 0.3, 0.4,0.5,0.6]
     env = ['CartPole-v1', 'Acrobot-v1', 'MountainCarContinuous-v0']
     path = ['./exper/cartpole.pth', './exper/acrobot.pth', './exper/mountaincar.pth']
     obj  ={}
@@ -123,11 +126,14 @@ def eval_classic():
 def eval_mujoco():
     args = argsparser()
     discount_factor = [0.8, 0.9,0.95, 0.99, 0.995]
-    random_weight = [np.exp(-0.5),0.65,0.7,0.75,0.8,0.85]
-    env = ['MountainCarContinuous-v0','Hopper-v4','HalfCheetah-v4','HalfCheetah-v4','Ant-v4',
-           'Swimmer-v4','Walker2d-v4']
-    path = ['./exper/mountaincar.pth','./exper/hopper.pth','./exper/halfcheetah_0.pth',
-            './exper/halfcheetah_1.pth','./exper/ant.pth','./exper/swimmer.pth','./exper/walker.pth']
+    # discount_factor= [0.95]
+    random_weight = [1.4,1.8,2.0,2.4,2.8,3.2]
+    # random_weight = [0.25]
+    env = ['MountainCarContinuous-v0','Hopper-v4','HalfCheetah-v4','Ant-v4','Walker2d-v4']
+    path = ['./exper/mountaincar.pth','./exper/hopper.pth','./exper/halfcheetah_1.pth',
+            './exper/ant.pth','./exper/walker.pth']
+    # env = ['Hopper-v4']
+    # path = ['./exper/hopper.pth']
 
     obj = {}
     tar_rets, beh_rets = {}, {}
@@ -140,7 +146,8 @@ def eval_mujoco():
                 obj['-'.join(name) + '-obj'] = target_obj
                 tar_rets['-'.join(name) + '-tar_ret'] = target_ret
                 beh_rets['-'.join(name) + '-beh_ret'] = beh_ret
-    filename = args.log_dir + 'mujoco_values_less_var.csv'
+                print('-'.join(name), ":::",beh_ret)
+    filename = args.log_dir + 'mujoco_values.csv'
     with open(filename, 'w') as csv_file:
         writer = csv.writer(csv_file)
         for key, value in obj.items():
@@ -150,5 +157,5 @@ def eval_mujoco():
         for key, value in beh_rets.items():
             writer.writerow([key, value])
 
-# eval_classic()
+eval_classic()
 eval_mujoco()

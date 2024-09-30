@@ -1,15 +1,15 @@
 import os
 
 # Define hyperparameters to sweep over
-alpha_values = [0.3, 0.5, 0.7]
-# seed_values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-seed_values = [4, 5, 6, 7, 8, 9]
-gamma_values = [0.8, 0.9, 0.95, 0.99]  # Example gamma values
-num_trajectory_values = [40, 80, 200]  # Example num_trajectory values
-max_len_values = [100]
+alpha_values = [(1-i) for i in [0.1,0.2, 0.3,0.4,0.5,0.6]]
+seed_values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+# seed_values = [4, 5, 6, 7, 8, 9]
+gamma_values = [0.8, 0.9, 0.95, 0.99 ,0.995]  # Example gamma values
+num_trajectory_values = [2000, 4000, 8000, 16000, 32000]  # Example num_trajectory values
+max_len_values = [20,50,100,200,400]
 
-save_dir_prefix = './results06271701/cartpole/'
-bash_file_prefix = './bash06271701/cartpole/run_results06271701'
+save_dir_prefix = './results09292030/cartpole/'
+bash_file_prefix = './bash09292030/cartpole/run_results09292030'
 bash_file_index = 0
 
 # Create the folder if it does not exist
@@ -21,13 +21,14 @@ for gamma in gamma_values:
             for seed in seed_values:
                 for max_trajectory_length in max_len_values:
                     # Command for the first loop
+                    new_num_trajectory = num_trajectory / max_trajectory_length
                     for alpha_val in [alpha, 1.0]:
                         command1 = (
                             f"python scripts/create_dataset.py "
                             f"--save_dir={save_dir_prefix} "
                             f"--load_dir=./exper/cartpole.pth "
                             f"--env_name=CartPole-v1 "
-                            f"--num_trajectory={num_trajectory} "
+                            f"--num_trajectory={new_num_trajectory} "
                             f"--max_trajectory_length={max_trajectory_length} "
                             f"--alpha={alpha_val} "
                             f"--tabular_obs=0 "
@@ -50,7 +51,7 @@ for gamma in gamma_values:
                             f"--save_dir={save_dir_prefix} "
                             f"--load_dir=./exper/cartpole.pth "
                             f"--env_name=CartPole-v1 "
-                            f"--num_trajectory={num_trajectory} "
+                            f"--num_trajectory={new_num_trajectory} "
                             f"--max_trajectory_length={max_trajectory_length} "
                             f"--alpha={alpha_val} "
                             f"--tabular_obs=0 "

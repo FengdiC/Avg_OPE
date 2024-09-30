@@ -98,6 +98,7 @@ for gamma in gamma_values:
     true_value = true_values[gamma]
     for alpha in alpha_values:
         for num_trajectory in num_trajectory_values:
+            for max_trajectory_length in max_len_values:
                 mse_summary_train = defaultdict(list)
                 mse_summary_test = defaultdict(list)
                 for seed in seed_values:
@@ -108,7 +109,7 @@ for gamma in gamma_values:
                         ALPHA=alpha,
                         SEED=seed,
                         NUM_TRAJ=num_trajectory,
-                        MAX_TRAJ=50,
+                        MAX_TRAJ=max_trajectory_length,
                         GAMMA=gamma,
                         RANDOM_WEIGHT=0.2)
 
@@ -122,7 +123,7 @@ for gamma in gamma_values:
                         "load_dir_policy": "./exper/cartpole.pth",
                         "env_name": "CartPole-v1",
                         "num_trajectory": num_trajectory,
-                        "max_trajectory_length": 50,
+                        "max_trajectory_length": max_trajectory_length,
                         "alpha": alpha,
                         "tabular_obs": 0,
                         "seed": seed,

@@ -279,6 +279,10 @@ def main(argv):
       eval_obj2 = estimator.eval_policy_csv(dataset2, target_policy)
       save_to_csv(step, eval_obj, eval_obj2, csv_file)
 
+    if step % 500 == 0 or step == num_steps - 1:
+        plot_file = os.path.join(save_dir, '_zeta_'+str(step))
+        estimator.plot_zeta_csv(dataset, target_policy, filename_prefix=plot_file)
+
     global_step.assign_add(1)
 
     # Save the model at the end of training

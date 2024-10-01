@@ -435,3 +435,32 @@ class NeuralDice(object):
 
 
     return est
+
+  def plot_zeta_csv(self, dataset, target_policy, filename_prefix='zeta_values'):
+    # Get experience and zeta_values
+    experience = dataset.get_all_steps(num_steps=1)
+    env_step = tf.nest.map_structure(lambda t: t[:, 0, ...], experience)
+
+    zeta_values = self._get_value(self._zeta_network, env_step)
+
+    # Convert zeta_values to a numpy array and save to a CSV file
+    zeta_values_np = zeta_values.numpy() if hasattr(zeta_values, 'numpy') else np.array(zeta_values)
+    csv_filename = f"{filename_prefix}.csv"
+    df = pd.DataFrame({'zeta_values': zeta_values_np})
+    df.to_csv(csv_filename, index=False)
+
+    # Plot the scatter plot of sorted zeta_values
+    plt.figure()
+    plt.scatter(range(len(zeta_values_np)), np.sort(zeta_values_np))
+    plt.xlabel('Index (Sorted)')
+    plt.ylabel('Zeta Value')
+    plt.title('Scatter Plot of Sorted Zeta Values')
+    plt.yscale('log')  # Optional: Log scale to better see small and large values
+    plt.grid(axis='y', linestyle='--')
+
+    # Save the plot using the prefix of the CSV filename, with a '.png' extension
+    plot_filename = f"{filename_prefix}.png"
+    plt.savefig(plot_filename)
+
+    # Close the plot to free memory
+    plt.close()

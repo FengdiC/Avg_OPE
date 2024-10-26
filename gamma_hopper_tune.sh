@@ -4,7 +4,7 @@
 #SBATCH --time=0-72:00
 #SBATCH --output=%N-%j.out
 #SBATCH --account=def-ashique
-#SBATCH --array=1-720
+#SBATCH --array=1-360
 
 # salloc --cpus-per-task=1 --mem=3600M --time=0-3:00 --account=def-ashique
 

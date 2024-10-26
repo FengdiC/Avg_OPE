@@ -101,7 +101,7 @@ class WeightNet(nn.Module):
         print(sizes)
         layers = []
         for j in range(len(sizes) - 1):
-            layers += [nn.Linear(sizes[j], sizes[j + 1]),nn.Tanh()]
+            layers += [nn.Linear(sizes[j], sizes[j + 1]),nn.ReLU()]
         self.body = nn.Sequential(*layers)
         self.weight = nn.Sequential(nn.Linear(sizes[-1], 1),activation())  #nn.Identity()
 
@@ -359,19 +359,18 @@ def argsparser():
 
 def tune():
     alpha = [0, 0.0005, 0.001, 0.002, 0.005, 0.01]
-    batch_size = [256, 512]
+    batch_size = 1024
     link = ['inverse', 'identity']
     lr = [0.00005,0.0001, 0.0005, 0.001, 0.005]
     reg_lambda = [0.1,0.5,1,2,5,8]
 
     args = argsparser()
     seeds = range(5)
-    idx = np.unravel_index(args.array, (6, 2, 2, 5, 6))
+    idx = np.unravel_index(args.array, (6, 2, 5, 6))
 
-    random_weight, buffer_size = 2.0, 80
-    discount_factor = 0.95
-    alpha, lr, reg_lambda = alpha[idx[0]], lr[idx[3]], reg_lambda[idx[4]]
-    link, batch_size = link[idx[1]], batch_size[idx[2]]
+    random_weight, buffer_size = 2.0, 40
+    discount_factor, amx_len = 0.95, 100
+    alpha, link, lr, reg_lambda = alpha[idx[0]], link[idx[1]], lr[idx[2]], reg_lambda[idx[3]]
 
     filename = args.log_dir + 'gamma-tune-square-reg-alpha-' + str(alpha) + '-lr-' \
                + str(lr) + '-lambda-' + str(reg_lambda) + '-' + str(link) + '-' + str(batch_size) + '.csv'
@@ -391,7 +390,7 @@ def tune():
                        reg_lambda=reg_lambda,discount=discount_factor,
                        checkpoint=args.steps,epoch=args.epoch, cv_fold=10,
                        batch_size=batch_size,buffer_size=buffer_size,
-                       max_len=args.max_len,mujoco=True)
+                       max_len=max_len,mujoco=True)
         print("Return result shape: ", len(cv), ":::", args.steps)
         result.append(cv)
         result_val.append(cv_val)

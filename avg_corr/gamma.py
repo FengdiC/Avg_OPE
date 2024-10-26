@@ -369,7 +369,7 @@ def tune():
     idx = np.unravel_index(args.array, (6, 2, 5, 6))
 
     random_weight, buffer_size = 2.0, 40
-    discount_factor, amx_len = 0.95, 100
+    discount_factor, max_len = 0.95, 100
     alpha, link, lr, reg_lambda = alpha[idx[0]], link[idx[1]], lr[idx[2]], reg_lambda[idx[3]]
 
     filename = args.log_dir + 'gamma-tune-square-reg-alpha-' + str(alpha) + '-lr-' \

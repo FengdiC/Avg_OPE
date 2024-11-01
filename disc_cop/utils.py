@@ -188,7 +188,7 @@ def maybe_collect_dataset(
                 mu = ac.pi.mu_net(torch.as_tensor(o, dtype=torch.float32))
                 beh_pi = Normal(mu, std * random_weight)
                 a = beh_pi.sample().numpy()
-
+                pi = ac.pi._distribution(torch.as_tensor(o, dtype=torch.float32))
                 logtarg = (
                     ac.pi._log_prob_from_distribution(pi, torch.as_tensor(a)).detach().numpy()
                 )

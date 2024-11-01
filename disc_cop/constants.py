@@ -1,16 +1,16 @@
-HOME_DIR = "/home/chanb"
-LOG_DIR = f"{HOME_DIR}/scratch/disc_cop/results"
-RUN_REPORT_DIR = f"{HOME_DIR}/scratch/disc_cop/run_reports"
-DATASET_DIR = f"{HOME_DIR}/scratch/disc_cop/datasets"
-REPO_PATH = f"{HOME_DIR}/src/Avg_OPE"
-CC_ACCOUNT = "def-schuurma"
-
-# HOME_DIR = "/Users/chanb/research/ualberta/Avg_OPE"
-# LOG_DIR = "/Users/chanb/research/ualberta/Avg_OPE/local/results"
-# RUN_REPORT_DIR = "/Users/chanb/research/ualberta/Avg_OPE/local/run_reports"
-# DATASET_DIR = "/Users/chanb/research/ualberta/Avg_OPE/local/datasets"
-# REPO_PATH = "/Users/chanb/research/ualberta/Avg_OPE"
+# HOME_DIR = "/home/chanb"
+# LOG_DIR = f"{HOME_DIR}/scratch/disc_cop/results"
+# RUN_REPORT_DIR = f"{HOME_DIR}/scratch/disc_cop/run_reports"
+# DATASET_DIR = f"{HOME_DIR}/scratch/disc_cop/datasets"
+# REPO_PATH = f"{HOME_DIR}/src/Avg_OPE"
 # CC_ACCOUNT = "def-schuurma"
+
+HOME_DIR = "/Users/chanb/research/ualberta/Avg_OPE"
+LOG_DIR = "/Users/chanb/research/ualberta/Avg_OPE/local/results"
+RUN_REPORT_DIR = "/Users/chanb/research/ualberta/Avg_OPE/local/run_reports"
+DATASET_DIR = "/Users/chanb/research/ualberta/Avg_OPE/local/datasets"
+REPO_PATH = "/Users/chanb/research/ualberta/Avg_OPE"
+CC_ACCOUNT = "def-schuurma"
 
 # CHOOSE BEST HYPERPARAM WITH CARTPOLE AND HOPPER
 HYPERPARAMETERS = dict(

@@ -234,7 +234,7 @@ def train_ratio(
 
     def eval(buffer):
         ratio = (
-            weight(torch.as_tensor(buffer.obs_buf[: buffer.ptr], dtype=torch.float32))
+            weight(torch.as_tensor(buffer.obs_buf.reshape((-1, buffer.obs_buf.shape[-1]))[: buffer.ptr], dtype=torch.float32))
             .detach()
             .numpy()
         )
@@ -248,8 +248,8 @@ def train_ratio(
             ratio = np.exp(ratio)
         obj = np.mean(
             ratio
-            * np.exp(buffer.logtarg_buf[: buffer.ptr] - buffer.logbev_buf[: buffer.ptr])
-            * buffer.rew_buf[: buffer.ptr]
+            * np.exp(buffer.logtarg_buf.flatten()[: buffer.ptr] - buffer.logbev_buf.flatten()[: buffer.ptr])
+            * buffer.rew_buf.flatten()[: buffer.ptr]
         )
         return obj * max_len * (1 - gamma)
 

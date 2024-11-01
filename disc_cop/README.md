@@ -56,7 +56,7 @@ pip install tqdm
 pip install -U 'mujoco-py<2.2,>=2.1'
 pip install "Cython<3"
 pip install imageio
-pip install gymnasium>=0.29
+pip install "gymnasium>=0.29"
 ```
 
 ## Running Experiments

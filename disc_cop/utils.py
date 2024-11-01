@@ -154,8 +154,8 @@ def maybe_collect_dataset(
     random_weight,
     fold=1,
     load_dataset=None,
+    mujoco=False,
 ):
-    mujoco = env
     save_buf = load_dataset is not None
     if load_dataset:
         if os.path.isfile(load_dataset):

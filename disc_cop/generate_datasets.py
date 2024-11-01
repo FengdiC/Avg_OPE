@@ -13,7 +13,7 @@ from itertools import product
 from tqdm import tqdm
 
 from disc_cop.constants import HYPERPARAMETERS
-from disc_cop.envs import ENVS, ENV_FAMILY_SPECIFICS, ENV_TO_FAMILY
+from disc_cop.envs import ENVS, ENV_TO_FAMILY
 from disc_cop.utils import maybe_collect_dataset, set_seed
 
 
@@ -33,6 +33,7 @@ def main(args):
         max_num_samples = max(HYPERPARAMETERS[env_family]["buffer_sizes"])
         min_max_len = min(HYPERPARAMETERS[env_family]["max_lens"])
         max_max_len = max(HYPERPARAMETERS[env_family]["max_lens"])
+        mujoco = env_family == "mujoco"
         for (
             policy_path,
             random_weight,
@@ -58,6 +59,7 @@ def main(args):
                     load_dataset,
                     "train-random_weight_{}.pkl".format(random_weight),
                 ),
+                mujoco=mujoco,
             )
             maybe_collect_dataset(
                 env,
@@ -70,6 +72,7 @@ def main(args):
                     load_dataset,
                     "test-random_weight_{}.pkl".format(random_weight),
                 ),
+                mujoco=mujoco,
             )
 
 

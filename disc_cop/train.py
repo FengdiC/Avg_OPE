@@ -15,6 +15,7 @@ sys.path.insert(0, parentdir)
 from torch.optim import Adam
 
 from disc_cop.utils import maybe_collect_dataset, set_seed
+from disc_cop.envs import ENV_TO_FAMILY, ENV_ID_TO_NAME
 
 
 class WeightNet(nn.Module):
@@ -74,6 +75,8 @@ def train_ratio(
     env = gym.make(env)
     env.reset(seed=seed)
 
+    mujoco = ENV_TO_FAMILY[ENV_ID_TO_NAME[env]] == "mujoco"
+
     buf = maybe_collect_dataset(
         env,
         max_ep=max_ep,
@@ -85,6 +88,7 @@ def train_ratio(
             load_dataset,
             "train-random_weight_{}.pkl".format(random_weight),
         ),
+        mujoco=mujoco,
     )
     buf_test = maybe_collect_dataset(
         env,
@@ -97,6 +101,7 @@ def train_ratio(
             load_dataset,
             "test-random_weight_{}.pkl".format(random_weight),
         ),
+        mujoco=mujoco,
     )
 
     if link == "inverse" or link == "identity":

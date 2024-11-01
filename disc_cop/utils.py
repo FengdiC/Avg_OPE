@@ -1,5 +1,5 @@
 import _pickle as pickle
-import gym
+import gymnasium as gym
 import inspect
 import numpy as np
 import os
@@ -12,7 +12,7 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 
-from gym.spaces import Box, Discrete
+from gymnasium.spaces import Box, Discrete
 
 import ppo.algo.core as core
 

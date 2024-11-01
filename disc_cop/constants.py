@@ -72,33 +72,33 @@ Cartpole: mse-tune-random_weight_0.7-discount_factor_0.95-buffer_size_40-link_de
 """
 
 # Run 2
-HYPERPARAMETERS = dict(
-    mujoco=dict(
-        random_weights=[0.3, 0.4, 0.5, 0.6, 0.7],
-        discount_factors=[0.8, 0.9, 0.95, 0.99 ,0.995],
-        buffer_sizes=[2000, 4000, 8000, 16000, 32000],
-        max_lens=[20, 50, 100, 150],
-        batch_sizes=[256],
-        links=["default"],
-        bootstrap_targets=["target_network"],
-        lrs=[0.001],
-        alphas=[0.0],  # L1
-        tau=0.0005,  # target network
-        seeds=range(10),
-        step_frequency=5,
-    ),
-    classic_control=dict(
-        random_weights=[0.3, 0.4, 0.5, 0.6, 0.7],
-        discount_factors=[0.8, 0.9, 0.95, 0.99 ,0.995],
-        buffer_sizes=[2000, 4000, 8000, 16000, 32000],
-        max_lens=[20, 50, 100, 150],
-        batch_sizes=[256],
-        links=["default"],
-        bootstrap_targets=["target_network"],
-        lrs=[0.005],
-        alphas=[0.0],  # L1
-        tau=0.0005,  # target network
-        seeds=range(10),
-        step_frequency=5,
-    ),
-)
+# HYPERPARAMETERS = dict(
+#     mujoco=dict(
+#         random_weights=[0.3, 0.4, 0.5, 0.6, 0.7],
+#         discount_factors=[0.8, 0.9, 0.95, 0.99 ,0.995],
+#         buffer_sizes=[2000, 4000, 8000, 16000, 32000],
+#         max_lens=[20, 50, 100, 150],
+#         batch_sizes=[256],
+#         links=["default"],
+#         bootstrap_targets=["target_network"],
+#         lrs=[0.001],
+#         alphas=[0.0],  # L1
+#         tau=0.0005,  # target network
+#         seeds=range(10),
+#         step_frequency=5,
+#     ),
+#     classic_control=dict(
+#         random_weights=[0.3, 0.4, 0.5, 0.6, 0.7],
+#         discount_factors=[0.8, 0.9, 0.95, 0.99 ,0.995],
+#         buffer_sizes=[2000, 4000, 8000, 16000, 32000],
+#         max_lens=[20, 50, 100, 150],
+#         batch_sizes=[256],
+#         links=["default"],
+#         bootstrap_targets=["target_network"],
+#         lrs=[0.005],
+#         alphas=[0.0],  # L1
+#         tau=0.0005,  # target network
+#         seeds=range(10),
+#         step_frequency=5,
+#     ),
+# )

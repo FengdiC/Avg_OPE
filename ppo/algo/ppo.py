@@ -5,7 +5,7 @@ sys.path.insert(0, parentdir)
 import numpy as np
 import torch
 from torch.optim import Adam
-import gym
+import gymnasium as gym
 import time
 import algo.core as core
 from utils.logx import EpochLogger

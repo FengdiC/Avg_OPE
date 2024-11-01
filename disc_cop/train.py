@@ -1,6 +1,6 @@
 import _pickle as pickle
 import copy
-import gym
+import gymnasium as gym
 import inspect
 import numpy as np
 import os

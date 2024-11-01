@@ -1,6 +1,6 @@
 import _pickle as pickle
 import argparse
-import gym
+import gymnasium as gym
 import inspect
 import os
 import sys

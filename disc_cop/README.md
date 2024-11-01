@@ -12,11 +12,11 @@ wget https://mujoco.org/download/mujoco210-linux-x86_64.tar.gz
 tar -xvzf mujoco210-linux-x86_64.tar.gz
 mkdir .mujoco
 mv mujoco210 ./.mujoco/mujoco210
-pip install -U 'mujoco-py<2.2,>=2.1'
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.mujoco/mujoco210/bin
 
-python -m venv ~/avg_ope
-source ~/avg_ope/bin/activate
+python -m venv ~/avg_ope_cuda
+source ~/avg_ope_cuda/bin/activate
+pip install -U 'mujoco-py<2.2,>=2.1'
 pip install "Cython<3"
 pip install imageio
 pip install gymnasium>=0.29
@@ -36,9 +36,9 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.mujoco/mujoco210/bin:/usr/lib/nvidia
 
 # ========================================================================
 # If Compute Canada:
-module load python/3.10
-module load StdEnv/2020
-module load mujoco/2.2.2
+module load StdEnv/2023
+module load gcc gcccore/.12.3 opencv intel/2023.2.1 python/3.10 mpi4py
+module load mujoco
 # ========================================================================
 
 python -m venv ~/avg_ope
@@ -53,13 +53,10 @@ pip install torch --no-index
 # ========================================================================
 
 pip install tqdm
-pip install gym
-pip install mujoco-py
-
-# ========================================================================
-# Might need to do this when gym.make fails on MuJoCo
-pip install "cython<3"
-# ========================================================================
+pip install -U 'mujoco-py<2.2,>=2.1'
+pip install "Cython<3"
+pip install imageio
+pip install gymnasium>=0.29
 ```
 
 ## Running Experiments

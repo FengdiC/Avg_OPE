@@ -3,8 +3,8 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 import numpy as np
-from gym.spaces import Box, Discrete
-import gym
+from gymnasium.spaces import Box, Discrete
+import gymnasium as gym
 import time
 import torch
 import torch.nn as nn

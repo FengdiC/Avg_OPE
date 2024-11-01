@@ -112,7 +112,7 @@ class Buffer:
         else:
             ind = np.random.randint(-self.max_ep, self.ptr, size=batch_size)
 
-        sample_ind = np.clip(ind, a_min=0, a_max=np.inf)
+        sample_ind = np.clip(ind, a_min=0, a_max=np.inf).astype(int)
         ep_i = sample_ind // self.max_len
         timestep_i = sample_ind % self.max_len
 

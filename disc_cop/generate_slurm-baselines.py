@@ -35,8 +35,8 @@ sbatch_content += "#SBATCH --array=1-{}\n".format(len(ENV_TO_FAMILY))
 sbatch_content += "#SBATCH --output={}/%j.out\n".format(
     os.path.join(RUN_REPORT_DIR, "baselines")
 )
-sbatch_content += "module load python/3.10\n"
-sbatch_content += "module load StdEnv/2020\n"
+sbatch_content += "module load StdEnv/2023\n"
+sbatch_content += "module load gcc gcccore/.12.3 opencv intel/2023.2.1 python/3.10 mpi4py\n"
 sbatch_content += "module load mujoco/2.2.2\n"
 sbatch_content += "source ~/avg_ope/bin/activate\n"
 sbatch_content += '`sed -n "${SLURM_ARRAY_TASK_ID}p"'

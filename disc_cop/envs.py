@@ -40,15 +40,21 @@ ENV_ID_TO_NAME = {
     "MountainCarContinuous-v0": "mountain_car",
 }
 
+# ENV_TO_FAMILY = {
+#     "ant": "mujoco",
+#     "halfcheetah": "mujoco",
+#     "hopper": "mujoco",
+#     "swimmer": "mujoco",
+#     "walker": "mujoco",
+#     "acrobot": "classic_control",
+#     "cartpole": "classic_control",
+#     "mountain_car": "classic_control",
+# }
+
+# For tuning
 ENV_TO_FAMILY = {
-    "ant": "mujoco",
-    "halfcheetah": "mujoco",
     "hopper": "mujoco",
-    "swimmer": "mujoco",
-    "walker": "mujoco",
-    "acrobot": "classic_control",
     "cartpole": "classic_control",
-    "mountain_car": "classic_control",
 }
 
 ENV_FAMILY_SPECIFICS = {

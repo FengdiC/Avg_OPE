@@ -137,6 +137,15 @@ You may simply do `sbatch run_all-<FILE>.sh` to kick off the run.
 
 
 ## Experimental Status
+Setting
+```
+discount factor = [0.8, 0.9, 0.95, 0.99 ,0.995]
+random weight classic = [0.1,0.2, 0.3,0.4,0.5]
+random weight mujoco = [1.4,1.8,2.0,2.4,2.8] the multiple of the std
+num of trajectories = [2000/len,4000/len,8000/len,16000/len]
+trajectory length = [20,50,100,200,400]
+```
+
 Baseline tuning:
 ```
 Cartpole

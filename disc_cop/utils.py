@@ -6,6 +6,8 @@ import os
 import sys
 import torch
 
+from torch.distributions.normal import Normal
+
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
@@ -153,6 +155,7 @@ def maybe_collect_dataset(
     fold=1,
     load_dataset=None,
 ):
+    mujoco = env
     save_buf = load_dataset is not None
     if load_dataset:
         if os.path.isfile(load_dataset):
@@ -179,16 +182,28 @@ def maybe_collect_dataset(
         unif = 1 / env.action_space.n
 
     while num_traj < max_ep:
-        if np.random.random() < random_weight:
-            # random behaviour policy
-            a = env.action_space.sample()
+        if mujoco:
+            with torch.no_grad():
+                std = torch.exp(ac.pi.log_std)
+                mu = ac.pi.mu_net(torch.as_tensor(o, dtype=torch.float32))
+                beh_pi = Normal(mu, std * random_weight)
+                a = beh_pi.sample().numpy()
+
+                logtarg = (
+                    ac.pi._log_prob_from_distribution(pi, torch.as_tensor(a)).detach().numpy()
+                )
+                logbev = beh_pi.log_prob(torch.as_tensor(a)).sum(axis=-1).detach().numpy()
         else:
-            a, _, _ = ac.step(torch.as_tensor(o, dtype=torch.float32))
-        pi = ac.pi._distribution(torch.as_tensor(o, dtype=torch.float32))
-        logtarg = (
-            ac.pi._log_prob_from_distribution(pi, torch.as_tensor(a)).detach().numpy()
-        )
-        logbev = np.log(random_weight * unif + (1 - random_weight) * np.exp(logtarg))
+            if np.random.random() < random_weight:
+                # random behaviour policy
+                a = env.action_space.sample()
+            else:
+                a, _, _ = ac.step(torch.as_tensor(o, dtype=torch.float32))
+            pi = ac.pi._distribution(torch.as_tensor(o, dtype=torch.float32))
+            logtarg = (
+                ac.pi._log_prob_from_distribution(pi, torch.as_tensor(a)).detach().numpy()
+            )
+            logbev = np.log(random_weight * unif + (1 - random_weight) * np.exp(logtarg))
         next_o, r, d, _, _ = env.step(a)
         ep_len += 1
 

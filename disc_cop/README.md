@@ -1,5 +1,27 @@
 # Instructions
 
+## New installation
+```
+module load StdEnv/2023
+module load gcc gcccore/.12.3 opencv intel/2023.2.1 cuda/11.8 python/3.10 mpi4py
+module load mujoco
+
+# ========================================================================
+# First time setup to install mujoco binary
+wget https://mujoco.org/download/mujoco210-linux-x86_64.tar.gz
+tar -xvzf mujoco210-linux-x86_64.tar.gz
+mkdir .mujoco
+mv mujoco210 ./.mujoco/mujoco210
+pip install -U 'mujoco-py<2.2,>=2.1'
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.mujoco/mujoco210/bin
+
+python -m venv ~/avg_ope
+source ~/avg_ope/bin/activate
+pip install "Cython<3"
+pip install imageio
+pip install gymnasium>=0.29
+```
+
 ## Installation
 ```
 # ========================================================================
@@ -118,23 +140,25 @@ You may simply do `sbatch run_all-<FILE>.sh` to kick off the run.
 
 
 ## Experimental Status
+Baseline tuning:
 ```
-ant: done
-halfcheetah: done
-hopper: done
-swimmer: done
-walker: done
-acrobot: done
-cartpole: done
-mountain_car: done
+Cartpole
+random_weight = 0.3
+traj_len = 100
+num_traj = 40
+discount_factor = 0.95
 
-rerun: done
+Hopper
+random_weight = 2.0
+traj_len = 100
+num_traj = 40
+discount_factor = 0.95
 ```
 
-New experiments to run
+Per-step metric for setting:
 ```
-discount factor = [0.8, 0.9, 0.95, 0.99 ,0.995]
-random weight = [0.3,0.4,0.5,0.6,0.7]
-buffer size = [2000/len,4000/len,8000/len,16000/len, 32000/len]
-len = [20,50,100,200,400]
+random_weight = 0.5
+num_traj = 40
+traj_len = 100
+discount_factor = 0.95
 ```

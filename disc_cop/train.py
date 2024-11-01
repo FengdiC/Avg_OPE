@@ -72,10 +72,9 @@ def train_ratio(
     gamma = discount
     set_seed(seed)
 
+    mujoco = ENV_TO_FAMILY[ENV_ID_TO_NAME[env]] == "mujoco"
     env = gym.make(env)
     env.reset(seed=seed)
-
-    mujoco = ENV_TO_FAMILY[ENV_ID_TO_NAME[env]] == "mujoco"
 
     buf = maybe_collect_dataset(
         env,

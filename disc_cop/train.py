@@ -76,6 +76,7 @@ def train_ratio(
     env = gym.make(env)
     env.reset(seed=seed)
 
+    buffer_size = max_ep * max_len
     buf = maybe_collect_dataset(
         env,
         max_ep=max_ep,
@@ -85,7 +86,11 @@ def train_ratio(
         fold=1,
         load_dataset=os.path.join(
             load_dataset,
-            "train-random_weight_{}.pkl".format(random_weight),
+            "train-random_weight_{}-buffer_size_{}-max_len_{}.pkl".format(
+                random_weight,
+                buffer_size,
+                max_len,
+            ),
         ),
         mujoco=mujoco,
     )
@@ -98,7 +103,11 @@ def train_ratio(
         fold=1,
         load_dataset=os.path.join(
             load_dataset,
-            "test-random_weight_{}.pkl".format(random_weight),
+            "test-random_weight_{}-buffer_size_{}-max_len_{}.pkl".format(
+                random_weight,
+                buffer_size,
+                max_len,
+            ),
         ),
         mujoco=mujoco,
     )

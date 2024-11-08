@@ -81,3 +81,23 @@ HYPERPARAMETERS = dict(
 #         step_frequency=5,
 #     ),
 # )
+
+"""
+discounts = [0.8, 0.9, 0.95, 0.99 ,0.995]
+sizes = [2000,4000,8000,16000]
+seeds = range(10)
+
+weights= [0.1,0.2, 0.3,0.4,0.5]
+# weights=[0.5]
+lengths = [20,40,80,100]
+envs = ['CartPole-v1', 'Acrobot-v1']
+paths = ['./exper/cartpole.pth', './exper/acrobot.pth']
+continuous = False
+
+weights = [1.4,1.8,2.0,2.4,2.8]
+lengths = [20,50,100,200]
+envs = ['MountainCarContinuous-v0', 'Hopper-v4', 'HalfCheetah-v4', 'Ant-v4', 'Walker2d-v4']
+paths = ['./exper/mountaincar.pth', './exper/hopper.pth', './exper/halfcheetah_1.pth',
+        './exper/ant.pth', './exper/walker.pth']
+continuous = True
+"""

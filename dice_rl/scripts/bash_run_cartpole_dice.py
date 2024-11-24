@@ -3,12 +3,16 @@ import csv
 import numpy as np
 from collections import defaultdict
 
-def create_bash_script(command, bash_file_prefix, index):
-    bash_file_name = f"{bash_file_prefix}_{index}.sh"
-    with open(bash_file_name, 'w') as bash_file:
-        bash_file.write("#!/bin/bash\n")
+
+
+def create_bash_script(command, bash_file_prefix, bash_file_index):
+    bash_file_name = f"{bash_file_prefix}_{bash_file_index}.sh"
+    file_exists = os.path.isfile(bash_file_name)
+    with open(bash_file_name, 'a' if file_exists else 'w') as bash_file:
+        if not file_exists:
+            bash_file.write("#!/bin/bash\n")
+            os.chmod(bash_file_name, 0o755)
         bash_file.write(command + "\n")
-    os.chmod(bash_file_name, 0o755)  # Make the script executable
 
 def extract_float_from_tensor(tensor_str):
     try:
@@ -79,26 +83,32 @@ train_hparam_str = (
 #################
 
 # Define hyperparameters to sweep over
-alpha_values = [0.3, 0.5, 0.7]
-# seed_values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-seed_values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-gamma_values = [0.8, 0.9, 0.95, 0.99]  # Example gamma values
-num_trajectory_values = [40, 80, 200]  # Example num_trajectory values
+alpha_values = [(1-i) for i in [0.1,0.2, 0.3,0.4,0.5]]
+# seed_values = [100, 200]
+seed_values = [5,6,7,8,9 ]
+gamma_values = [0.8, 0.9, 0.95, 0.99 ,0.995]  # Example gamma values
+num_trajectory_values = [2000,4000,8000,16000]  # Example num_trajectory values
+max_len_values = [20,50,100,200,400]
+max_num_bash = 5
+num_bash = 0
+
 true_values = { 0.8: 0.99992, 0.9: 1.0, 0.95: 0.99951, 0.99: 0.94339,}  # Replace with the actual true values for each gamma
 num_steps = 10000
-save_dir_prefix = './results06271701/cartpole/'
-bash_file_prefix = './bash06271701/cartpole/run_dice_results06271701'
+
+save_dir_prefix = './results10081001_r/cartpole/'
+load_dir_prefix = './results10021944/cartpole/'
+bash_file_prefix = './bash10021944/cartpole/run_dice_results10021944'
 bash_file_index = 0
-max_len_values = [100]
 
 # Create the directory for bash scripts if it doesn't exist
 os.makedirs(os.path.dirname(bash_file_prefix), exist_ok=True)
 
 for gamma in gamma_values:
-    true_value = true_values[gamma]
+    # true_value = true_values[gamma]
     for alpha in alpha_values:
         for num_trajectory in num_trajectory_values:
             for max_trajectory_length in max_len_values:
+                new_num_trajectory = int(num_trajectory / max_trajectory_length)
                 mse_summary_train = defaultdict(list)
                 mse_summary_test = defaultdict(list)
                 for seed in seed_values:
@@ -108,7 +118,7 @@ for gamma in gamma_values:
                         TAB=False,
                         ALPHA=alpha,
                         SEED=seed,
-                        NUM_TRAJ=num_trajectory,
+                        NUM_TRAJ=new_num_trajectory,
                         MAX_TRAJ=max_trajectory_length,
                         GAMMA=gamma,
                         RANDOM_WEIGHT=0.2)
@@ -119,10 +129,10 @@ for gamma in gamma_values:
                     # Generate bash script for experiment
                     params = {
                         "save_dir": save_dir_prefix,
-                        "load_dir": save_dir_prefix,
+                        "load_dir": load_dir_prefix,
                         "load_dir_policy": "./exper/cartpole.pth",
                         "env_name": "CartPole-v1",
-                        "num_trajectory": num_trajectory,
+                        "num_trajectory": new_num_trajectory,
                         "max_trajectory_length": max_trajectory_length,
                         "alpha": alpha,
                         "tabular_obs": 0,
@@ -155,44 +165,47 @@ for gamma in gamma_values:
                         f"--gamma={params['gamma']}"
                     )
                     create_bash_script(command, bash_file_prefix, bash_file_index)
-                    bash_file_index += 1
+                    num_bash += 1
+                    if num_bash == max_num_bash:
+                        bash_file_index += 1
+                        num_bash = 0
 
-                    # Compute MSE
-                    print("read", csv_file)
-                    if os.path.exists(csv_file):
-                        mse_train_per_step, mse_test_per_step = read_csv_and_compute_mse(csv_file, true_value)
-                        print("mse_train_per_step", mse_train_per_step)
-                        print("mse_test_per_step", mse_test_per_step)
-                        for step, mse_list in mse_train_per_step.items():
-                            mse_summary_train[step].extend(mse_list)
-                        for step, mse_list in mse_test_per_step.items():
-                            mse_summary_test[step].extend(mse_list)
-
-                mean_mse_per_step_train = {
-                    step: np.mean(mse_values) for step, mse_values in mse_summary_train.items()
-                }
-                mean_mse_per_step_test = {
-                    step: np.mean(mse_values) for step, mse_values in mse_summary_test.items()
-                }
-
-                # Save the summary
-                summary_dir = os.path.join(save_dir_prefix, f"{gamma}_{alpha}_{num_trajectory}", 'summary')
-                os.makedirs(summary_dir, exist_ok=True)
-                summary_file_train = os.path.join(summary_dir, f'summary_train_gamma_{gamma}_alpha_{1-alpha}_numtraj_{num_trajectory}.csv')
-                summary_file_test = os.path.join(summary_dir, f'summary_test_gamma_{gamma}_alpha_{1-alpha}_numtraj_{num_trajectory}.csv')
-
-                with open(summary_file_train, mode='w', newline='') as file:
-                    writer = csv.writer(file)
-                    writer.writerow(['Step', 'Mean MSE'])
-                    for step, mean_mse in sorted(mean_mse_per_step_train.items()):
-                        print("train step, mean_mse", step, mean_mse)
-                        writer.writerow([step, mean_mse])
-
-                with open(summary_file_test, mode='w', newline='') as file:
-                    writer = csv.writer(file)
-                    writer.writerow(['Step', 'Mean MSE'])
-                    for step, mean_mse in sorted(mean_mse_per_step_test.items()):
-                        print("test step, mean_mse", step, mean_mse)
-                        writer.writerow([step, mean_mse])
+                #     # Compute MSE
+                #     print("read", csv_file)
+                #     if os.path.exists(csv_file):
+                #         mse_train_per_step, mse_test_per_step = read_csv_and_compute_mse(csv_file, true_value)
+                #         print("mse_train_per_step", mse_train_per_step)
+                #         print("mse_test_per_step", mse_test_per_step)
+                #         for step, mse_list in mse_train_per_step.items():
+                #             mse_summary_train[step].extend(mse_list)
+                #         for step, mse_list in mse_test_per_step.items():
+                #             mse_summary_test[step].extend(mse_list)
+                #
+                # mean_mse_per_step_train = {
+                #     step: np.mean(mse_values) for step, mse_values in mse_summary_train.items()
+                # }
+                # mean_mse_per_step_test = {
+                #     step: np.mean(mse_values) for step, mse_values in mse_summary_test.items()
+                # }
+                #
+                # # Save the summary
+                # summary_dir = os.path.join(save_dir_prefix, f"{gamma}_{alpha}_{new_num_trajectory}", 'summary')
+                # os.makedirs(summary_dir, exist_ok=True)
+                # summary_file_train = os.path.join(summary_dir, f'summary_train_gamma_{gamma}_alpha_{1-alpha}_numtraj_{new_num_trajectory}.csv')
+                # summary_file_test = os.path.join(summary_dir, f'summary_test_gamma_{gamma}_alpha_{1-alpha}_numtraj_{new_num_trajectory}.csv')
+                #
+                # with open(summary_file_train, mode='w', newline='') as file:
+                #     writer = csv.writer(file)
+                #     writer.writerow(['Step', 'Mean MSE'])
+                #     for step, mean_mse in sorted(mean_mse_per_step_train.items()):
+                #         print("train step, mean_mse", step, mean_mse)
+                #         writer.writerow([step, mean_mse])
+                #
+                # with open(summary_file_test, mode='w', newline='') as file:
+                #     writer = csv.writer(file)
+                #     writer.writerow(['Step', 'Mean MSE'])
+                #     for step, mean_mse in sorted(mean_mse_per_step_test.items()):
+                #         print("test step, mean_mse", step, mean_mse)
+                #         writer.writerow([step, mean_mse])
 
 print(f"Generated {bash_file_index} bash scripts.")

@@ -33,6 +33,7 @@ from tf_agents.trajectories import policy_step
 from tf_agents.utils import nest_utils
 import tensorflow_probability as tfp
 import tf_agents
+from tf_agents.specs import tensor_spec
 
 from dice_rl.environments import suites
 from dice_rl.environments.infinite_cartpole import InfiniteCartPole
@@ -112,6 +113,81 @@ def assign_weights_to_tf_model(tf_model, pytorch_weights, pytorch_activations):
                         tf_model.add(tf_activation)
                     else:
                         layer.activation = tf_activation
+
+def extract_pytorch_weights_sac(pytorch_model):
+    actor_weights = []
+    actor_activations = []
+    log_std = None  # Initialize log_std
+
+    def print_layer_details(layer, layer_name):
+        activation = None
+        if isinstance(layer, torch.nn.Sequential):
+            for sub_layer in layer:
+                if isinstance(sub_layer, (torch.nn.ReLU, torch.nn.Tanh, torch.nn.Sigmoid, torch.nn.LeakyReLU)):
+                    activation = type(sub_layer).__name__
+        elif isinstance(layer, (torch.nn.ReLU, torch.nn.Tanh, torch.nn.Sigmoid, torch.nn.LeakyReLU)):
+            activation = type(layer).__name__
+        else:
+            activation = 'None'
+
+        if isinstance(layer, torch.nn.Linear):
+            weights = (layer.weight.detach().numpy(), layer.bias.detach().numpy())
+            actor_weights.append(weights)
+            print(f"Extracted PyTorch layer: {layer_name}, weights shape: {layer.weight.shape}, bias shape: {layer.bias.shape}")
+
+        return activation
+
+    for module_name, module in pytorch_model.named_children():
+        print(f"Module: {module_name}, Type: {type(module)}")
+        if isinstance(module, core.MLPGaussianActor):
+            # Extract the mu_net weights
+            net = module.mu_net if hasattr(module, 'mu_net') else module.logits_net
+            for layer_name, layer in net.named_children():
+                actor_activations.append(print_layer_details(layer, layer_name))
+
+            # Extract the log_std parameter
+            log_std = module.log_std.detach().numpy()
+            print(f"Extracted log_std with shape: {module.log_std.shape}")
+
+    return actor_weights, actor_activations, log_std
+
+def assign_weights_to_tf_model_sac(tf_model, pytorch_weights, pytorch_activations, log_std, input_shape):
+    def get_tf_activation(name):
+        if name == 'ReLU':
+            return tf.keras.activations.relu
+        elif name == 'Tanh':
+            return tf.keras.activations.tanh
+        elif name == 'Sigmoid':
+            return tf.keras.activations.sigmoid
+        elif name == 'LeakyReLU':
+            return tf.keras.layers.LeakyReLU()
+        else:
+            return None
+
+    # Build the TensorFlow model by passing dummy input
+    dummy_input = tf.zeros(input_shape)
+    tf_model(dummy_input)  # This will build the model
+
+    # Assign PyTorch weights to TensorFlow model
+    weight_index = 0
+    for layer in tf_model.mu_layers:
+        if isinstance(layer, tf.keras.layers.Dense):
+            weight, bias = pytorch_weights[weight_index]
+            weight_index += 1
+            print(f"Assigning weights to TF layer {layer.name}, expected weight shape: {layer.weights[0].shape if layer.weights else 'Unbuilt'}")
+            layer.set_weights([tf.transpose(tf.convert_to_tensor(weight)), tf.convert_to_tensor(bias)])
+            print(f"Assigned weights: {weight.shape}, bias: {bias.shape}")
+
+    # Assign weights for mu_net (output layer)
+    mu_weight, mu_bias = pytorch_weights[weight_index]
+    print(f"Assigning weights to TF mu_net layer, expected weight shape: {tf_model.mu_net.weights[0].shape if tf_model.mu_net.weights else 'Unbuilt'}")
+    tf_model.mu_net.set_weights([tf.transpose(tf.convert_to_tensor(mu_weight)), tf.convert_to_tensor(mu_bias)])
+    print(f"Assigned mu_net weights: {mu_weight.shape}, bias: {mu_bias.shape}")
+
+    # Load log_std into the TensorFlow model
+    tf_model.log_std.assign(log_std)
+    print(f"Assigned log_std with shape: {log_std.shape}")
+
 
 
 # Ensure you call the correct functions in your main workflow
@@ -223,9 +299,40 @@ import os
 import tensorflow as tf
 from tf_agents.environments import suite_gym, tf_py_environment
 from tf_agents.policies import epsilon_greedy_policy
+import dice_rl.ppo.algo.core as core
+import torch
+from torch.distributions import Normal
+import gym
 
+# load target policy
+def load(path,env):
+    ac_kwargs = dict(hidden_sizes=[64,32])
+    ac = core.MLPActorCritic(convert_to_gym_observation_space(env.observation_space),
+                             convert_to_gym_observation_space(env.action_space), **ac_kwargs)
+    checkpoint = torch.load(path)
+    ac.load_state_dict(checkpoint['model_state_dict'])
+    return ac
 
-
+def convert_to_gym_observation_space(gymnasium_obs_space):
+    """
+    Convert a gymnasium observation space to a gym-style observation space.
+    """
+    import gymnasium
+    if isinstance(gymnasium_obs_space, gymnasium.spaces.Box):
+        return gym.spaces.Box(
+            low=gymnasium_obs_space.low,
+            high=gymnasium_obs_space.high,
+            shape=gymnasium_obs_space.shape,
+            dtype=gymnasium_obs_space.dtype
+        )
+    elif isinstance(gymnasium_obs_space, gymnasium.spaces.Discrete):
+        return gym.spaces.Discrete(gymnasium_obs_space.n)
+    elif isinstance(gymnasium_obs_space, gymnasium.spaces.MultiDiscrete):
+        return gym.spaces.MultiDiscrete(gymnasium_obs_space.nvec)
+    elif isinstance(gymnasium_obs_space, gymnasium.spaces.MultiBinary):
+        return gym.spaces.MultiBinary(gymnasium_obs_space.n)
+    else:
+        return gymnasium_obs_space
 
 def load_custom_policy(env, tf_env, load_dir, ckpt_file=None):
     observation_space = env.observation_space
@@ -261,6 +368,8 @@ def load_custom_policy(env, tf_env, load_dir, ckpt_file=None):
 
     return custom_policy
 
+
+
 def debug_print_shapes(time_step):
     print("time_step.reward shape:", time_step.reward.shape)
     print("time_step.discount shape:", time_step.discount.shape)
@@ -274,41 +383,20 @@ def ensure_batch_dimension(time_step):
     return time_step
 
 
-class CustomTFPolicy(tf_policy.TFPolicy):
-    def __init__(self, time_step_spec, action_spec, actor_critic_model):
-        super(CustomTFPolicy, self).__init__(time_step_spec, action_spec)
-        self._actor_critic_model = actor_critic_model
-
-    def _distribution(self, time_step, policy_state):
-        observation = time_step.observation
-        action_distribution, _ = self._actor_critic_model(observation)
-        return policy_step.PolicyStep(action_distribution, policy_state)
-
-    def _action(self, time_step, policy_state, seed):
-        distribution_step = self._distribution(time_step, policy_state)
-        actions = distribution_step.action.sample(seed=seed)
-        # Debugging: Log the dtype of the actions and action_spec
-        print(f"Actions dtype: {actions.dtype}, Action Spec dtype: {self.action_spec().dtype}")
-
-        # Ensure actions match the dtype of action_spec
-        actions = tf.cast(actions, self.action_spec().dtype)
-
-        # Debugging: Log the actions and their dtype after casting
-        print(f"Actions after casting: {actions.numpy()}, dtype: {actions.dtype}")
-
-        return policy_step.PolicyStep(actions, distribution_step.state, distribution_step.info)
-
-
-
-##
-import torch
-
-
 def load_pytorch_model(path, env):
     import dice_rl.ppo.algo.core as core
 
     ac_kwargs = dict(hidden_sizes=[64, 32])
     ac = core.MLPActorCritic(env.observation_space, env.action_space, **ac_kwargs)
+    checkpoint = torch.load(path)
+    ac.load_state_dict(checkpoint['model_state_dict'])
+    return ac
+
+def load_pytorch_model_spec(path, observation_space, action_space):
+    import dice_rl.ppo.algo.core as core
+
+    ac_kwargs = dict(hidden_sizes=[64, 32])
+    ac = core.MLPActorCritic(observation_space, action_space, **ac_kwargs)
     checkpoint = torch.load(path)
     ac.load_state_dict(checkpoint['model_state_dict'])
     return ac
@@ -404,6 +492,101 @@ def get_env_and_custom_policy(env_name, pytorch_model_path, env_seed=0, epsilon=
     # Load the policy if a checkpoint is provided
     # policy = load_policy(dqn_policy, load_dir, ckpt_file)
     return env, EpsilonGreedyPolicy(dqn_policy, epsilon=epsilon, emit_log_probability=True)
+
+from tf_agents.networks import Network
+
+
+class CustomGaussianActorNetwork(Network):
+    def __init__(self, obs_dim, act_dim, hidden_sizes, activation):
+        super(CustomGaussianActorNetwork, self).__init__(
+            input_tensor_spec=tensor_spec.TensorSpec(shape=(obs_dim,), dtype=tf.float32),
+            state_spec=(),
+            name='CustomGaussianActorNetwork'
+        )
+        self.mu_layers = []
+
+        # Create dense layers (equivalent to PyTorch's mlp network)
+        for size in hidden_sizes:
+            self.mu_layers.append(tf.keras.layers.Dense(size, activation=activation))
+
+        # Output layer for mean
+        self.mu_net = tf.keras.layers.Dense(act_dim)
+
+        # Log standard deviation (learnable parameter)
+        log_std = -0.5 * np.ones(act_dim, dtype=np.float32)
+        self.log_std = tf.Variable(initial_value=log_std, trainable=True)
+
+    def call(self, observations, step_type=None, network_state=(), training=False):
+        x = observations
+        for layer in self.mu_layers:
+            x = layer(x)
+        mu = self.mu_net(x)  # Mean of the action distribution
+        return mu, network_state
+
+
+def get_env_and_custom_sac_policy(env_name, pytorch_model_path):
+    if env_name == 'Hopper-v4':
+        observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(11,), dtype=np.float64)
+        action_space = gym.spaces.Box(low=-1, high=1, shape=(3,), dtype=np.float32)
+        obs_dim = 11
+        act_dim = 3
+    if env_name == 'HalfCheetah-v4':
+        observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(17,), dtype=np.float64)
+        action_space = gym.spaces.Box(low=-1, high=1, shape=(6,), dtype=np.float32)
+        obs_dim = 17
+        act_dim = 6
+
+    if env_name == 'Ant-v4':
+        observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(27,), dtype=np.float64)
+        action_space = gym.spaces.Box(low=-1, high=1, shape=(8,), dtype=np.float32)
+        obs_dim = 27
+        act_dim = 8
+
+    if env_name == 'Walker2d-v4':
+        observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(17,), dtype=np.float64)
+        action_space = gym.spaces.Box(low=-1, high=1, shape=(6,), dtype=np.float32)
+        obs_dim = 17
+        act_dim = 6
+
+    hidden_sizes = [64, 32]
+
+    from tf_agents.trajectories import time_step as ts
+    from tf_agents.specs import tensor_spec
+
+    # Define the time_step_spec as a TimeStep object
+    time_step_spec = ts.TimeStep(
+        step_type=tensor_spec.TensorSpec(shape=(), dtype=tf.int32, name='step_type'),
+        reward=tensor_spec.TensorSpec(shape=(), dtype=tf.float32, name='reward'),
+        discount=tensor_spec.TensorSpec(shape=(), dtype=tf.float32, name='discount'),
+        observation=tensor_spec.TensorSpec(shape=observation_space.shape, dtype=tf.float32, name='observation')
+    )
+    # time_step_spec = tensor_spec.TensorSpec(shape=[], dtype=tf.int32, name='step_type')
+    action_spec = tensor_spec.TensorSpec(shape=action_space.shape, dtype=np.float32, name='action')
+
+    # Load the PyTorch model and extract weights
+    pytorch_model = load_pytorch_model_spec(pytorch_model_path, observation_space, action_space)
+    actor_weights, actor_activations, log_std = extract_pytorch_weights_sac(pytorch_model)
+
+    # Create TensorFlow model
+    tf_model = CustomGaussianActorNetwork(obs_dim, act_dim, hidden_sizes, activation=tf.nn.tanh)
+
+    input_shape = (1, obs_dim)
+    # Assign PyTorch weights (including log_std) to TensorFlow model
+    assign_weights_to_tf_model_sac(tf_model, actor_weights, actor_activations, log_std, input_shape)
+
+    # Create TensorFlow policy with the transferred model
+    policy = actor_policy.ActorPolicy(
+        time_step_spec=time_step_spec,
+        action_spec=action_spec,
+        actor_network=tf_model,
+        training=False
+    )
+
+    print(log_std)
+    print(np.exp(log_std))
+
+    return policy, np.exp(log_std)
+
 
 
 def get_env_and_dqn_policy(env_name,
@@ -628,6 +811,12 @@ def get_env_and_policy(load_dir,
     policy = load_policy(sac_policy, env_name, directory)
     policy = GaussianPolicy(
         policy, 0.2 - 0.1 * alpha, emit_log_probability=True)
+  elif env_name in ['Hopper-v4', 'HalfCheetah-v4','Ant-v4','Walker2d-v4']:
+    tf_env = None
+    sac_policy, std = get_env_and_custom_sac_policy(env_name, os.path.join(load_dir))
+    # policy = load_policy(sac_policy, env_name, directory)
+    policy = GaussianPolicy(
+        sac_policy, alpha*std, emit_log_probability=True)
   elif env_name == 'line':
     tf_env, policy = line.get_line_env_and_policy(env_seed)
   else:
@@ -746,6 +935,7 @@ class GaussianPolicy(tf_policy.TFPolicy):
       policy_mean_action = nest_utils.unbatch_nested_tensors(policy_mean_action)
       policy_info = nest_utils.unbatch_nested_tensors(policy_info)
 
+
     gaussian_dist = tfp.distributions.MultivariateNormalDiag(
           loc=policy_mean_action,
           scale_diag=tf.ones_like(policy_mean_action) * self._scale)
@@ -808,115 +998,6 @@ def get_env_and_policy_from_weights(env_name: str,
               axis=0)
       ])
   return tf_env, policy
-
-
-import dice_rl.ppo.algo.core as core
-import torch
-
-# load target policy
-def load(path,env):
-    ac_kwargs = dict(hidden_sizes=[64,32])
-
-    ac = core.MLPActorCritic(env.observation_space, env.action_space, **ac_kwargs)
-    checkpoint = torch.load(path)
-    ac.load_state_dict(checkpoint['model_state_dict'])
-    return ac
-
-import tensorflow as tf
-import tensorflow_probability as tfp
-from gym.spaces import Box, Discrete
-
-tfd = tfp.distributions
-
-class MLPActorCriticTF(tf.keras.Model):
-    def __init__(self, observation_space, action_space, tf_env, emit_log_probability=True, hidden_sizes=(64, 64), activation='tanh', ):
-        super(MLPActorCriticTF, self).__init__()
-        obs_dim = observation_space.shape[0]
-
-        self.time_step_spec = tf_env.time_step_spec()
-        self.action_spec = tf_env.action_spec()
-        self.policy_state_spec = tf_env.observation_spec()
-        self.info_spec = {}
-        self.emit_log_probability = emit_log_probability
-
-        if isinstance(action_space, Box):
-            self.pi = MLPGaussianActorTF(obs_dim, action_space.shape[0], hidden_sizes, activation)
-        elif isinstance(action_space, Discrete):
-            self.pi = MLPCategoricalActorTF(obs_dim, action_space.n, hidden_sizes, activation)
-
-        self.v = MLPCriticTF(obs_dim, hidden_sizes, activation)
-
-    def call(self, obs):
-        pi_dist = self.pi._distribution(obs)
-        v = self.v(obs)
-        return pi_dist, v
-
-class MLPGaussianActorTF(tf.keras.Model):
-    def __init__(self, obs_dim, act_dim, hidden_sizes, activation):
-        super(MLPGaussianActorTF, self).__init__()
-        log_std = -0.5 * np.ones(act_dim, dtype=np.float32)
-        self.log_std = tf.Variable(log_std, trainable=True)
-        self.mu_net = self._build_mlp([obs_dim] + list(hidden_sizes) + [act_dim], activation)
-
-    def _build_mlp(self, sizes, activation):
-        model = tf.keras.Sequential()
-        for j in range(len(sizes) - 1):
-            model.add(tf.keras.layers.Dense(sizes[j + 1], activation=activation if j < len(sizes) - 2 else None))
-        return model
-
-    def _distribution(self, obs):
-        mu = self.mu_net(obs)
-        std = tf.exp(self.log_std)
-        return tfd.Normal(mu, std)
-
-class MLPCategoricalActorTF(tf.keras.Model):
-    def __init__(self, obs_dim, act_dim, hidden_sizes, activation):
-        super(MLPCategoricalActorTF, self).__init__()
-        self.logits_net = self._build_mlp([obs_dim] + list(hidden_sizes) + [act_dim], activation)
-
-    def _build_mlp(self, sizes, activation):
-        model = tf.keras.Sequential()
-        for j in range(len(sizes) - 1):
-            model.add(tf.keras.layers.Dense(sizes[j + 1], activation=activation if j < len(sizes) - 2 else None))
-        return model
-
-    def _distribution(self, obs):
-        logits = self.logits_net(obs)
-        return tfd.Categorical(logits=logits)
-
-class MLPCriticTF(tf.keras.Model):
-    def __init__(self, obs_dim, hidden_sizes, activation):
-        super(MLPCriticTF, self).__init__()
-        self.v_net = self._build_mlp([obs_dim] + list(hidden_sizes) + [1], activation)
-
-    def _build_mlp(self, sizes, activation):
-        model = tf.keras.Sequential()
-        for j in range(len(sizes) - 1):
-            model.add(tf.keras.layers.Dense(sizes[j + 1], activation=activation if j < len(sizes) - 2 else None))
-        return model
-
-    def call(self, obs):
-        return tf.squeeze(self.v_net(obs), axis=-1)
-
-
-# Convert PyTorch model to TensorFlow model and save
-def load_tf_model_from_pytorch(pytorch_model, observation_space, action_space, tf_env, hidden_sizes=(64, 32), save_dir='tf_model'):
-    ac_tf = MLPActorCriticTF(observation_space, action_space, tf_env, True, hidden_sizes)
-
-    # Create the model's weights by calling it with a dummy input
-    dummy_input = np.zeros((1, observation_space.shape[0]), dtype=np.float32)
-    ac_tf(dummy_input)
-
-    # Transfer parameters from PyTorch to TensorFlow
-    for layer_tf, layer_torch in zip(ac_tf.trainable_variables, pytorch_model.parameters()):
-        if len(layer_tf.shape) == 2:  # Dense layer weights
-            layer_tf.assign(tf.transpose(layer_torch.detach().numpy()))
-        else:  # Biases and other parameters
-            layer_tf.assign(layer_torch.detach().numpy())
-
-    # Save the TensorFlow model
-    ac_tf.save_weights(save_dir)
-    return ac_tf
 
 
 def main():

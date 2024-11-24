@@ -22,6 +22,7 @@ import numpy as np
 import os
 import pickle
 import tensorflow.compat.v2 as tf
+import json
 
 import six
 from typing import Any, Callable, Iterable, Optional, Sequence, Tuple, Union
@@ -33,6 +34,13 @@ from tf_agents.utils import nest_utils
 CONSTRUCTOR_PREFIX = 'dataset-ctr.pkl'
 CHECKPOINT_PREFIX = 'dataset-ckpt'
 
+# Custom unpickler to handle TensorFlow version discrepancies
+class CustomUnpickler(pickle.Unpickler):
+ def find_class(self, module, name):
+  # Remap the missing module path
+  if module == "tensorflow.python.framework.tensor":
+   module = "tensorflow.python.framework.ops"  # Update the path for TensorFlow 2.6
+  return super().find_class(module, name)
 
 class StepType(object):
   """Defines the type of step (first/mid/last) with some basic utilities."""
@@ -212,7 +220,6 @@ class Dataset(object):
         will have shape [T], whereas if multiple episodes are collected, it
         will have shape [B, T].
     """
-
   def save(self, directory, checkpoint=None):
     """Saves this dataset to a directory."""
     args, kwargs = self.constructor_args_and_kwargs
@@ -266,6 +273,7 @@ class Dataset(object):
     checkpoint.restore(checkpoint_filename)
 
     return dataset
+
 
 
 @six.add_metaclass(abc.ABCMeta)

@@ -39,6 +39,12 @@ from dice_rl.networks.value_network import ValueNetwork
 import dice_rl.utils.common as common_utils
 from dice_rl.data.dataset import Dataset, EnvStep, StepType
 from dice_rl.data.tf_offpolicy_dataset import TFOffpolicyDataset
+import tensorflow_probability as tfp
+import torch
+import torch.distributions as td
+import dice_rl.ppo.algo.core as core
+from dice_rl.environments.env_policies import load as load_pytorch_policy
+import gym
 
 
 FLAGS = flags.FLAGS
@@ -83,6 +89,70 @@ flags.DEFINE_string(
     'One of [exp, cuberoot, None]')
 flags.DEFINE_float('random_weight', 0.2,
                    'random policy')
+
+
+class ActionDistributionWrapper:
+    """Wrapper for PyTorch action distribution, providing a compatible API."""
+
+    def __init__(self, distribution):
+        self.distribution = distribution  # Store the PyTorch distribution
+        self.action = distribution  # Store the sampled action
+
+    def probs_parameter(self):
+        """Returns the probabilities for categorical actions (or mean for continuous actions)."""
+        if hasattr(self.action, 'probs'):
+            return self.action.probs
+        else:
+            raise AttributeError("Action doesn't have `probs` or `mean` attributes.")
+
+
+class PyTorchPolicyWrapper:
+    """A wrapper to use PyTorch policy in TensorFlow environments."""
+
+    def __init__(self, torch_policy, mujoco=False, random_weight=0.2):
+        self.torch_policy = torch_policy  # PyTorch actor-critic policy
+        self.mujoco = mujoco
+        self.random_weight = random_weight
+
+    def distribution(self, tf_time_step):
+        """Generates action distribution for a given time step (compatible with TensorFlow)."""
+        # Convert TensorFlow observation to a NumPy array and then a PyTorch tensor
+        print(tf_time_step.observation)
+        obs = tf_time_step.observation.numpy()  # Run in eager mode
+        obs_tensor = torch.as_tensor(obs, dtype=torch.float32)
+
+        # Get action distribution from the PyTorch policy
+        pi = self.torch_policy.pi._distribution(obs_tensor)
+
+        if self.mujoco:
+            std = torch.exp(self.torch_policy.pi.log_std)
+            mu = self.torch_policy.pi.mu_net(obs_tensor)
+            action_weights = torch.distributions.Normal(mu, std * self.random_weight)
+        else:
+            action_weights = pi.probs  # Assuming `pi` has a `probs` or similar method
+
+        # Convert the PyTorch result to TensorFlow tensor
+        print("action_weights", action_weights)
+        action_weights_tf = tf.convert_to_tensor(action_weights.detach().numpy(), dtype=tf.float32)
+
+        return action_weights_tf
+
+    def action(self, tf_time_step):
+        """Sample actions from the PyTorch policy."""
+        obs = tf_time_step.observation.numpy()
+        obs_tensor = torch.as_tensor(obs, dtype=torch.float32)
+
+        # Sample action based on the PyTorch policy distribution
+        if self.mujoco:
+            std = torch.exp(self.torch_policy.pi.log_std)
+            mu = self.torch_policy.pi.mu_net(obs_tensor)
+            beh_pi = torch.distributions.Normal(mu, std * self.random_weight)
+            action = beh_pi.sample().detach().numpy()
+        else:
+            targ_a, _, _ = self.torch_policy.step(obs_tensor)
+            action = targ_a.detach().numpy()
+
+        return tf.convert_to_tensor(action, dtype=tf.float32)
 
 def main(argv):
   load_dir = FLAGS.load_dir
@@ -129,6 +199,8 @@ def main(argv):
       raise ValueError('Reward {} not implemented.'.format(transform_reward))
     return reward
 
+
+
   hparam_str = ('{ENV_NAME}_tabular{TAB}_alpha{ALPHA}_seed{SEED}_'
                 'numtraj{NUM_TRAJ}_maxtraj{MAX_TRAJ}_gamma{GAMMA}_random{RANDOM_WEIGHT}').format(
       ENV_NAME=env_name,
@@ -174,11 +246,13 @@ def main(argv):
 
   directory = os.path.join(load_dir, hparam_str)
   print('Loading dataset from', directory)
-  dataset = Dataset.load(directory)
+  # dataset = Dataset.load(directory)
+  dataset = TFOffpolicyDataset.load_off(directory)
 
   directory2 = os.path.join(load_dir, hparam_str2)
   print('Loading dataset from', directory2)
-  dataset2 = Dataset.load(directory2)
+  # dataset2 = Dataset.load(directory2)
+  dataset2 = TFOffpolicyDataset.load_off(directory2)
 
   all_steps = dataset.get_all_steps()
   max_reward = tf.reduce_max(all_steps.reward)
@@ -190,15 +264,16 @@ def main(argv):
   print('min reward', min_reward, 'max reward', max_reward)
   print('behavior per-step',
         estimator_lib.get_fullbatch_average(dataset, gamma=gamma))
-  target_dataset = Dataset.load(
-      directory.replace('alpha{}'.format(alpha), 'alpha1.0'))
-  print('target per-step',
-        estimator_lib.get_fullbatch_average(target_dataset, gamma=1.))
+  # target_dataset = Dataset.load(
+  #     directory.replace('alpha{}'.format(alpha), 'alpha1.0'))
+  # print('target per-step',
+  #       estimator_lib.get_fullbatch_average(target_dataset, gamma=1.))
 
   activation_fn = tf.nn.relu
   kernel_initializer = tf.keras.initializers.GlorotUniform()
   hidden_dims = (64, 64)
   input_spec = (dataset.spec.observation, dataset.spec.action)
+  print(dataset.spec.observation, dataset.spec.action)
   nu_network = ValueNetwork(
       input_spec,
       fc_layer_params=hidden_dims,
@@ -238,6 +313,7 @@ def main(argv):
 
   global_step = tf.Variable(0, dtype=tf.int64)
   tf.summary.experimental.set_step(global_step)
+
 
   target_policy = get_target_policy(load_dir_policy, env_name, tabular_obs)
   running_losses = []
@@ -279,9 +355,9 @@ def main(argv):
       eval_obj2 = estimator.eval_policy_csv(dataset2, target_policy)
       save_to_csv(step, eval_obj, eval_obj2, csv_file)
 
-    if step % 500 == 0 or step == num_steps - 1:
-        plot_file = os.path.join(save_dir, '_zeta_'+str(step))
-        estimator.plot_zeta_csv(dataset, target_policy, filename_prefix=plot_file)
+    # if (step < 1000 and step % 25 == 0) or (step >= 1000 and step % 100 == 0):
+    #     plot_file = os.path.join(save_dir, '_zeta_'+str(step))
+    #     estimator.plot_zeta_csv(dataset, target_policy, filename_prefix=plot_file)
 
     global_step.assign_add(1)
 

@@ -27,6 +27,8 @@ import dice_rl.data.dataset as dataset_lib
 import dice_rl.utils.common as common_lib
 import dice_rl.estimators.estimator as estimator_lib
 
+import pandas as pd
+# import matplotlib.pyplot as plt
 
 class NeuralDice(object):
   """Policy evaluation with DICE."""
@@ -140,8 +142,10 @@ class NeuralDice(object):
     if self._solve_for_state_action_ratio:
       tfagents_step = dataset_lib.convert_to_tfagents_timestep(env_step)
       if self._categorical_action and self._num_samples is None:
+        # action_weights = policy.distribution(
+        #     tfagents_step)
         action_weights = policy.distribution(
-            tfagents_step).action.probs_parameter()
+          tfagents_step).action.probs_parameter()
         action_dtype = self._dataset_spec.action.dtype
         batch_size = tf.shape(action_weights)[0]
         num_actions = tf.shape(action_weights)[-1]
@@ -166,6 +170,7 @@ class NeuralDice(object):
       flat_values, _ = network((flat_observations, flat_actions))
       values = tf.reshape(flat_values, [batch_size, num_actions] +
                           flat_values.shape[1:].as_list())
+      # print(action_weights)
       return tf.reduce_sum(
           values * common_lib.reverse_broadcast(action_weights, values), axis=1)
     else:
@@ -449,18 +454,18 @@ class NeuralDice(object):
     df = pd.DataFrame({'zeta_values': zeta_values_np})
     df.to_csv(csv_filename, index=False)
 
-    # Plot the scatter plot of sorted zeta_values
-    plt.figure()
-    plt.scatter(range(len(zeta_values_np)), np.sort(zeta_values_np))
-    plt.xlabel('Index (Sorted)')
-    plt.ylabel('Zeta Value')
-    plt.title('Scatter Plot of Sorted Zeta Values')
-    plt.yscale('log')  # Optional: Log scale to better see small and large values
-    plt.grid(axis='y', linestyle='--')
-
-    # Save the plot using the prefix of the CSV filename, with a '.png' extension
-    plot_filename = f"{filename_prefix}.png"
-    plt.savefig(plot_filename)
-
-    # Close the plot to free memory
-    plt.close()
+    # # Plot the scatter plot of sorted zeta_values
+    # plt.figure()
+    # plt.scatter(range(len(zeta_values_np)), np.sort(zeta_values_np))
+    # plt.xlabel('Index (Sorted)')
+    # plt.ylabel('Zeta Value')
+    # plt.title('Scatter Plot of Sorted Zeta Values')
+    # plt.yscale('log')  # Optional: Log scale to better see small and large values
+    # plt.grid(axis='y', linestyle='--')
+    #
+    # # Save the plot using the prefix of the CSV filename, with a '.png' extension
+    # plot_filename = f"{filename_prefix}.png"
+    # plt.savefig(plot_filename)
+    #
+    # # Close the plot to free memory
+    # plt.close()

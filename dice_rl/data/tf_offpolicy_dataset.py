@@ -29,6 +29,11 @@ import tensorflow_probability as tfp
 
 from dice_rl.data.dataset import EnvStep, OffpolicyDataset, StepType
 
+import os
+import os
+import json
+import pickle
+
 EpisodeInfo = collections.namedtuple(
     'EpisodeInfo', ['episode_start_id', 'episode_end_id',
                     'episode_start_type', 'episode_end_type'])
@@ -56,6 +61,9 @@ class TFOffpolicyDataset(tf.Module, OffpolicyDataset):
     super(TFOffpolicyDataset, self).__init__(name=name)
     self._spec = spec
     self._capacity_value = np.int64(capacity)
+
+    self.env_capacity = capacity
+    self.env_step_spec = spec
 
     self._episode_info_spec = EpisodeInfo(
         tensor_spec.TensorSpec([], dtype=tf.int64, name='episode_start_id'),
@@ -380,3 +388,92 @@ class TFOffpolicyDataset(tf.Module, OffpolicyDataset):
 
     discounted_rewards = calculate_discounted_rewards(steps, valid_steps, gamma)
     return discounted_rewards
+
+  def save_off(self, directory):
+    """Saves the dataset, including env_step_spec and capacity."""
+    if not os.path.exists(directory):
+      os.makedirs(directory)
+
+    # Save env_step_spec and capacity to a JSON file
+    attributes = {
+      'env_step_spec': self.serialize_env_step_spec(),  # Serialize the env_step_spec
+      'capacity': self.env_capacity
+    }
+    with open(os.path.join(directory, 'attributes.json'), 'w') as f:
+      json.dump(attributes, f)
+
+    # Save the rest of the dataset as a TensorFlow checkpoint
+    checkpoint = tf.train.Checkpoint(dataset=self)
+    checkpoint_path = os.path.join(directory, 'ckpt')
+    checkpoint.save(checkpoint_path)
+    print(f"Checkpoint saved to {checkpoint_path} and attributes saved to {directory}/attributes.json")
+
+  @classmethod
+  def load_off(cls, directory):
+    """Loads the dataset by first loading env_step_spec and capacity."""
+    attributes_file = os.path.join(directory, 'attributes.json')
+
+    # Load env_step_spec and capacity from the JSON file
+    if not os.path.exists(attributes_file):
+      raise ValueError(f"No attributes file found in {directory}")
+
+    with open(attributes_file, 'r') as f:
+      attributes = json.load(f)
+
+    env_step_spec = cls.deserialize_env_step_spec(attributes['env_step_spec'])
+    capacity = attributes['capacity']
+
+    # Create a new dataset instance with loaded attributes
+    dataset = cls(env_step_spec, capacity)
+
+    # Load the checkpoint to restore variables
+    checkpoint_path = tf.train.latest_checkpoint(directory)
+    if not checkpoint_path:
+      raise ValueError(f'No suitable checkpoint found in {directory}.')
+
+    checkpoint = tf.train.Checkpoint(dataset=dataset)
+    checkpoint.restore(checkpoint_path).expect_partial()
+
+    print(f"Checkpoint and attributes loaded from {directory}")
+    return dataset
+
+  def serialize_env_step_spec(self):
+    """Convert env_step_spec to a serializable dictionary."""
+
+    def spec_to_dict(spec):
+      return {
+        'shape': spec.shape.as_list(),
+        'dtype': spec.dtype.name,  # Store dtype as string (e.g., "int32")
+        'name': spec.name
+      }
+
+    return {
+      'step_type': spec_to_dict(self.env_step_spec.step_type),
+      'step_num': spec_to_dict(self.env_step_spec.step_num),
+      'observation': spec_to_dict(self.env_step_spec.observation),
+      'action': spec_to_dict(self.env_step_spec.action),
+      'reward': spec_to_dict(self.env_step_spec.reward),
+      'discount': spec_to_dict(self.env_step_spec.discount),
+      'policy_info': spec_to_dict(self.env_step_spec.policy_info),
+      'env_info': spec_to_dict(self.env_step_spec.env_info),
+      'other_info': spec_to_dict(self.env_step_spec.other_info)
+    }
+
+  @classmethod
+  def deserialize_env_step_spec(cls, env_step_spec_dict):
+    """Convert dictionary back to env_step_spec using TensorSpecs."""
+
+    def dict_to_spec(d):
+      return tf.TensorSpec(shape=d['shape'], dtype=tf.dtypes.as_dtype(d['dtype']), name=d['name'])
+
+    return EnvStep(
+      step_type=dict_to_spec(env_step_spec_dict['step_type']),
+      step_num=dict_to_spec(env_step_spec_dict['step_num']),
+      observation=dict_to_spec(env_step_spec_dict['observation']),
+      action=dict_to_spec(env_step_spec_dict['action']),
+      reward=dict_to_spec(env_step_spec_dict['reward']),
+      discount=dict_to_spec(env_step_spec_dict['discount']),
+      policy_info=dict_to_spec(env_step_spec_dict['policy_info']),
+      env_info=dict_to_spec(env_step_spec_dict['env_info']),
+      other_info=dict_to_spec(env_step_spec_dict['other_info'])
+    )

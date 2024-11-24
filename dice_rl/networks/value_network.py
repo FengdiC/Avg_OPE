@@ -19,6 +19,18 @@ from tf_agents.networks import utils
 
 import dice_rl.utils.common as common_lib
 
+def custom_mlp_layers(input_tensor, layer_params, activation_fn, kernel_initializer, name):
+    layers = []
+    for i, num_units in enumerate(layer_params):
+        layers.append(
+            tf.keras.layers.Dense(
+                num_units,
+                activation=activation_fn,
+                kernel_initializer=kernel_initializer,
+                name=f'{name}_dense{i}'  # Replacing '/' with '_'
+            )
+        )
+    return layers
 
 class ValueNetwork(network.Network):
   """Creates a critic network."""

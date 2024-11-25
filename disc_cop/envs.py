@@ -22,12 +22,10 @@ ENV_ID_TO_NAME = {
 
 ENV_FAMILY_SPECIFICS = {
     "mujoco": {
-        "max_len": 100,
         "train_steps": 250_000,
         "run_time": "02:55:00",
     },
     "classic_control": {
-        "max_len": 50,
         "train_steps": 10_000,
         "run_time": "02:00:00",
     },

@@ -24,13 +24,15 @@ def main(args):
         set_seed(seed)
         res[seed] = dict()
         for gamma in HYPERPARAMETERS[env_family]["discount_factors"]:
-            res[seed][gamma] = policy_evaluation(
-                env_name=env_config[0],
-                policy_path=env_config[1],
-                gamma=gamma,
-                max_len=ENV_FAMILY_SPECIFICS[env_family]["max_len"],
-                total_trajs=args.total_trajs,
-            )
+            res[seed][gamma] = dict()
+            for max_len in HYPERPARAMETERS[env_family]["max_lens"]:
+                res[seed][gamma][max_len] = policy_evaluation(
+                    env_name=env_config[0],
+                    policy_path=env_config[1],
+                    gamma=gamma,
+                    max_len=max_len,
+                    total_trajs=args.total_trajs,
+                )
 
     pickle.dump(
         res,

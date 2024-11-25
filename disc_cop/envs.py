@@ -23,11 +23,11 @@ ENV_ID_TO_NAME = {
 ENV_FAMILY_SPECIFICS = {
     "mujoco": {
         "train_steps": 250_000,
-        "run_time": "02:55:00",
+        "run_time": "12:00:00",
     },
     "classic_control": {
         "train_steps": 10_000,
-        "run_time": "02:00:00",
+        "run_time": "03:00:00",
     },
 }
 

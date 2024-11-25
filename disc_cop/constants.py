@@ -5,7 +5,7 @@ DATASET_DIR = f"{HOME_DIR}/scratch/disc_cop/datasets"
 REPO_PATH = f"{HOME_DIR}/src/Avg_OPE"
 CC_ACCOUNT = "def-schuurma"
 USE_SLURM = True
-RUN_ALL = True
+RUN_ALL = False
 
 # HOME_DIR = "/Users/chanb/research/ualberta/Avg_OPE"
 # LOG_DIR = "/Users/chanb/research/ualberta/Avg_OPE/local/results"

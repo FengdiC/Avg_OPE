@@ -236,7 +236,7 @@ def policy_evaluation(env_name, policy_path, max_len, total_trajs=100):
     env = gym.make(env_name)
     ac = load_policy(policy_path, env)
 
-    (o, _), ep_len, ep_ret, ep_avg_ret = env.reset(), 0, 0, 0
+    (o, _), ep_len = env.reset(), 0
     num_traj = 0
 
     all_rew = []

@@ -10,16 +10,14 @@ from disc_cop.constants import (
     LOG_DIR,
     RUN_REPORT_DIR,
     REPO_PATH,
-    DATASET_DIR,
     CC_ACCOUNT,
 )
 from disc_cop.envs import ENV_TO_FAMILY
 
 dat_content = ""
 for env_name in ENV_TO_FAMILY:
-    dat_content += "export env_name={} dataset_dir={} \n".format(
+    dat_content += "export env_name={} \n".format(
         env_name,
-        DATASET_DIR,
     )
 
 with open(os.path.join(LOG_DIR, "baselines.dat"), "w+") as f:
@@ -28,7 +26,7 @@ with open(os.path.join(LOG_DIR, "baselines.dat"), "w+") as f:
 sbatch_content = ""
 sbatch_content += "#!/bin/bash\n"
 sbatch_content += "#SBATCH --account={}\n".format(CC_ACCOUNT)
-sbatch_content += "#SBATCH --time=01:00:00\n"
+sbatch_content += "#SBATCH --time=03:00:00\n"
 sbatch_content += "#SBATCH --cpus-per-task=1\n"
 sbatch_content += "#SBATCH --mem=3G\n"
 sbatch_content += "#SBATCH --array=1-{}\n".format(len(ENV_TO_FAMILY))

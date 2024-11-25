@@ -214,7 +214,7 @@ def maybe_collect_dataset(
         o = next_o
 
         terminal = d
-        epoch_ended = ep_len == max_len - 1
+        epoch_ended = ep_len == max_len
 
         if terminal or epoch_ended:
             if terminal and not (epoch_ended):
@@ -249,7 +249,7 @@ def policy_evaluation(env_name, policy_path, max_len, total_trajs=100):
         o = next_o
 
         terminal = d
-        epoch_ended = ep_len == max_len - 1
+        epoch_ended = ep_len == max_len
         curr_rews.append(r)
 
         if terminal or epoch_ended:

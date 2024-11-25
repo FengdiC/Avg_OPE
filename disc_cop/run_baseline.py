@@ -27,7 +27,6 @@ def main(args):
         res[seed] = policy_evaluation(
             env_name=env_config[0],
             policy_path=env_config[1],
-            gamma=gamma,
             max_len=max_len,
             total_trajs=args.total_trajs,
         )

@@ -232,22 +232,18 @@ def maybe_collect_dataset(
     return buf
 
 
-def policy_evaluation(env_name, policy_path, gamma, max_len, total_trajs=100):
+def policy_evaluation(env_name, policy_path, max_len, total_trajs=100):
     env = gym.make(env_name)
     ac = load_policy(policy_path, env)
 
     (o, _), ep_len, ep_ret, ep_avg_ret = env.reset(), 0, 0, 0
     num_traj = 0
-    rets = []
-    avg_rets = []
 
     all_rew = []
     curr_rews = []
     while num_traj < total_trajs:
         a, _, _ = ac.step(torch.as_tensor(o, dtype=torch.float32))
         next_o, r, d, _, _ = env.step(a)
-        ep_ret += r * gamma**ep_len
-        ep_avg_ret += r
         ep_len += 1
         # Update obs (critical!)
         o = next_o
@@ -259,10 +255,8 @@ def policy_evaluation(env_name, policy_path, gamma, max_len, total_trajs=100):
         if terminal or epoch_ended:
             if epoch_ended:
                 num_traj += 1
-                rets.append(ep_ret)
-                avg_rets.append(ep_avg_ret)
                 all_rew.append(curr_rews)
-            (o, _), ep_ret, ep_len, ep_avg_ret = env.reset(), 0, 0, 0
+            (o, _), ep_len = env.reset(), 0
             curr_rews = []
 
     # return (1 - gamma) * np.mean(rets), np.var(rets), np.mean(avg_rets)

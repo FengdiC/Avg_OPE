@@ -38,7 +38,7 @@ sbatch_content += "#SBATCH --output={}/%j.out\n".format(
 )
 sbatch_content += "module load StdEnv/2023\n"
 sbatch_content += "module load gcc gcccore/.12.3 opencv intel/2023.2.1 python/3.10 mpi4py\n"
-sbatch_content += "module load mujoco/2.2.2\n"
+sbatch_content += "module load mujoco\n"
 sbatch_content += "source ~/avg_ope/bin/activate\n"
 sbatch_content += '`sed -n "${SLURM_ARRAY_TASK_ID}p"'
 sbatch_content += " < {}`\n".format(os.path.join(LOG_DIR, "generate_datasets.dat"))

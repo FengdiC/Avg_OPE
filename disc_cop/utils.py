@@ -158,6 +158,7 @@ def maybe_collect_dataset(
 ):
     save_buf = load_dataset is not None
     if load_dataset:
+        print("dataset path: {}".format(load_dataset))
         if os.path.isfile(load_dataset):
             save_buf = False
             print("Loaded from existing buffer.")

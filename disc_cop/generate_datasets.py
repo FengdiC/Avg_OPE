@@ -30,47 +30,56 @@ def main(args):
             ),
         )
 
-        max_num_samples = max(HYPERPARAMETERS[env_family]["buffer_sizes"])
-        min_max_len = min(HYPERPARAMETERS[env_family]["max_lens"])
-        max_max_len = max(HYPERPARAMETERS[env_family]["max_lens"])
         mujoco = env_family == "mujoco"
         for (
             policy_path,
             random_weight,
+            buffer_size,
+            max_len,
         ) in product(
             [env_config[1]],
             HYPERPARAMETERS[env_family]["random_weights"],
+            HYPERPARAMETERS[env_family]["buffer_sizes"],
+            HYPERPARAMETERS[env_family]["max_lens"],
         ):
 
             set_seed(seed)
 
-            max_ep = max_num_samples // min_max_len
+            max_ep = buffer_size // max_len
             env = gym.make(env_config[0])
             env.reset(seed=seed)
 
             maybe_collect_dataset(
                 env,
                 max_ep=max_ep,
-                max_len=max_max_len,
+                max_len=max_len,
                 policy_path=policy_path,
                 random_weight=random_weight,
                 fold=1,
                 load_dataset=os.path.join(
                     load_dataset,
-                    "train-random_weight_{}.pkl".format(random_weight),
+                    "train-random_weight_{}-buffer_size_{}-max_len_{}.pkl".format(
+                        random_weight,
+                        buffer_size,
+                        max_len,
+                    ),
                 ),
                 mujoco=mujoco,
             )
             maybe_collect_dataset(
                 env,
                 max_ep=max_ep,
-                max_len=max_max_len,
+                max_len=max_len,
                 policy_path=policy_path,
                 random_weight=random_weight,
                 fold=1,
                 load_dataset=os.path.join(
                     load_dataset,
-                    "test-random_weight_{}.pkl".format(random_weight),
+                    "test-random_weight_{}-buffer_size_{}-max_len_{}.pkl".format(
+                        random_weight,
+                        buffer_size,
+                        max_len,
+                    ),
                 ),
                 mujoco=mujoco,
             )

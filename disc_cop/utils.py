@@ -51,7 +51,6 @@ class Buffer:
         self.max_ep = max_ep
         self.max_len = max_len
         self.max_size = max_ep * max_len
-        self.ep_start_inds = [0]
         self.ep_i = 0
 
     def store(self, obs, act, rew, next_obs, tim, logbev, logtarg):
@@ -163,7 +162,6 @@ def maybe_collect_dataset(
             save_buf = False
             print("Loaded from existing buffer.")
             buf = pickle.load(open(load_dataset, "rb"))
-            buf.set_ep_len(max_ep, max_len)
         os.makedirs(os.path.dirname(load_dataset), exist_ok=True)
 
     ac = load_policy(policy_path, env)

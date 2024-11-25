@@ -15,6 +15,7 @@ RUN_ALL = True
 # CC_ACCOUNT = "def-schuurma"
 # USE_SLURM = False
 
+MAX_BUFFER_SIZE = 16000
 if RUN_ALL:
     # RUN ALL
     HYPERPARAMETERS = dict(

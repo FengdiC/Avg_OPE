@@ -14,8 +14,9 @@ sys.path.insert(0, parentdir)
 
 from torch.optim import Adam
 
-from disc_cop.utils import maybe_collect_dataset, set_seed
+from disc_cop.constants import MAX_BUFFER_SIZE
 from disc_cop.envs import ENV_TO_FAMILY, ENV_ID_TO_NAME
+from disc_cop.utils import maybe_collect_dataset, set_seed
 
 
 class WeightNet(nn.Module):
@@ -76,7 +77,6 @@ def train_ratio(
     env = gym.make(env)
     env.reset(seed=seed)
 
-    buffer_size = max_ep * max_len
     buf = maybe_collect_dataset(
         env,
         max_ep=max_ep,
@@ -88,7 +88,7 @@ def train_ratio(
             load_dataset,
             "train-random_weight_{}-buffer_size_{}-max_len_{}.pkl".format(
                 random_weight,
-                buffer_size,
+                MAX_BUFFER_SIZE,
                 max_len,
             ),
         ),
@@ -105,7 +105,7 @@ def train_ratio(
             load_dataset,
             "test-random_weight_{}-buffer_size_{}-max_len_{}.pkl".format(
                 random_weight,
-                buffer_size,
+                MAX_BUFFER_SIZE,
                 max_len,
             ),
         ),

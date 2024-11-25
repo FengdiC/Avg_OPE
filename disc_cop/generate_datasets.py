@@ -12,7 +12,7 @@ sys.path.insert(0, parentdir)
 from itertools import product
 from tqdm import tqdm
 
-from disc_cop.constants import HYPERPARAMETERS
+from disc_cop.constants import HYPERPARAMETERS, MAX_BUFFER_SIZE
 from disc_cop.envs import ENVS, ENV_TO_FAMILY
 from disc_cop.utils import maybe_collect_dataset, set_seed
 
@@ -34,18 +34,16 @@ def main(args):
         for (
             policy_path,
             random_weight,
-            buffer_size,
             max_len,
         ) in product(
             [env_config[1]],
             HYPERPARAMETERS[env_family]["random_weights"],
-            HYPERPARAMETERS[env_family]["buffer_sizes"],
             HYPERPARAMETERS[env_family]["max_lens"],
         ):
 
             set_seed(seed)
 
-            max_ep = buffer_size // max_len
+            max_ep = MAX_BUFFER_SIZE // max_len
             env = gym.make(env_config[0])
             env.reset(seed=seed)
 
@@ -60,7 +58,7 @@ def main(args):
                     load_dataset,
                     "train-random_weight_{}-buffer_size_{}-max_len_{}.pkl".format(
                         random_weight,
-                        buffer_size,
+                        MAX_BUFFER_SIZE,
                         max_len,
                     ),
                 ),
@@ -77,7 +75,7 @@ def main(args):
                     load_dataset,
                     "test-random_weight_{}-buffer_size_{}-max_len_{}.pkl".format(
                         random_weight,
-                        buffer_size,
+                        MAX_BUFFER_SIZE,
                         max_len,
                     ),
                 ),

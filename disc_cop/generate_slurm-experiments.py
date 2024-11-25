@@ -6,7 +6,7 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 
-from disc_cop.constants import LOG_DIR, RUN_REPORT_DIR, REPO_PATH, CC_ACCOUNT
+from disc_cop.constants import LOG_DIR, RUN_REPORT_DIR, REPO_PATH, CC_ACCOUNT, DATASET_DIR
 from disc_cop.envs import ENV_TO_FAMILY, ENV_FAMILY_SPECIFICS
 
 for env_name in ENV_TO_FAMILY:
@@ -44,9 +44,12 @@ for env_name in ENV_TO_FAMILY:
     sbatch_content += 'echo "Current working directory is `pwd`"\n'
     sbatch_content += 'echo "Running on hostname `hostname`"\n'
     sbatch_content += 'echo "Starting run at: `date`"\n'
+
+    sbatch_content += "unzip {}/datasets.zip -d $SLURM_TMPDIR\n".format(DATASET_DIR)
+
     sbatch_content += "python3 {}/disc_cop/run_experiment.py \\\n".format(REPO_PATH)
     sbatch_content += "  --config_path=${config_path} \\\n"
-    sbatch_content += "  --dataset_dir=${dataset_dir}\n"
+    sbatch_content += "  --dataset_dir=${SLURM_TMPDIR}/datasets \n"
     sbatch_content += 'echo "Program test finished with exit code $? at: `date`"\n'
 
     with open(

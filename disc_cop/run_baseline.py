@@ -20,19 +20,17 @@ def main(args):
     env_family = ENV_TO_FAMILY[env_name]
     env_config = ENVS[env_family][env_name]
     res = dict()
+
+    max_len = max(HYPERPARAMETERS[env_family]["max_lens"])
     for seed in tqdm(HYPERPARAMETERS[env_family]["seeds"]):
         set_seed(seed)
-        res[seed] = dict()
-        for gamma in HYPERPARAMETERS[env_family]["discount_factors"]:
-            res[seed][gamma] = dict()
-            for max_len in HYPERPARAMETERS[env_family]["max_lens"]:
-                res[seed][gamma][max_len] = policy_evaluation(
-                    env_name=env_config[0],
-                    policy_path=env_config[1],
-                    gamma=gamma,
-                    max_len=max_len,
-                    total_trajs=args.total_trajs,
-                )
+        res[seed] = policy_evaluation(
+            env_name=env_config[0],
+            policy_path=env_config[1],
+            gamma=gamma,
+            max_len=max_len,
+            total_trajs=args.total_trajs,
+        )
 
     pickle.dump(
         res,

@@ -11,7 +11,7 @@ sys.path.insert(0, parentdir)
 from itertools import product
 from tqdm import tqdm
 
-from disc_cop.constants import LOG_DIR, DATASET_DIR, HYPERPARAMETERS
+from disc_cop.constants import LOG_DIR, DATASET_DIR, HYPERPARAMETERS, USE_SLURM
 from disc_cop.envs import ENVS, ENV_FAMILY_SPECIFICS
 
 
@@ -70,7 +70,7 @@ def generate_experiment_configs():
                     + "discount_factor_"
                     + str(discount_factor)
                     + "-"
-                    + "max_ep"
+                    + "max_ep_"
                     + str(buffer_size // max_len)
                     + "-"
                     + "link_"
@@ -127,10 +127,15 @@ def generate_experiment_configs():
                     result, open(os.path.join(LOG_DIR, env_name, filename), "wb")
                 )
 
-                dat_content += "export config_path={} dataset_dir={} \n".format(
-                    os.path.join(LOG_DIR, env_name, filename),
-                    DATASET_DIR,
-                )
+                if USE_SLURM:
+                    dat_content += "export config_path={} \n".format(
+                        os.path.join(LOG_DIR, env_name, filename),
+                    )
+                else:
+                    dat_content += "export config_path={} dataset_dir={} \n".format(
+                        os.path.join(LOG_DIR, env_name, filename),
+                        DATASET_DIR,
+                    )
 
             with open(os.path.join(LOG_DIR, "{}.dat".format(env_name)), "w+") as f:
                 f.writelines(dat_content)

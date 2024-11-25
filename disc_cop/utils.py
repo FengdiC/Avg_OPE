@@ -241,6 +241,8 @@ def policy_evaluation(env_name, policy_path, gamma, max_len, total_trajs=100):
     rets = []
     avg_rets = []
 
+    all_rew = []
+    curr_rews = []
     while num_traj < total_trajs:
         a, _, _ = ac.step(torch.as_tensor(o, dtype=torch.float32))
         next_o, r, d, _, _ = env.step(a)
@@ -252,12 +254,16 @@ def policy_evaluation(env_name, policy_path, gamma, max_len, total_trajs=100):
 
         terminal = d
         epoch_ended = ep_len == max_len - 1
+        curr_rews.append(r)
 
         if terminal or epoch_ended:
             if epoch_ended:
                 num_traj += 1
                 rets.append(ep_ret)
                 avg_rets.append(ep_avg_ret)
+                all_rew.append(curr_rews)
             (o, _), ep_ret, ep_len, ep_avg_ret = env.reset(), 0, 0, 0
+            curr_rews = []
 
-    return (1 - gamma) * np.mean(rets), np.var(rets), np.mean(avg_rets)
+    # return (1 - gamma) * np.mean(rets), np.var(rets), np.mean(avg_rets)
+    return np.array(all_rew)

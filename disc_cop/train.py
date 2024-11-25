@@ -302,7 +302,11 @@ def train_ratio(
         os.makedirs(os.path.join(save_path, run_dirname), exist_ok=True)
 
     if baseline_path and os.path.isfile(baseline_path):
-        baseline = pickle.load(open(baseline_path, "rb"))[seed][gamma][max_len][0]
+        baseline_rewards = pickle.load(open(baseline_path, "rb"))[seed]
+
+        baseline = (1 - gamma) * np.mean(
+            baseline_rewards[:, :max_len] * (gamma ** np.arange(max_len)[None])
+        )
 
         def check_best(obj_test, curr_best, steps):
             loss = (obj_test - baseline) ** 2

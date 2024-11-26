@@ -135,6 +135,11 @@ run_all-walker.sh
 
 You may simply do `sbatch run_all-<FILE>.sh` to kick off the run.
 
+## CURRENT (2024-11-26)
+- Chose hyperparameters based on Cartpole and Acrobot
+- Running cartpole
+- Running Acrobot
+
 
 ## Experimental Status
 Setting

@@ -6,7 +6,7 @@ REPO_PATH = f"{HOME_DIR}/src/Avg_OPE"
 CC_ACCOUNT = "def-schuurma"
 USE_SLURM = True
 USE_GPU = True
-RUN_ALL = False
+RUN_ALL = True
 
 # HOME_DIR = "/Users/chanb/research/ualberta/Avg_OPE"
 # LOG_DIR = "/Users/chanb/research/ualberta/Avg_OPE/local/results"
@@ -25,10 +25,10 @@ if RUN_ALL:
             discount_factors=[0.8, 0.9, 0.95, 0.99 ,0.995],
             buffer_sizes=[2000, 4000, 8000, 16000],
             max_lens=[20, 50, 100, 200],
-            batch_sizes=[256],
+            batch_sizes=[512],
             links=["default"],
             bootstrap_targets=["target_network"],
-            lrs=[0.001],
+            lrs=[0.005],
             alphas=[0.0],  # L1
             tau=0.0005,  # target network
             seeds=range(10),
@@ -39,11 +39,11 @@ if RUN_ALL:
             discount_factors=[0.8, 0.9, 0.95, 0.99 ,0.995],
             buffer_sizes=[2000, 4000, 8000, 16000],
             max_lens=[20, 40, 80, 100],
-            batch_sizes=[256],
+            batch_sizes=[512],
             links=["default"],
             bootstrap_targets=["target_network"],
             lrs=[0.005],
-            alphas=[0.0],  # L1
+            alphas=[0.01],  # L1
             tau=0.0005,  # target network
             seeds=range(10),
             step_frequency=5,

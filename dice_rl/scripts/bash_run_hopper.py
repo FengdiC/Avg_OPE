@@ -1,17 +1,17 @@
 import os
 
 # Define hyperparameters to sweep over
-alpha_values = [(1-i) for i in [0.1,0.2, 0.3,0.4,0.5]]
+alpha_values = [(1-i) for i in [1.4,1.8,2.0,2.4,2.8]]
 # seed_values = [100, 200]
-seed_values = [5,6,7,8,9 ]
+seed_values = [0,1,2,3,4,5,6,7,8,9 ]
 gamma_values = [0.8, 0.9, 0.95, 0.99 ,0.995]  # Example gamma values
 num_trajectory_values = [2000,4000,8000,16000]  # Example num_trajectory values
-max_len_values = [20,50,100,200,400]
-max_num_bash = 5
+max_len_values = [20,50,100,200]
+max_num_bash = 1
 num_bash = 0
 
-save_dir_prefix = './results10021944/cartpole/'
-bash_file_prefix = './bash10021944/cartpole/run_results10021944'
+save_dir_prefix = './results11261101/hopper/'
+bash_file_prefix = './bash11261101/hopper/run_results11261101'
 bash_file_index = 0
 
 # Create the folder if it does not exist
@@ -26,10 +26,10 @@ for gamma in gamma_values:
                     new_num_trajectory = int(num_trajectory / max_trajectory_length)
                     for alpha_val in [alpha,]:
                         command1 = (
-                            f"python scripts/create_dataset.py "
+                            f"python scripts/create_dataset_pytorch.py "
                             f"--save_dir={save_dir_prefix} "
-                            f"--load_dir=./exper/cartpole.pth "
-                            f"--env_name=CartPole-v1 "
+                            f"--load_dir=./exper/hopper.pth "
+                            f"--env_name=Hopper-v4 "
                             f"--num_trajectory={new_num_trajectory} "
                             f"--max_trajectory_length={max_trajectory_length} "
                             f"--alpha={alpha_val} "
@@ -54,10 +54,10 @@ for gamma in gamma_values:
                     for alpha_val in [alpha,]:
                         seed_plus_100 = seed + 100
                         command2 = (
-                            f"python scripts/create_dataset.py "
+                            f"python scripts/create_dataset_pytorch.py "
                             f"--save_dir={save_dir_prefix} "
-                            f"--load_dir=./exper/cartpole.pth "
-                            f"--env_name=CartPole-v1 "
+                            f"--load_dir=./exper/hopper.pth "
+                            f"--env_name=Hopper-v4 "
                             f"--num_trajectory={new_num_trajectory} "
                             f"--max_trajectory_length={max_trajectory_length} "
                             f"--alpha={alpha_val} "

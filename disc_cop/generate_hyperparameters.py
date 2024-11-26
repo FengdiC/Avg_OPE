@@ -73,6 +73,9 @@ def generate_experiment_configs():
                     + "max_ep_"
                     + str(buffer_size // max_len)
                     + "-"
+                    + "max_len_"
+                    + str(max_len)
+                    + "-"
                     + "link_"
                     + str(link)
                     + "-"
@@ -87,9 +90,6 @@ def generate_experiment_configs():
                     + "-"
                     + "alpha_"
                     + str(alpha)
-                    + "-"
-                    + "max_len_"
-                    + str(max_len)
                     + ".pkl"
                 )
                 os.makedirs(os.path.join(LOG_DIR, env_name), exist_ok=True)

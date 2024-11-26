@@ -48,7 +48,7 @@ source ~/avg_ope/bin/activate
 # If not Compute Canada:
 pip install mujoco matplotlib numpy torch
 pip install mujoco==2.3.3
-#Otherwise
+# Otherwise
 pip install torch --no-index
 # ========================================================================
 

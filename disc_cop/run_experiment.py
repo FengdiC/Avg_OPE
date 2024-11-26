@@ -27,7 +27,8 @@ def main(args):
                     experiment_info["env_name"],
                     seed,
                 ),
-            )
+            ),
+            device=args.device,
         )
 
     pickle.dump(
@@ -49,6 +50,12 @@ if __name__ == "__main__":
         type=str,
         required=True,
         help="The directory storing all datasets",
+    )
+    parser.add_argument(
+        "--device",
+        type=str,
+        default="cpu",
+        help="The device to use",
     )
     args = parser.parse_args()
     main(args)

@@ -8,6 +8,8 @@ import sys
 import torch
 import torch.nn as nn
 
+from tqdm import tqdm
+
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
@@ -65,6 +67,7 @@ def train_ratio(
     load_dataset=None,
     baseline_path=None,
     save_path=None,
+    device="cpu",
     **kwargs,
 ):
     """
@@ -112,6 +115,9 @@ def train_ratio(
         mujoco=mujoco,
     )
 
+    buf.to(device)
+    buf_test.to(device)
+
     if link == "inverse" or link == "identity":
         weight = WeightNet(
             env.observation_space.shape[0],
@@ -126,6 +132,7 @@ def train_ratio(
             activation=nn.Identity,
             use_batch_norm=use_batch_norm,
         )
+    weight.to(device)
 
     # Set up optimizers for policy and value function
     optimizer = Adam(weight.parameters(), lr)
@@ -135,6 +142,7 @@ def train_ratio(
     """
     if use_target_network:
         target_weight = copy.deepcopy(weight)
+        target_weight.to(device)
 
         def update(fold_num):
             # sample minibatches
@@ -199,7 +207,7 @@ def train_ratio(
             first_timestep = data["first_timestep"]
 
             # Since we might get s_0 as s', we should exclude predicting s for those situations
-            non_first_timestep = np.where(1 - first_timestep)[0]
+            non_first_timestep = torch.where(1 - first_timestep)[0]
             all_obs = torch.cat((obs[non_first_timestep], next_obs), dim=0)
             c_all = weight(all_obs)
             c_next_obs = c_all[len(non_first_timestep) :]
@@ -243,8 +251,15 @@ def train_ratio(
 
     def eval(buffer):
         ratio = (
-            weight(torch.as_tensor(buffer.obs_buf.reshape((-1, buffer.obs_buf.shape[-1]))[: buffer.ptr], dtype=torch.float32))
+            weight(
+                torch.as_tensor(
+                    buffer.obs_buf.reshape((-1, buffer.obs_buf.shape[-1]))[: buffer.ptr],
+                    dtype=torch.float32,
+                    device=device,
+                ),
+            )
             .detach()
+            .cpu()
             .numpy()
         )
         if link == "inverse":
@@ -318,7 +333,7 @@ def train_ratio(
                         {
                             "loss": loss,
                             "steps": steps,
-                            "model_state_dict": weight.state_dict(),
+                            "model_state_dict": {k: v.cpu() for k, v in weight.state_dict().items()},
                         },
                         open(
                             os.path.join(
@@ -336,7 +351,7 @@ def train_ratio(
     curr_best = np.inf
     for fold_num in range(cv_fold):
         objs, objs_test = [], []
-        for steps in range(epoch * checkpoint):
+        for steps in tqdm(range(epoch * checkpoint)):
             weight.train()
             update(fold_num)
             if steps % checkpoint == 0:
@@ -351,7 +366,7 @@ def train_ratio(
             {
                 "loss": None,
                 "steps": steps,
-                "model_state_dict": weight.state_dict(),
+                "model_state_dict": {k: v.cpu() for k, v in weight.state_dict().items()},
             },
             open(
                 os.path.join(

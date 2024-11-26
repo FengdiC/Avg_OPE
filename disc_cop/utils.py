@@ -52,6 +52,10 @@ class Buffer:
         self.max_len = max_len
         self.max_size = max_ep * max_len
         self.ep_i = 0
+        self.device = torch.device("cpu")
+
+    def to(self, device):
+        self.device = torch.device(device)
 
     def store(self, obs, act, rew, next_obs, tim, logbev, logtarg):
         """
@@ -130,7 +134,7 @@ class Buffer:
             # Find any s_0 as s' and properly set them.
             start_ind = np.where(ind < 0)[0]
             data["next_obs"][start_ind] = data["obs"][start_ind]
-        return {k: torch.as_tensor(v, dtype=torch.float32) for k, v in data.items()}
+        return {k: torch.as_tensor(v, dtype=torch.float32, device=self.device) for k, v in data.items()}
 
     def delete_last_traj(self):
         self.ptr = self.ep_i * self.max_len

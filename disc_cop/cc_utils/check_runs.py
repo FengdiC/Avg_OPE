@@ -19,10 +19,13 @@ dir_path = f"{LOG_DIR}/saved_models"
 env_name = "hopper"
 
 complete_dir_path = os.path.join(dir_path, env_name)
+config_path = os.path.join(f"{LOG_DIR}", env_name)
 
 incomplete_variants = []
-for variant in tqdm(os.listdir(complete_dir_path)):
-    if "seed_9-final.pt" not in os.listdir(os.path.join(complete_dir_path, variant)):
+for variant in tqdm(os.listdir(config_path)):
+    variant = variant[9:-4]
+    curr_variant_path = os.path.join(complete_dir_path, variant)
+    if not os.path.isdir(curr_variant_path) or "seed_9-final.pt" not in os.listdir(curr_variant_path):
         incomplete_variants.append(variant)
 
 pprint(incomplete_variants)

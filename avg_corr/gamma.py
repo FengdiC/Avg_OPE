@@ -221,8 +221,9 @@ def collect_dataset(env,gamma,buffer_size=20,max_len=200,
     return buf
 
 # train weight net
-def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,reg_lambda=0,discount=0.95,
-          checkpoint=5,epoch=1000,cv_fold=10,batch_size=256,buffer_size=20,max_len=50,mujoco=False):
+def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,
+          buf=None, buf_test=None,reg_lambda=0,discount=0.95,
+          checkpoint=5,epoch=1000,cv_fold=10,batch_size=256,buffer_size=20,max_len=50,mujoco=True):
     hyperparam = random_search(hyper_choice)
     gamma = discount
     env = gym.make(env)
@@ -234,10 +235,11 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,reg_lambda
     torch.backends.cudnn.deterministic = True
     env.reset(seed=seed)
 
-    buf = collect_dataset(env,gamma,buffer_size=buffer_size,max_len=max_len,path=path,
-                            random_weight=random_weight,fold = cv_fold,mujoco=mujoco)
-    # buf_test = collect_dataset(env, gamma,buffer_size=buffer_size,max_len=max_len,
-    #                                   path=path,random_weight=random_weight,fold=cv_fold)
+    if buf==None:
+        buf = collect_dataset(env,gamma,buffer_size=buffer_size,max_len=max_len,path=path,
+                                random_weight=random_weight,fold = cv_fold,mujoco=mujoco)
+        buf_test = collect_dataset(env, gamma,buffer_size=buffer_size,max_len=max_len,
+                                          path=path,random_weight=random_weight,fold=cv_fold)
     if link=='inverse' or link=='identity':
         weight = WeightNet(env.observation_space.shape[0], hidden_sizes=(256,256),activation=nn.ReLU)
     else:
@@ -324,16 +326,16 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,reg_lambda
         for steps in range(epoch * checkpoint):
             update(fold_num)
             if steps % checkpoint == 0:
-                obj_val, obj = eval_cv(buf, fold_num)
-                # obj, obj_test = eval(buf), eval(buf_test)
+                # obj_val, obj = eval_cv(buf, fold_num)
+                obj, obj_test = eval(buf), eval(buf_test)
                 objs.append(obj)
-                objs_val.append(obj_val)
-                # objs_test.append(obj_test)
-        objs_mean.append(objs)
-        objs_val_mean.append(objs_val)
-    # return objs, objs_test
-    return np.around(np.mean(np.array(objs_mean),axis=0),decimals=4),\
-           np.around(np.mean(np.array(objs_val_mean),axis=0),decimals=4)
+                # objs_val.append(obj_val)
+                objs_test.append(obj_test)
+        # objs_mean.append(objs)
+        # objs_val_mean.append(objs_val)
+    return objs, objs_test
+    # return np.around(np.mean(np.array(objs_mean),axis=0),decimals=4),\
+    #        np.around(np.mean(np.array(objs_val_mean),axis=0),decimals=4)
 
 def argsparser():
     import argparse
@@ -437,4 +439,4 @@ def tune():
 # plt.ylim((0,5))
 # plt.show()
 
-tune()
+# tune()

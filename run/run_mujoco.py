@@ -69,13 +69,13 @@ def run_mujoco():
                 'buffer_size', 16000, 'seed', seed, 'env', env]
         name = '-'.join(str(x) for x in name)
 
-        with open(args.data_dir+'/dataset/' + name + '.pkl', 'wb') as outp:
+        with open(args.data_dir+'/dataset/' + name + '.pkl', 'r') as outp:
             buf = pickle.load(outp)
         name = ['discount_factor', 0.8, 'random_weight', random_weight, 'max_length', length,
                 'buffer_size', 16000, 'seed', seed + 1314, 'env', env]
         name = '-'.join(str(x) for x in name)
 
-        with open(args.data_dir +'/dataset_test/'+ name + '.pkl', 'wb') as outp:
+        with open(args.data_dir +'/dataset_test/'+ name + '.pkl', 'r') as outp:
             buf_test = pickle.load(outp)
         for size in size_lists:
             buf.ptr, buf.max_size = size, size
@@ -128,13 +128,13 @@ def run_mujoco():
                 'buffer_size', 16000, 'seed', seed, 'env', env]
         name = '-'.join(str(x) for x in name)
 
-        with open(args.data_dir+'/dataset/' + name + '.pkl', 'wb') as outp:
+        with open(args.data_dir+'/dataset/' + name + '.pkl', 'r') as outp:
             buf = pickle.load(outp)
         name = ['discount_factor', 0.8, 'random_weight', random_weight, 'max_length', length,
                 'buffer_size', 16000, 'seed', seed + 1314, 'env', env]
         name = '-'.join(str(x) for x in name)
 
-        with open(args.data_dir +'/dataset_test/'+ name + '.pkl', 'wb') as outp:
+        with open(args.data_dir +'/dataset_test/'+ name + '.pkl', 'r') as outp:
             buf_test = pickle.load(outp)
         for size in size_lists:
             buf.ptr, buf.max_size = size, size

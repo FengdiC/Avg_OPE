@@ -100,12 +100,12 @@ def run_mujoco():
             train, test = np.around(train, decimals=4), np.around(test, decimals=4)
             result_train.append(train)
             result_test.append(test)
-            mylist = [str(i) for i in list(train)] + ['-'.join(['train', 'size', size, 'seed', str(seed)])]
+            mylist = [str(i) for i in list(train)] + ['-'.join(['train', 'size', str(size), 'seed', str(seed)])]
             with open(filename, 'a', newline='') as file:
                 # Step 4: Using csv.writer to write the list to the CSV file
                 writer = csv.writer(file)
                 writer.writerow(mylist)  # Use writerow for single list
-            mylist = [str(i) for i in list(test)] + ['-'.join(['test', 'size', size, 'seed', str(seed)])]
+            mylist = [str(i) for i in list(test)] + ['-'.join(['test', 'size', str(size), 'seed', str(seed)])]
             with open(filename, 'a', newline='') as file:
                 # Step 4: Using csv.writer to write the list to the CSV file
                 writer = csv.writer(file)
@@ -159,12 +159,12 @@ def run_mujoco():
             train, test = np.around(train, decimals=4), np.around(test, decimals=4)
             result_train.append(train)
             result_test.append(test)
-            mylist = [str(i) for i in list(train)] + ['-'.join(['train', 'size', size, 'seed', str(seed)])]
+            mylist = [str(i) for i in list(train)] + ['-'.join(['train', 'size', str(size), 'seed', str(seed)])]
             with open(filename, 'a', newline='') as file:
                 # Step 4: Using csv.writer to write the list to the CSV file
                 writer = csv.writer(file)
                 writer.writerow(mylist)  # Use writerow for single list
-            mylist = [str(i) for i in list(test)] + ['-'.join(['test', 'size', size, 'seed', str(seed)])]
+            mylist = [str(i) for i in list(test)] + ['-'.join(['test', 'size', str(size), 'seed', str(seed)])]
             with open(filename, 'a', newline='') as file:
                 # Step 4: Using csv.writer to write the list to the CSV file
                 writer = csv.writer(file)

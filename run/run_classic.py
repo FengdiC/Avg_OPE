@@ -75,12 +75,13 @@ def run_classic():
         name = '-'.join(str(x) for x in name)
 
         with open(args.data_dir +'/dataset/'+ name + '.pkl', 'rb') as outp:
+            print(args.data_dir +'/dataset/'+ name + '.pkl')
             buf =  pickle.load(outp)
         name = ['discount_factor', 0.8, 'random_weight', random_weight, 'max_length', length,
                 'buffer_size', 16000, 'seed', seed+1314, 'env', env]
         name = '-'.join(str(x) for x in name)
 
-        with open(args.data_dir+'/dataset_test/' + name + '.pkl', 'r') as outp:
+        with open(args.data_dir+'/dataset_test/' + name + '.pkl', 'rb') as outp:
             buf_test = pickle.load(outp)
         for size in size_lists:
             buf.ptr, buf.max_size = size, size
@@ -133,13 +134,13 @@ def run_classic():
                 'buffer_size', 16000, 'seed', seed, 'env', env]
         name = '-'.join(str(x) for x in name)
 
-        with open(args.data_dir +'/dataset/' +name + '.pkl', 'r') as outp:
+        with open(args.data_dir +'/dataset/' +name + '.pkl', 'rb') as outp:
             buf = pickle.load(outp)
         name = ['discount_factor', 0.8, 'random_weight', random_weight, 'max_length', length,
                 'buffer_size', 16000, 'seed', seed + 1314, 'env', env]
         name = '-'.join(str(x) for x in name)
 
-        with open(args.data_dir+'/dataset_test/' + name + '.pkl', 'r') as outp:
+        with open(args.data_dir+'/dataset_test/' + name + '.pkl', 'rb') as outp:
             buf_test = pickle.laod(outp)
         for size in size_lists:
             buf.ptr, buf.max_size = size, size

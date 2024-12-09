@@ -70,7 +70,7 @@ def run_mujoco():
         name = '-'.join(str(x) for x in name)
 
         with open(args.data_dir+'/dataset/' + name + '.pkl', 'wb') as outp:
-            buf = pickle.laod(outp, pickle.HIGHEST_PROTOCOL)
+            buf = pickle.load(outp, pickle.HIGHEST_PROTOCOL)
         name = ['discount_factor', 0.8, 'random_weight', random_weight, 'max_length', length,
                 'buffer_size', 16000, 'seed', seed + 1314, 'env', env]
         name = '-'.join(str(x) for x in name)

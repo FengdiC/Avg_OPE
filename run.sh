@@ -4,7 +4,7 @@
 #SBATCH --time=0-144:00
 #SBATCH --output=%N-%j.out
 #SBATCH --account=def-ashique
-# haha  SBATCH --array=1-600
+#SBATCH --array=1-600
 
 # salloc --cpus-per-task=1 --mem=3600M --time=0-3:00 --account=def-ashique
 # Did not tune for three discount factors
@@ -28,7 +28,7 @@ python run/run_mujoco.py --log_dir $SCRATCH/avg_corr/mujoco/ \
 --array $SLURM_ARRAY_TASK_ID --steps 5 --epoch 100000 --max_len 100 &
 
 echo "Baseline job $seed took $SECONDS"
-sleep 72h
+sleep 144h
 
 # python avg_corr/run_classic.py --log_dir $SCRATCH/avg_corr/classic/ --array 10  --steps 5 --epoch 2000 --max_len 50
 # pip install torch torchvision numpy

@@ -23,7 +23,8 @@ for gamma in gamma_values:
             for seed in seed_values:
                 for max_trajectory_length in max_len_values:
                     # Command for the first loop
-                    new_num_trajectory = int(num_trajectory / max_trajectory_length)
+                    # new_num_trajectory = int(num_trajectory / max_trajectory_length)
+                    new_num_trajectory = num_trajectory
                     for alpha_val in [alpha,]:
                         command1 = (
                             f"python scripts/create_dataset_pytorch.py "

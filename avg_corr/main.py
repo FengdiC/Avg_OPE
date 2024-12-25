@@ -147,7 +147,8 @@ def eval_policy(path='./exper/cartpole.pth',env='CartPole-v1',gamma=0.8):
             num_traj += 1
             rets.append(ep_ret)
             avg_rets.append(ep_avg_ret)
-            o, ep_ret, ep_len, ep_avg_ret = env.reset(), 0, 0, 0
+            o,_ = env.reset()
+            ep_ret, ep_len, ep_avg_ret = 0, 0, 0
     return (1-gamma)*np.mean(rets),np.var(rets),np.mean(avg_rets)
 
 # sample behaviour dataset

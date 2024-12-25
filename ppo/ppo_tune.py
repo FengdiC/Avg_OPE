@@ -7,7 +7,7 @@ from algo import core
 
 from utils import logger
 import numpy as np
-import gym
+import gymnasium as gym
 from algo.random_search import random_search,set_one_thread
 
 args = argsparser()

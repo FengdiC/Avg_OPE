@@ -1,0 +1,108 @@
+
+Lmod is automatically replacing "gcc/12.3" with "intel/2023.2.1".
+
+
+Due to MODULEPATH changes, the following have been reloaded:
+  1) flexiblas/3.3.1     2) openmpi/4.1.5
+
+
+Baseline job  took 0
+<frozen importlib._bootstrap>:283: DeprecationWarning: the load_module() method is deprecated and slated for removal in Python 3.12; use exec_module() instead
+<frozen importlib._bootstrap>:283: DeprecationWarning: the load_module() method is deprecated and slated for removal in Python 3.12; use exec_module() instead
+/scratch/fengdic//dataset/discount_factor-0.8-random_weight-0.1-max_length-20-buffer_size-16000-seed-0-env-CartPole-v1.pkl
+loss: mse!
+[4, 256, 256]
+loss: mse!
+[4, 256, 256]
+loss: mse!
+[4, 256, 256]
+loss: mse!
+[4, 256, 256]
+/scratch/fengdic//dataset/discount_factor-0.8-random_weight-0.1-max_length-20-buffer_size-16000-seed-1-env-CartPole-v1.pkl
+loss: mse!
+[4, 256, 256]
+loss: mse!
+[4, 256, 256]
+loss: mse!
+[4, 256, 256]
+loss: mse!
+[4, 256, 256]
+/scratch/fengdic//dataset/discount_factor-0.8-random_weight-0.1-max_length-20-buffer_size-16000-seed-2-env-CartPole-v1.pkl
+loss: mse!
+[4, 256, 256]
+loss: mse!
+[4, 256, 256]
+loss: mse!
+[4, 256, 256]
+loss: mse!
+[4, 256, 256]
+/scratch/fengdic//dataset/discount_factor-0.8-random_weight-0.1-max_length-20-buffer_size-16000-seed-3-env-CartPole-v1.pkl
+loss: mse!
+[4, 256, 256]
+loss: mse!
+[4, 256, 256]
+loss: mse!
+[4, 256, 256]
+loss: mse!
+[4, 256, 256]
+/scratch/fengdic//dataset/discount_factor-0.8-random_weight-0.1-max_length-20-buffer_size-16000-seed-4-env-CartPole-v1.pkl
+loss: mse!
+[4, 256, 256]
+loss: mse!
+[4, 256, 256]
+loss: mse!
+[4, 256, 256]
+loss: mse!
+[4, 256, 256]
+/scratch/fengdic//dataset/discount_factor-0.8-random_weight-0.1-max_length-20-buffer_size-16000-seed-5-env-CartPole-v1.pkl
+loss: mse!
+[4, 256, 256]
+loss: mse!
+[4, 256, 256]
+loss: mse!
+[4, 256, 256]
+loss: mse!
+[4, 256, 256]
+/scratch/fengdic//dataset/discount_factor-0.8-random_weight-0.1-max_length-20-buffer_size-16000-seed-6-env-CartPole-v1.pkl
+loss: mse!
+[4, 256, 256]
+loss: mse!
+[4, 256, 256]
+loss: mse!
+[4, 256, 256]
+loss: mse!
+[4, 256, 256]
+/scratch/fengdic//dataset/discount_factor-0.8-random_weight-0.1-max_length-20-buffer_size-16000-seed-7-env-CartPole-v1.pkl
+loss: mse!
+[4, 256, 256]
+loss: mse!
+[4, 256, 256]
+loss: mse!
+[4, 256, 256]
+loss: mse!
+[4, 256, 256]
+/scratch/fengdic//dataset/discount_factor-0.8-random_weight-0.1-max_length-20-buffer_size-16000-seed-8-env-CartPole-v1.pkl
+loss: mse!
+[4, 256, 256]
+loss: mse!
+[4, 256, 256]
+loss: mse!
+[4, 256, 256]
+loss: mse!
+[4, 256, 256]
+/scratch/fengdic//dataset/discount_factor-0.8-random_weight-0.1-max_length-20-buffer_size-16000-seed-9-env-CartPole-v1.pkl
+loss: mse!
+[4, 256, 256]
+loss: mse!
+[4, 256, 256]
+loss: mse!
+[4, 256, 256]
+loss: mse!
+[4, 256, 256]
+Traceback (most recent call last):
+  File "/home/fengdic/Documents/Avg_OPE/run/run_classic.py", line 179, in <module>
+    run_classic()
+  File "/home/fengdic/Documents/Avg_OPE/run/run_classic.py", line 144, in run_classic
+    buf_test = pickle.laod(outp)
+AttributeError: module 'pickle' has no attribute 'laod'
+slurmstepd: error: *** JOB 53477348 ON bc11204 CANCELLED AT 2024-12-27T22:52:46 ***

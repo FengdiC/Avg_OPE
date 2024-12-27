@@ -47,5 +47,5 @@ sleep 144h
 #  python
 #  import mujoco_py
 #  module load mujoco
-#  pip install imageio
+#  pip install imageio tqdm
 #  pip install gymnasium>=0.29

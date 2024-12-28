@@ -199,7 +199,7 @@ def load(path,env):
     return ac
 
 def main(argv):
-    seeds = range(10)
+    seeds = range(2)
 
     discount_factor_lists = [0.8, 0.9, 0.95, 0.99, 0.995]
     size_lists = [2000, 4000, 8000, 16000]

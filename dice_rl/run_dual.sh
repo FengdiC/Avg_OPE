@@ -21,7 +21,7 @@ echo
 
 #python avg_corr/run_cartpole_td.py --log_dir $SCRATCH/avg_corr/td_err/ --steps 5 --epoch 2000 --max_len 50
 
-python scripts/run_neural_dice.py --log_dir $SCRATCH/avg_corr/dice/classic/ \
+python scripts/run_neural_dice.py --log_dir $SCRATCH/avg_corr/dice/mujoco/ \
 --array 0  --steps 5 --epoch 5000 --max_len 50 --data_dir $SCRATCH/ &
 
 python run/run_mujoco.py --log_dir $SCRATCH/avg_corr/dice/mujoco/ \

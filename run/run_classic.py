@@ -141,7 +141,7 @@ def run_classic():
         name = '-'.join(str(x) for x in name)
 
         with open(args.data_dir+'/dataset_test/' + name + '.pkl', 'rb') as outp:
-            buf_test = pickle.laod(outp)
+            buf_test = pickle.load(outp)
         for size in size_lists:
             buf.ptr, buf.max_size = size, size
             buf_test.ptr, buf_test.max_size = size, size

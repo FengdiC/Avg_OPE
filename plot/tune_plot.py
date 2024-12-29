@@ -65,7 +65,7 @@ def top_five(data,var,data_train,best_value):
 
     n = data.shape[1]
     # check the training error
-    last = data_train.iloc[:, n - 800:n]
+    last = data.iloc[:, n - 800:n]
     last = (last - best_value).abs()
     avg = last.mean(axis=1)
     top_five = avg.nsmallest(20)

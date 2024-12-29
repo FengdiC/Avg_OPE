@@ -36,28 +36,33 @@ def compute_points(gamma,size,random_weight,length,env,train,true_obj,env_name):
               np.mean(first_logmse),np.mean(np.var(first_logmse,axis=0)),
               np.mean(last_logmse),np.mean(np.var(last_logmse,axis=0))]
 
-    # result = []
-    # result_dir = "tune_log/results/disc_cop"
-    # # plot the result for our avg algorithm
-    # for run_file in os.listdir(os.path.join(result_dir, env_name)):
-    #     if 'batch_size_256-bootstrap_target_target_network-lr_0.005' in run_file:
-    #         if str(gamma) in run_file and str(buffer) in run_file and str(random_weight) in run_file:
-    #             print(run_file)
-    #             run_data = pickle.load(open(os.path.join(result_dir, env_name, run_file), "rb"))
-    #
-    #             for seed in run_data["seeds"]:
-    #                 result.append(np.array(run_data["results"][seed][1]))
-    # result = np.array(result)
-    # print(result.shape)
-    # first_est = result[:, :50]
-    # last_est = result[:, :-50]
-    # first_logmse = (first_est - true_obj) ** 2
-    # last_logmse = (last_est - true_obj) ** 2
-    # values_cop_td = [np.mean(first_est), np.mean(np.var(first_est, axis=0)),
-    #                   np.mean(last_est), np.mean(np.var(last_est, axis=0)),
-    #                   np.mean(first_logmse), np.mean(np.var(first_logmse, axis=0)),
-    #                   np.mean(last_logmse), np.mean(np.var(last_logmse, axis=0))]
-    values_cop_td = [0,0,0,0,0,0,0,0]
+    result = []
+    result_dir = "tune_log/COP-TD/results/results/"+env_name+"/"
+    # plot the result for our avg algorithm
+    for filename in os.listdir(result_dir):
+        f = os.path.join(result_dir, filename)
+        # checking if it is a file
+        if not f.endswith('.pkl'):
+            continue
+        if filename.startswith('.'):
+            continue
+        if str(gamma) + '-' in filename and str(random_weight) in filename \
+                and str(size//length)+'-' in filename and str(length) + '-' in filename:
+            print(f)
+            run_data = pickle.load(open(f, "rb"))
+            for seed in run_data["seeds"]:
+                result.append(np.array(run_data["results"][seed][1]))
+    result = np.array(result)
+    print(result.shape)
+    first_est = result[:, :50]
+    last_est = result[:, :-50]
+    first_logmse = (first_est - true_obj) ** 2
+    last_logmse = (last_est - true_obj) ** 2
+    values_cop_td = [np.mean(first_est), np.mean(np.var(first_est, axis=0)),
+                      np.mean(last_est), np.mean(np.var(last_est, axis=0)),
+                      np.mean(first_logmse), np.mean(np.var(first_logmse, axis=0)),
+                      np.mean(last_logmse), np.mean(np.var(last_logmse, axis=0))]
+    # values_cop_td = [0,0,0,0,0,0,0,0]
 
     # result = []
     # for filename in os.listdir('./tune_log/bestdice_cartpole'):
@@ -94,9 +99,12 @@ def plot_classic(env_file='./exper/ant.pth',env='Ant-v4',env_name='ant'):
     train = 'test'
 
     avg_mse, dice,cop = [], [], []
-    for gamma in discount_factor_lists:
+    for i in range(len(discount_factor_lists)):
+        gamma = discount_factor_lists[i]
         size, random_weight, length = 4000,2.0,50
-        true_obj,_,_ = eval_policy(path=env_file, env=env, gamma=gamma)
+        with open('./dataset/mujoco_obj.pkl', 'r') as file:
+            obj = pickle.load(file)
+        true_obj = obj[env_name][i]
         values_avg_mse, values_dice,values_cop = compute_points(gamma,size,random_weight,length,
                                                                        env,train,true_obj,env_name)
         avg_mse.append([values_avg_mse[6],values_avg_mse[7]])
@@ -106,15 +114,17 @@ def plot_classic(env_file='./exper/ant.pth',env='Ant-v4',env_name='ant'):
     avg_mse, dice, cop = np.array(avg_mse), np.array(dice), np.array(cop)
     plt.subplot(311)
     plt.errorbar(range(len(discount_factor_lists)), avg_mse[:,0], yerr=avg_mse[:,1],label='avg_mse')
-    # plt.errorbar(range(len(discount_factor)), cop[:, 0], yerr=cop[:, 1], label='cop_td')
+    plt.errorbar(range(len(discount_factor_lists)), cop[:, 0], yerr=cop[:, 1], label='cop_td')
     plt.errorbar(range(len(discount_factor_lists)), dice[:, 0], yerr=dice[:, 1], label='best_dice')
     plt.xticks(ticks=range(len(discount_factor_lists)), labels=discount_factor_lists )
     plt.legend()
 
+    with open('./dataset/mujoco_obj.pkl', 'r') as file:
+        obj = pickle.load(file)
+    true_obj = obj[env_name][2]
     avg_mse, dice,cop = [], [], []
     for size in size_lists:
         gamma, random_weight, length= 0.95,2.0,50
-        true_obj, _, _ = eval_policy(path=env_file, env=env, gamma=gamma)
         values_avg_mse, values_dice, values_cop = compute_points(gamma, size, random_weight,length,
                                                      env, train, true_obj,env_name)
         avg_mse.append([values_avg_mse[6], values_avg_mse[7]])
@@ -124,7 +134,7 @@ def plot_classic(env_file='./exper/ant.pth',env='Ant-v4',env_name='ant'):
     avg_mse, dice, cop = np.array(avg_mse), np.array(dice), np.array(cop)
     plt.subplot(312)
     plt.errorbar(range(len(size_lists)), avg_mse[:, 0], yerr=avg_mse[:, 1], label='avg_mse')
-    # plt.errorbar(range(len(buffer_num)), cop[:, 0], yerr=cop[:, 1], label='cop_td')
+    plt.errorbar(range(len(size_lists)), cop[:, 0], yerr=cop[:, 1], label='cop_td')
     plt.errorbar(range(len(size_lists)), dice[:, 0], yerr=dice[:, 1], label='best_dice')
     plt.xticks(ticks=range(len(size_lists)), labels=size_lists)
     plt.legend()
@@ -132,7 +142,6 @@ def plot_classic(env_file='./exper/ant.pth',env='Ant-v4',env_name='ant'):
     avg_mse, dice,cop = [], [], []
     for random_weight in random_weight_lists:
         size, gamma, length = 4000,0.95,50
-        true_obj, _, _ = eval_policy(path=env_file, env=env, gamma=gamma)
         values_avg_mse, values_dice, _ = compute_points(gamma, size, random_weight,length,
                                                      env, train, true_obj,env_name)
         avg_mse.append([values_avg_mse[6], values_avg_mse[7]])
@@ -142,7 +151,7 @@ def plot_classic(env_file='./exper/ant.pth',env='Ant-v4',env_name='ant'):
     avg_mse, dice, cop = np.array(avg_mse), np.array(dice), np.array(cop)
     plt.subplot(313)
     plt.errorbar(range(len(random_weight_lists)), avg_mse[:, 0], yerr=avg_mse[:, 1], label='avg_mse')
-    # plt.errorbar(range(len(random_weight_val)), cop[:, 0], yerr=cop[:, 1], label='cop_td')
+    plt.errorbar(range(len(random_weight_lists)), cop[:, 0], yerr=cop[:, 1], label='cop_td')
     plt.errorbar(range(len(random_weight_lists)), dice[:, 0], yerr=dice[:, 1], label='best_dice')
     plt.xticks(ticks=range(len(random_weight_lists)), labels=random_weight_lists)
     plt.legend()

@@ -26,21 +26,17 @@ import tensorflow.compat.v2 as tf
 tf.compat.v1.enable_v2_behavior()
 import pickle, csv
 
-from tf_agents.environments import gym_wrapper
-from tf_agents.environments import tf_py_environment
+os.environ["TF_USE_LEGACY_KERAS"]='1'
 
-from dice_rl.environments.env_policies import get_target_policy
 from dice_rl.estimators.neural_dice import NeuralDice
 from dice_rl.estimators import estimator as estimator_lib
 from dice_rl.networks.value_network import ValueNetwork
 import dice_rl.utils.common as common_utils
 from dice_rl.data.dataset import Dataset, EnvStep, StepType
 from dice_rl.data.tf_offpolicy_dataset import TFOffpolicyDataset
-import tensorflow_probability as tfp
 import torch
 import torch.distributions as td
 import dice_rl.ppo.algo.core as core
-from dice_rl.environments.env_policies import load as load_pytorch_policy
 import gym
 from dice_rl.scripts.create_dataset_pytorch import create_env_step_spec_from_gym
 

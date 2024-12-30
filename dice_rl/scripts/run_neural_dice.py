@@ -42,7 +42,7 @@ import torch
 import torch.distributions as td
 import dice_rl.ppo.algo.core as core
 import gym
-from dice_rl.scripts.create_dataset_pytorch import create_env_step_spec_from_gym
+from dice_rl.scripts.create_dataset_pytorch import create_env_step_spec_from_gym, PPOBuffer
 
 def del_all_flags(FLAGS):
     flags_dict = FLAGS._flags()

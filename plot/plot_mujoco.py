@@ -90,7 +90,7 @@ def compute_points(gamma,size,random_weight,length,env,train,true_obj,env_name):
     return values_avg_mse,values_dice,values_cop_td
 
 
-def plot_classic(env_file='./exper/ant.pth',env='Ant-v4',env_name='ant'):
+def plot_classic(env_file='./exper/ant.pth',env='Walker2d-v4',env_name='walker'):
     discount_factor_lists = [0.8, 0.9, 0.95, 0.99, 0.995]
     size_lists = [2000, 4000, 8000, 16000]
 
@@ -118,6 +118,7 @@ def plot_classic(env_file='./exper/ant.pth',env='Ant-v4',env_name='ant'):
     # plt.errorbar(range(len(discount_factor_lists)), cop[:, 0], yerr=cop[:, 1], label='cop_td')
     plt.errorbar(range(len(discount_factor_lists)), dice[:, 0], yerr=dice[:, 1], label='best_dice')
     plt.xticks(ticks=range(len(discount_factor_lists)), labels=discount_factor_lists )
+    plt.yscale('log')
     plt.legend()
 
     with open('./dataset/mujoco_obj.pkl', 'rb') as file:
@@ -139,6 +140,7 @@ def plot_classic(env_file='./exper/ant.pth',env='Ant-v4',env_name='ant'):
     # plt.errorbar(range(len(size_lists)), cop[:, 0], yerr=cop[:, 1], label='cop_td')
     plt.errorbar(range(len(size_lists)), dice[:, 0], yerr=dice[:, 1], label='best_dice')
     plt.xticks(ticks=range(len(size_lists)), labels=size_lists)
+    plt.yscale('log')
     plt.legend()
 
     avg_mse, dice,cop = [], [], []
@@ -157,6 +159,7 @@ def plot_classic(env_file='./exper/ant.pth',env='Ant-v4',env_name='ant'):
     # plt.errorbar(range(len(random_weight_lists)), cop[:, 0], yerr=cop[:, 1], label='cop_td')
     plt.errorbar(range(len(random_weight_lists)), dice[:, 0], yerr=dice[:, 1], label='best_dice')
     plt.xticks(ticks=range(len(random_weight_lists)), labels=random_weight_lists)
+    plt.yscale('log')
     plt.legend()
 
     plt.show()

@@ -44,8 +44,15 @@ import dice_rl.ppo.algo.core as core
 import gym
 from dice_rl.scripts.create_dataset_pytorch import create_env_step_spec_from_gym
 
+def del_all_flags(FLAGS):
+    flags_dict = FLAGS._flags()
+    keys_list = [keys for keys in flags_dict]
+    for keys in keys_list:
+        FLAGS.__delattr__(keys)
+
 
 FLAGS = flags.FLAGS
+del_all_flags(FLAGS)
 
 flags.DEFINE_string('data_dir', None, 'Directory to load dataset from.')
 flags.DEFINE_string('path', None, 'Directory to load dataset from.')

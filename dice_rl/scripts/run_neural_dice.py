@@ -49,7 +49,7 @@ FLAGS = flags.FLAGS
 
 flags.DEFINE_string('data_dir', None, 'Directory to load dataset from.')
 flags.DEFINE_string('path', None, 'Directory to load dataset from.')
-flags.DEFINE_string('log_dir', None,
+flags.DEFINE_string('save_dir', None,
                     'Directory to save the model and estimation results.')
 flags.DEFINE_string('env_name', 'grid', 'Environment name.')
 flags.DEFINE_integer('seed', 0, 'Initial random seed.')
@@ -253,9 +253,9 @@ def main(argv):
         obj = pickle.load(file)
     true_obj = obj[env_name][idx[2]]
 
-    filename = FLAGS.log_dir + '/dice-mujoco-' + str(env) + '-discount-' + str(gamma) \
+    filename = FLAGS.save_dir + '/dice-mujoco-' + str(env) + '-discount-' + str(gamma) \
                + '-length-' + str(max_trajectory_length) + '-random-' + str(random_weight) + '.csv'
-    os.makedirs(FLAGS.log_dir, exist_ok=True)
+    os.makedirs(FLAGS.save_dir, exist_ok=True)
     mylist = [str(i) for i in range(0, FLAGS.epoch * FLAGS.steps, FLAGS.steps)] + ['hyperparam']
     with open(filename, 'w+', newline='') as file:
         # Step 4: Using csv.writer to write the list to the CSV file
@@ -364,8 +364,8 @@ def main(argv):
                     if (eval_obj2-true_obj)**2 < best:
                         best = (eval_obj2-true_obj)**2
                         # Save the model at the end of training
-                        if FLAGS.log_dir is not None:
-                            model_save_path = os.path.join(FLAGS.log_dir, name+'_best_model_weights')
+                        if FLAGS.save_dir is not None:
+                            model_save_path = os.path.join(FLAGS.save_dir, name+'_best_model_weights')
 
                             # Create a checkpoint object
                             checkpoint = tf.train.Checkpoint(nu_network=nu_network,
@@ -387,8 +387,8 @@ def main(argv):
                 global_step.assign_add(1)
 
             # Save the model at the end of training
-            if FLAGS.log_dir is not None:
-                model_save_path = os.path.join(FLAGS.log_dir, name+'_last_model_weights')
+            if FLAGS.save_dir is not None:
+                model_save_path = os.path.join(FLAGS.save_dir, name+'_last_model_weights')
 
                 # Create a checkpoint object
                 checkpoint = tf.train.Checkpoint(nu_network=nu_network,

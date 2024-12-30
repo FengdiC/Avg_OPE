@@ -102,9 +102,9 @@ def plot_classic(env_file='./exper/ant.pth',env='Ant-v4',env_name='ant'):
     for i in range(len(discount_factor_lists)):
         gamma = discount_factor_lists[i]
         size, random_weight, length = 4000,2.0,50
-        with open('./dataset/mujoco_obj.pkl', 'r') as file:
+        with open('./dataset/mujoco_obj.pkl', 'rb') as file:
             obj = pickle.load(file)
-        true_obj = obj[env_name][i]
+        true_obj = obj[env][i]
         values_avg_mse, values_dice,values_cop = compute_points(gamma,size,random_weight,length,
                                                                        env,train,true_obj,env_name)
         avg_mse.append([values_avg_mse[6],values_avg_mse[7]])
@@ -119,9 +119,9 @@ def plot_classic(env_file='./exper/ant.pth',env='Ant-v4',env_name='ant'):
     plt.xticks(ticks=range(len(discount_factor_lists)), labels=discount_factor_lists )
     plt.legend()
 
-    with open('./dataset/mujoco_obj.pkl', 'r') as file:
+    with open('./dataset/mujoco_obj.pkl', 'rb') as file:
         obj = pickle.load(file)
-    true_obj = obj[env_name][2]
+    true_obj = obj[env][2]
     avg_mse, dice,cop = [], [], []
     for size in size_lists:
         gamma, random_weight, length= 0.95,2.0,50

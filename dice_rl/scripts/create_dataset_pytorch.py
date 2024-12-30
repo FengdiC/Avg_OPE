@@ -45,26 +45,6 @@ from tf_agents.specs import tensor_spec
 from dice_rl.environments.env_policies import load, convert_to_gym_observation_space
 
 
-FLAGS = flags.FLAGS
-
-flags.DEFINE_string('env_name', 'taxi', 'Environment name.')
-flags.DEFINE_integer('seed', 0, 'Initial random seed.')
-flags.DEFINE_integer('num_trajectory', 100,
-                     'Number of trajectories to collect.')
-flags.DEFINE_integer('max_trajectory_length', 500,
-                     'Cutoff trajectory at this step.')
-flags.DEFINE_float('alpha', 1.0,
-                   'How close to target policy.')
-flags.DEFINE_bool('tabular_obs', True,
-                  'Whether to use tabular observations.')
-flags.DEFINE_string('save_dir', None, 'Directory to save dataset to.')
-flags.DEFINE_string('load_dir', None, 'Directory to load policies from.')
-flags.DEFINE_bool('force', False,
-                  'Whether to force overwriting any existing dataset.')
-flags.DEFINE_float('gamma', 0.99, 'Discount factor.')
-flags.DEFINE_float('random_weight', 0.2,
-                   'random policy')
-
 # # load target policy
 # def load(path,env):
 #     ac_kwargs = dict(hidden_sizes=[64,32])
@@ -450,4 +430,23 @@ def main(argv):
 
 
 if __name__ == '__main__':
-  app.run(main)
+    FLAGS = flags.FLAGS
+
+    flags.DEFINE_string('env_name', 'taxi', 'Environment name.')
+    flags.DEFINE_integer('seed', 0, 'Initial random seed.')
+    flags.DEFINE_integer('num_trajectory', 100,
+                         'Number of trajectories to collect.')
+    flags.DEFINE_integer('max_trajectory_length', 500,
+                         'Cutoff trajectory at this step.')
+    flags.DEFINE_float('alpha', 1.0,
+                       'How close to target policy.')
+    flags.DEFINE_bool('tabular_obs', True,
+                      'Whether to use tabular observations.')
+    flags.DEFINE_string('save_dir', None, 'Directory to save dataset to.')
+    flags.DEFINE_string('load_dir', None, 'Directory to load policies from.')
+    flags.DEFINE_bool('force', False,
+                      'Whether to force overwriting any existing dataset.')
+    flags.DEFINE_float('gamma', 0.99, 'Discount factor.')
+    flags.DEFINE_float('random_weight', 0.2,
+                       'random policy')
+    app.run(main)

@@ -52,7 +52,6 @@ def del_all_flags(FLAGS):
 
 
 FLAGS = flags.FLAGS
-del_all_flags(FLAGS)
 
 flags.DEFINE_string('data_dir', None, 'Directory to load dataset from.')
 flags.DEFINE_string('path', None, 'Directory to load dataset from.')

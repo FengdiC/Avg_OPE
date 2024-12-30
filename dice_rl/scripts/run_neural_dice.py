@@ -147,7 +147,7 @@ class PyTorchPolicyWrapper:
 
     def action(self, tf_time_step):
         """Sample actions from the PyTorch policy."""
-        obs = tf_time_step.observation.numpy()
+        obs = tf_time_step.observation
         obs_tensor = torch.as_tensor(obs, dtype=torch.float32)
 
         # Sample action based on the PyTorch policy distribution

@@ -310,7 +310,7 @@ def create_env_step_spec_from_gym(env_name):
     discount_spec = tensor_spec.TensorSpec(shape=[], dtype=tf.float32, name='discount')
 
     # Add missing specs for policy_info, env_info, and other_info
-    policy_info_spec = tensor_spec.TensorSpec(shape=[], dtype=tf.float32, name='policy_info')
+    policy_info_spec = {'log_probability':tensor_spec.TensorSpec(shape=[], dtype=tf.float32, name='data_policy_info')}
     env_info_spec = tensor_spec.TensorSpec(shape=[], dtype=tf.int32, name='env_info')
 
     other_info_spec = tensor_spec.TensorSpec(shape=[], dtype=tf.int32, name='other_info')

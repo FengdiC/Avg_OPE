@@ -165,7 +165,7 @@ def load_dataset(log_dir,name,buffer_size,max_len,env_name,action_discrete=True)
     env_step_spec = create_env_step_spec_from_gym(env_name)
     tf_dataset = TFOffpolicyDataset(
         env_step_spec,
-        capacity=buffer_size)
+        capacity=buffer_size+1)
     with open(log_dir + name + '.pkl', 'rb') as outp:
         buf = pickle.load(outp)
     i = 0

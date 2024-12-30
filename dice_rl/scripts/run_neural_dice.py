@@ -193,6 +193,7 @@ def load_dataset(log_dir,name,buffer_size,max_len,env_name,action_discrete=True)
             other_info=tf.convert_to_tensor(0, dtype=tf.int32)
         )
         tf_dataset.add_step(env_step)
+        i+=1
     return tf_dataset
 
 # load target policy

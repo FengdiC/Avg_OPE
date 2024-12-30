@@ -216,7 +216,7 @@ def main(argv):
            'Swimmer-v4', 'Walker2d-v4']
     path = ['./exper/mountaincar.pth', './exper/hopper.pth', './exper/halfcheetah_0.pth',
             './exper/ant.pth', './exper/swimmer.pth', './exper/walker.pth']
-    idx = np.unravel_index(FLAGS.array, (5, 4, 5, 6))
+    idx = np.unravel_index(int(FLAGS.array), (5, 4, 5, 6))
     random_weight, max_trajectory_length, gamma = (
         weight_lists[idx[0]],
         length_lists[idx[1]],

@@ -255,7 +255,7 @@ def main(argv):
           raise ValueError('Reward {} not implemented.'.format(transform_reward))
         return reward
 
-    with open(FLAGS.data_dir+'/mujoco_obj.pkl','r') as file:
+    with open(FLAGS.data_dir+'/mujoco_obj.pkl','rb') as file:
         obj = pickle.load(file)
     true_obj = obj[env_name][idx[2]]
 

@@ -90,18 +90,18 @@ def compute_points(gamma,size,random_weight,length,env,train,true_obj,env_name):
     return values_avg_mse,values_dice,values_cop_td
 
 
-def plot_classic(env_file='./exper/ant.pth',env='Walker2d-v4',env_name='walker'):
+def plot_classic(env_file='./exper/ant.pth',env='HalfCheetah-v4',env_name='halfcheetah'):
     discount_factor_lists = [0.8, 0.9, 0.95, 0.99, 0.995]
     size_lists = [2000, 4000, 8000, 16000]
 
     random_weight_lists = [1.4, 1.8, 2.0, 2.4, 2.8]
     length_lists = [20, 50, 100, 200]
-    train = 'test'
+    train = 'train'
 
     avg_mse, dice,cop = [], [], []
     for i in range(len(discount_factor_lists)):
         gamma = discount_factor_lists[i]
-        size, random_weight, length = 4000,2.0,50
+        size, random_weight, length = 8000,2.0,50
         with open('./dataset/mujoco_obj.pkl', 'rb') as file:
             obj = pickle.load(file)
         true_obj = obj[env][i]
@@ -145,7 +145,7 @@ def plot_classic(env_file='./exper/ant.pth',env='Walker2d-v4',env_name='walker')
 
     avg_mse, dice,cop = [], [], []
     for random_weight in random_weight_lists:
-        size, gamma, length = 4000,0.95,50
+        size, gamma, length = 8000,0.95,50
         values_avg_mse, values_dice, _ = compute_points(gamma, size, random_weight,length,
                                                      env, train, true_obj,env_name)
         avg_mse.append([values_avg_mse[6], values_avg_mse[7]])

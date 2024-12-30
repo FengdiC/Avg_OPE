@@ -122,45 +122,45 @@ def main(argv):
 
   dataset = get_onpolicy_dataset(load_dir, env_name, tabular_obs,
                                  max_trajectory_length, alpha, seed)
-
-  write_dataset = TFOffpolicyDataset(
-      dataset.spec,
-      capacity=num_trajectory * (max_trajectory_length + 1))
-
-  batch_size = 20
-  for batch_num in range(1 + (num_trajectory - 1) // batch_size):
-    num_trajectory_after_batch = min(num_trajectory, batch_size * (batch_num + 1))
-    num_trajectory_to_get = num_trajectory_after_batch - batch_num * batch_size
-    episodes, valid_steps = dataset.get_episode(
-        batch_size=num_trajectory_to_get)
-    add_episodes_to_dataset(episodes, valid_steps, write_dataset)
-
-    print('num episodes collected: %d', write_dataset.num_total_episodes)
-    print('num steps collected: %d', write_dataset.num_steps)
-
-    estimate = estimator_lib.get_fullbatch_average(write_dataset)
-    print('per step avg on offpolicy data', estimate)
-    estimate = estimator_lib.get_fullbatch_average(write_dataset,
-                                                   by_steps=False)
-    print('per episode avg on offpolicy data', estimate)
-
-  print('Saving dataset to %s.' % directory)
-  if not tf.io.gfile.isdir(directory):
-    tf.io.gfile.makedirs(directory)
-  write_dataset.save(directory)
-
-  print('Loading dataset.')
-  new_dataset = Dataset.load(directory)
-  print('num loaded steps', new_dataset.num_steps)
-  print('num loaded total steps', new_dataset.num_total_steps)
-  print('num loaded episodes', new_dataset.num_episodes)
-  print('num loaded total episodes', new_dataset.num_total_episodes)
-
-  estimate = estimator_lib.get_fullbatch_average(new_dataset)
-  print('per step avg on saved and loaded offpolicy data', estimate)
-  estimate = estimator_lib.get_fullbatch_average(new_dataset,
-                                                 by_steps=False)
-  print('per episode avg on saved and loaded offpolicy data', estimate)
+  print(dataset.spec)
+  # write_dataset = TFOffpolicyDataset(
+  #     dataset.spec,
+  #     capacity=num_trajectory * (max_trajectory_length + 1))
+  #
+  # batch_size = 20
+  # for batch_num in range(1 + (num_trajectory - 1) // batch_size):
+  #   num_trajectory_after_batch = min(num_trajectory, batch_size * (batch_num + 1))
+  #   num_trajectory_to_get = num_trajectory_after_batch - batch_num * batch_size
+  #   episodes, valid_steps = dataset.get_episode(
+  #       batch_size=num_trajectory_to_get)
+  #   add_episodes_to_dataset(episodes, valid_steps, write_dataset)
+  #
+  #   print('num episodes collected: %d', write_dataset.num_total_episodes)
+  #   print('num steps collected: %d', write_dataset.num_steps)
+  #
+  #   estimate = estimator_lib.get_fullbatch_average(write_dataset)
+  #   print('per step avg on offpolicy data', estimate)
+  #   estimate = estimator_lib.get_fullbatch_average(write_dataset,
+  #                                                  by_steps=False)
+  #   print('per episode avg on offpolicy data', estimate)
+  #
+  # print('Saving dataset to %s.' % directory)
+  # if not tf.io.gfile.isdir(directory):
+  #   tf.io.gfile.makedirs(directory)
+  # write_dataset.save(directory)
+  #
+  # print('Loading dataset.')
+  # new_dataset = Dataset.load(directory)
+  # print('num loaded steps', new_dataset.num_steps)
+  # print('num loaded total steps', new_dataset.num_total_steps)
+  # print('num loaded episodes', new_dataset.num_episodes)
+  # print('num loaded total episodes', new_dataset.num_total_episodes)
+  #
+  # estimate = estimator_lib.get_fullbatch_average(new_dataset)
+  # print('per step avg on saved and loaded offpolicy data', estimate)
+  # estimate = estimator_lib.get_fullbatch_average(new_dataset,
+  #                                                by_steps=False)
+  # print('per episode avg on saved and loaded offpolicy data', estimate)
 
   print('Done!')
 

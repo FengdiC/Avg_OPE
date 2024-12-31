@@ -18,6 +18,8 @@ from __future__ import print_function
 
 import numpy as np
 import tensorflow.compat.v2 as tf
+tf.compat.v1.enable_v2_behavior()
+tf.compat.v1.enable_eager_execution()
 from tf_agents.specs import tensor_spec
 from tf_agents.policies import tf_policy
 from tf_agents.utils import common as tfagents_common

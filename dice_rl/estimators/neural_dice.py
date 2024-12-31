@@ -139,7 +139,7 @@ class NeuralDice(object):
       return network((env_step.observation,))[0]
 
   def _get_average_value(self, network, env_step, policy):
-    print(env_step.observation)
+    print("average value: ", env_step)
     if self._solve_for_state_action_ratio:
       tfagents_step = dataset_lib.convert_to_tfagents_timestep(env_step)
       if self._categorical_action and self._num_samples is None:
@@ -186,6 +186,7 @@ class NeuralDice(object):
     return reg
 
   def train_loss(self, initial_env_step, env_step, next_env_step, policy):
+    print("train loss: ",initial_env_step)
     nu_values = self._get_value(self._nu_network, env_step)
     initial_nu_values = self._get_average_value(self._nu_network,
                                                 initial_env_step, policy)
@@ -253,6 +254,7 @@ class NeuralDice(object):
       tape.watch(self._nu_network.variables)
       tape.watch(self._zeta_network.variables)
       tape.watch([self._lam])
+      print("train step: ", initial_env_step)
       nu_loss, zeta_loss, lam_loss = self.train_loss(initial_env_step, env_step,
                                                      next_env_step,
                                                      target_policy)

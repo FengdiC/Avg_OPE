@@ -139,6 +139,7 @@ class NeuralDice(object):
       return network((env_step.observation,))[0]
 
   def _get_average_value(self, network, env_step, policy):
+    print(env_step.observation)
     if self._solve_for_state_action_ratio:
       tfagents_step = dataset_lib.convert_to_tfagents_timestep(env_step)
       if self._categorical_action and self._num_samples is None:

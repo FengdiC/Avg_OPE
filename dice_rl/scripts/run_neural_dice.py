@@ -76,7 +76,7 @@ flags.DEFINE_float('zeta_regularizer', 0.0, 'Ortho regularization on zeta.')
 flags.DEFINE_integer('epoch', 100000, 'Number of training steps.')
 flags.DEFINE_integer('steps', 5, 'Number of training steps.')
 
-flags.DEFINE_integer('batch_size', 2048, 'Batch size.')
+flags.DEFINE_integer('batch_size', 512, 'Batch size.')
 
 flags.DEFINE_float('f_exponent', 2, 'Exponent for f function.')
 flags.DEFINE_bool('primal_form', False,

@@ -232,6 +232,7 @@ class NeuralDice(object):
 
     return nu_loss, zeta_loss, lam_loss
 
+  @tf.function
   def train_step(self, initial_env_step: dataset_lib.EnvStep,
                  experience: dataset_lib.EnvStep,
                  target_policy: tf_policy.TFPolicy):

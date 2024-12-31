@@ -147,7 +147,7 @@ class PyTorchPolicyWrapper:
 
     def action(self, tf_time_step):
         """Sample actions from the PyTorch policy."""
-        obs = tf_time_step.observation
+        obs = tf_time_step.observation.numpy()
         obs_tensor = torch.as_tensor(obs, dtype=torch.float32)
 
         # Sample action based on the PyTorch policy distribution
@@ -207,6 +207,7 @@ def load(path,env):
 
 def main(argv):
     seeds = range(2)
+    tf.config.run_functions_eagerly(True)
 
     discount_factor_lists = [0.8, 0.9, 0.95, 0.99, 0.995]
     size_lists = [2000, 4000, 8000, 16000]

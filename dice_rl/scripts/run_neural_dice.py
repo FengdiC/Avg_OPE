@@ -207,7 +207,6 @@ def load(path,env):
 
 def main(argv):
     seeds = range(2)
-    tf.compat.v1.enable_eager_execution()
 
     discount_factor_lists = [0.8, 0.9, 0.95, 0.99, 0.995]
     size_lists = [2000, 4000, 8000, 16000]
@@ -361,7 +360,7 @@ def main(argv):
                 initial_steps_batch = tf.nest.map_structure(lambda t: t[:, 0, ...],
                                                             initial_steps_batch)
                 print(initial_steps_batch.observation)
-                losses = estimator.train_step(initial_steps_batch, transitions_batch,
+                losses = estimator.train_step(initial_steps_batch.observation,initial_steps_batch, transitions_batch,
                                               target_policy)
                 running_losses.append(losses)
 

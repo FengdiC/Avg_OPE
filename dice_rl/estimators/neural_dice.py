@@ -230,7 +230,7 @@ class NeuralDice(object):
     return nu_loss, zeta_loss, lam_loss
 
   @tf.function
-  def train_step(self, initial_env_step: dataset_lib.EnvStep,
+  def train_step(self, x,initial_env_step: dataset_lib.EnvStep,
                  experience: dataset_lib.EnvStep,
                  target_policy: tf_policy.TFPolicy):
     """Performs a single training step based on batch.
@@ -244,6 +244,7 @@ class NeuralDice(object):
     Returns:
       The losses and the train op.
     """
+    print(x)
     env_step = tf.nest.map_structure(lambda t: t[:, 0, ...], experience)
     next_env_step = tf.nest.map_structure(lambda t: t[:, 1, ...], experience)
     print("train step before tage watch: ", initial_env_step)

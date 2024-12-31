@@ -162,6 +162,7 @@ class NeuralDice(object):
             [policy.action(tfagents_step).action for _ in range(num_actions)],
             axis=1)
 
+      print(env_step.observation.shape[1:])
       flat_actions = tf.reshape(actions, [batch_size * num_actions] +
                                 actions.shape[2:].as_list())
       flat_observations = tf.reshape(
@@ -232,7 +233,7 @@ class NeuralDice(object):
     return nu_loss, zeta_loss, lam_loss
 
   @tf.function
-  def train_step(self, x,initial_env_step: dataset_lib.EnvStep,
+  def train_step(self, initial_env_step: dataset_lib.EnvStep,
                  experience: dataset_lib.EnvStep,
                  target_policy: tf_policy.TFPolicy):
     """Performs a single training step based on batch.
@@ -246,17 +247,14 @@ class NeuralDice(object):
     Returns:
       The losses and the train op.
     """
-    print(x)
     env_step = tf.nest.map_structure(lambda t: t[:, 0, ...], experience)
     next_env_step = tf.nest.map_structure(lambda t: t[:, 1, ...], experience)
-    print("train step before tage watch: ", initial_env_step)
 
     with tf.GradientTape(
         watch_accessed_variables=False, persistent=True) as tape:
       tape.watch(self._nu_network.variables)
       tape.watch(self._zeta_network.variables)
       tape.watch([self._lam])
-      print("train step: ", initial_env_step)
       nu_loss, zeta_loss, lam_loss = self.train_loss(initial_env_step, env_step,
                                                      next_env_step,
                                                      target_policy)

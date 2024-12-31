@@ -359,8 +359,7 @@ def main(argv):
                 initial_steps_batch, _ = dataset.get_episode(batch_size, truncate_episode_at=1)
                 initial_steps_batch = tf.nest.map_structure(lambda t: t[:, 0, ...],
                                                             initial_steps_batch)
-                print(initial_steps_batch.observation)
-                losses = estimator.train_step(initial_steps_batch.observation,initial_steps_batch, transitions_batch,
+                losses = estimator.train_step(initial_steps_batch, transitions_batch,
                                               target_policy)
                 running_losses.append(losses)
 

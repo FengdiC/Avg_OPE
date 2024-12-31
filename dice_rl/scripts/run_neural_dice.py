@@ -372,7 +372,7 @@ def main(argv):
                     if (eval_obj2-true_obj)**2 < best:
                         best = (eval_obj2-true_obj)**2
                         # Save the model at the end of training
-                        if FLAGS.saoutput_dirve_dir is not None:
+                        if FLAGS.output_dir is not None:
                             model_save_path = os.path.join(FLAGS.output_dir, name+'_best_model_weights')
 
                             # Create a checkpoint object

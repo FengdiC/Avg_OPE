@@ -159,7 +159,7 @@ class NeuralDice(object):
         num_actions = self._num_samples
         action_weights = tf.ones([batch_size, num_actions]) / num_actions
         actions = tf.stack(
-            [policy.action(tfagents_step).action for _ in range(num_actions)],
+            [policy.action(tfagents_step) for _ in range(num_actions)],
             axis=1)
 
       print(env_step.observation.shape[1:])

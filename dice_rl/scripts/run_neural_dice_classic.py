@@ -208,17 +208,18 @@ def main(argv):
     seeds = range(10)
     tf.config.run_functions_eagerly(True)
 
+    if FLAGS.array > 200:
+        return -1
+
     discount_factor_lists = [0.8, 0.9, 0.95, 0.99, 0.995]
     size_lists = [2000, 4000, 8000, 16000]
 
-    weight_lists = [1.4, 1.8, 2.0, 2.4, 2.8]
-    length_lists = [20, 50, 100, 200]
-    env = ['MountainCarContinuous-v0', 'Hopper-v4', 'HalfCheetah-v4', 'Ant-v4',
-           'Swimmer-v4', 'Walker2d-v4']
-    path = ['./exper/mountaincar.pth', './exper/hopper.pth', './exper/halfcheetah_0.pth',
-            './exper/ant.pth', './exper/swimmer.pth', './exper/walker.pth']
-    idx = np.unravel_index(int(FLAGS.array), (5, 4, 5, 6))
-    random_weight, max_trajectory_length, gamma = (
+    weight_lists = [0.1, 0.2, 0.3, 0.4, 0.5]
+    length_lists = [20, 40, 80, 100]
+    env = ['CartPole-v1', 'Acrobot-v1']
+    path = ['./exper/cartpole.pth', './exper/acrobot.pth']
+    idx = np.unravel_index(int(FLAGS.array), (5, 4, 5, 2))
+    random_weight, max_trajectory_length, gamma  = (
         weight_lists[idx[0]],
         length_lists[idx[1]],
         discount_factor_lists[idx[2]],
@@ -256,13 +257,13 @@ def main(argv):
           raise ValueError('Reward {} not implemented.'.format(transform_reward))
         return reward
 
-    with open(FLAGS.data_dir+'/mujoco_obj.pkl','rb') as file:
+    with open(FLAGS.data_dir+'/classic_obj.pkl','rb') as file:
         obj = pickle.load(file)
     true_obj = obj[env_name][idx[2]]
 
     os.makedirs(FLAGS.output_dir, exist_ok=True)
     os.makedirs(FLAGS.output_dir+str(env_name), exist_ok=True)
-    filename = FLAGS.output_dir + str(env_name)+'/dice-mujoco-' + str(env) + '-discount-' + str(gamma) \
+    filename = FLAGS.output_dir + str(env_name)+'/dice-classic-' + str(env) + '-discount-' + str(gamma) \
                + '-length-' + str(max_trajectory_length) + '-random-' + str(random_weight) + '.csv'
 
     mylist = [str(i) for i in range(0, FLAGS.epoch * FLAGS.steps, FLAGS.steps)] + ['hyperparam']

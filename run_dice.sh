@@ -4,7 +4,7 @@
 #SBATCH --time=0-144:00
 #SBATCH --output=%N-%j.out
 #SBATCH --account=def-ashique
-# hei SBATCH --array=0-599
+#SBATCH --array=0-599
 
 # salloc --cpus-per-task=1 --mem=3600M --time=0-3:00 --account=def-ashique
 # Did not tune for three discount factors
@@ -22,10 +22,10 @@ echo
 #python avg_corr/run_cartpole_td.py --log_dir $SCRATCH/avg_corr/td_err/ --steps 5 --epoch 2000 --max_len 50
 
 python dice_rl/scripts/run_neural_dice.py --output_dir $SCRATCH/avg_corr/dice/mujoco/ \
---array 0  --steps 5 --epoch 5000 --max_trajectory_length 50 --data_dir $SCRATCH/avg_corr/ &
+--array $SLURM_ARRAY_TASK_ID  --steps 5 --epoch 100000 --max_trajectory_length 100 --data_dir $SCRATCH/avg_corr/ &
 
-python run/run_mujoco.py --log_dir $SCRATCH/avg_corr/dice/mujoco/ \
---array 0 --steps 5 --epoch 100000 --max_len 100 &
+python dice_rl/scripts/run_neural_dice_classic.py --log_dir $SCRATCH/avg_corr/dice/classic/ \
+--array $SLURM_ARRAY_TASK_ID --steps 5 --epoch 5000 --max_len 100 --data_dir $SCRATCH/avg_corr/ &
 
 echo "Baseline job $seed took $SECONDS"
 sleep 144h

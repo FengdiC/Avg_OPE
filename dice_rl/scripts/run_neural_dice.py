@@ -260,9 +260,11 @@ def main(argv):
         obj = pickle.load(file)
     true_obj = obj[env_name][idx[2]]
 
-    filename = FLAGS.output_dir + '/dice-mujoco-' + str(env) + '-discount-' + str(gamma) \
-               + '-length-' + str(max_trajectory_length) + '-random-' + str(random_weight) + '.csv'
     os.makedirs(FLAGS.output_dir, exist_ok=True)
+    os.makedirs(FLAGS.output_dir+str(env_name), exist_ok=True)
+    filename = FLAGS.output_dir + str(env_name)+'/dice-mujoco-' + str(env) + '-discount-' + str(gamma) \
+               + '-length-' + str(max_trajectory_length) + '-random-' + str(random_weight) + '.csv'
+
     mylist = [str(i) for i in range(0, FLAGS.epoch * FLAGS.steps, FLAGS.steps)] + ['hyperparam']
     with open(filename, 'w+', newline='') as file:
         # Step 4: Using csv.writer to write the list to the CSV file
@@ -372,7 +374,7 @@ def main(argv):
                         best = (eval_obj2-true_obj)**2
                         # Save the model at the end of training
                         if FLAGS.output_dir is not None:
-                            model_save_path = os.path.join(FLAGS.output_dir, name+'_best_model_weights')
+                            model_save_path = os.path.join(FLAGS.output_dir, env_name,name+'_best_model_weights')
 
                             # Create a checkpoint object
                             checkpoint = tf.train.Checkpoint(nu_network=nu_network,
@@ -395,7 +397,7 @@ def main(argv):
 
             # Save the model at the end of training
             if FLAGS.output_dir is not None:
-                model_save_path = os.path.join(FLAGS.output_dir, name+'_last_model_weights')
+                model_save_path = os.path.join(FLAGS.output_dir, env_name,name+'_last_model_weights')
 
                 # Create a checkpoint object
                 checkpoint = tf.train.Checkpoint(nu_network=nu_network,

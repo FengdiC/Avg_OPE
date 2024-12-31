@@ -279,14 +279,14 @@ def main(argv):
             name = '-'.join(str(x) for x in name)
 
             dataset = load_dataset(FLAGS.data_dir,'/dataset/'+ name, size,max_trajectory_length,env_name,
-                                   action_discrete=False)
+                                   action_discrete=True)
 
             name = ['discount_factor', 0.8, 'random_weight', random_weight, 'max_length', max_trajectory_length,
                     'buffer_size', 16000, 'seed', seed + 1314, 'env', env_name]
             name = '-'.join(str(x) for x in name)
 
             dataset2 = load_dataset(FLAGS.data_dir,'/dataset_test/'+name, size, max_trajectory_length, env_name,
-                                   action_discrete=False)
+                                   action_discrete=True)
 
             all_steps = dataset.get_all_steps()
             max_reward = tf.reduce_max(all_steps.reward)

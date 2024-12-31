@@ -160,7 +160,7 @@ class PyTorchPolicyWrapper:
             action = targ_a.detach().numpy()
         return tf.convert_to_tensor(action, dtype=tf.float32)
 
-def load_dataset(log_dir,name,buffer_size,max_len,env_name,action_discrete=True):
+def load_dataset(log_dir,name,buffer_size,max_len,env_name,action_discrete=False):
     env_step_spec = create_env_step_spec_from_gym(env_name)
     tf_dataset = TFOffpolicyDataset(
         env_step_spec,

@@ -24,8 +24,8 @@ echo
 python dice_rl/scripts/run_neural_dice.py --output_dir $SCRATCH/avg_corr/dice/mujoco/ \
 --array $SLURM_ARRAY_TASK_ID  --steps 5 --epoch 100000 --max_trajectory_length 100 --data_dir $SCRATCH/avg_corr/ &
 
-python dice_rl/scripts/run_neural_dice_classic.py --log_dir $SCRATCH/avg_corr/dice/classic/ \
---array $SLURM_ARRAY_TASK_ID --steps 5 --epoch 5000 --max_len 100 --data_dir $SCRATCH/avg_corr/ &
+python dice_rl/scripts/run_neural_dice_classic.py --output_dir $SCRATCH/avg_corr/dice/classic/ \
+--array $SLURM_ARRAY_TASK_ID --steps 5 --epoch 5000 --max_trajectory_length 100 --data_dir $SCRATCH/avg_corr/ &
 
 echo "Baseline job $seed took $SECONDS"
 sleep 144h

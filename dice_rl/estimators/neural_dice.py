@@ -162,7 +162,6 @@ class NeuralDice(object):
             [policy.action(tfagents_step) for _ in range(num_actions)],
             axis=1)
 
-      print(env_step.observation.shape[1:])
       flat_actions = tf.reshape(actions, [batch_size * num_actions] +
                                 actions.shape[2:].as_list())
       flat_observations = tf.reshape(

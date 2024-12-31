@@ -125,7 +125,6 @@ class PyTorchPolicyWrapper:
     def distribution(self, tf_time_step):
         """Generates action distribution for a given time step (compatible with TensorFlow)."""
         # Convert TensorFlow observation to a NumPy array and then a PyTorch tensor
-        print(tf_time_step.observation)
         obs = tf_time_step.observation.numpy()  # Run in eager mode
         obs_tensor = torch.as_tensor(obs, dtype=torch.float32)
 
@@ -140,7 +139,7 @@ class PyTorchPolicyWrapper:
             action_weights = pi.probs  # Assuming `pi` has a `probs` or similar method
 
         # Convert the PyTorch result to TensorFlow tensor
-        print("action_weights", action_weights)
+        # print("action_weights", action_weights)
         action_weights_tf = tf.convert_to_tensor(action_weights.detach().numpy(), dtype=tf.float32)
 
         return action_weights_tf

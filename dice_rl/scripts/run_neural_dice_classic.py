@@ -353,7 +353,7 @@ def main(argv):
 
             env = gym.make(env_name)
             env.reset(seed=seed)
-            env.action_space.seed(args.seed)
+            env.action_space.seed(seed)
             ac = load(path, env)
             target_policy = PyTorchPolicyWrapper(ac,mujoco=True,random_weight=random_weight)
             running_losses = []

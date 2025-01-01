@@ -144,10 +144,8 @@ class NeuralDice(object):
     if self._solve_for_state_action_ratio:
       tfagents_step = dataset_lib.convert_to_tfagents_timestep(env_step)
       if self._categorical_action and self._num_samples is None:
-        # action_weights = policy.distribution(
-        #     tfagents_step)
         action_weights = policy.distribution(
-          tfagents_step).action.probs_parameter()
+          tfagents_step)
         action_dtype = self._dataset_spec.action.dtype
         batch_size = tf.shape(action_weights)[0]
         num_actions = tf.shape(action_weights)[-1]

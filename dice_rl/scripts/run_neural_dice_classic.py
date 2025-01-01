@@ -176,8 +176,7 @@ def load_dataset(log_dir,name,buffer_size,max_len,env_name,action_discrete=True)
         if not action_discrete:
             tf_action = tf.convert_to_tensor(buf.act_buf[i], dtype=tf.float32)
         else:
-            tf_action = tf.convert_to_tensor(int(buf.act_buf[i]), dtype=tf.int32)
-            print(int(buf.act_buf[i]),":::",tf_action)
+            tf_action = tf.convert_to_tensor([int(buf.act_buf[i])], dtype=tf.int32)
 
         # Create the EnvStep using cached step data
         env_step = EnvStep(
@@ -274,6 +273,15 @@ def main(argv):
         writer.writerow(mylist)  # Use writerow for single list
 
     for seed in seeds:
+        # Set seeds
+        np.random.seed(seed)
+        os.environ['PYTHONHASHSEED'] = str(seed)
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed(seed)
+        torch.backends.cudnn.deterministic = True
+        env.reset(seed=seed)
+        env.action_space.seed(args.seed)
+        tf.random.set_seed(seed)
         for size in size_lists:
             name = ['discount_factor', 0.8, 'random_weight', random_weight, 'max_length', max_trajectory_length,
                     'buffer_size', 16000, 'seed', seed, 'env', env_name]

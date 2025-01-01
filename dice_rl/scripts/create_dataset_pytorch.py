@@ -301,7 +301,7 @@ def create_env_step_spec_from_gym(env_name):
     if isinstance(act_space, gymnasium.spaces.Box):
         act_spec = tensor_spec.TensorSpec(shape=act_space.shape, dtype=np.float32, name='action')
     elif isinstance(act_space, gymnasium.spaces.Discrete):
-        act_spec = tensor_spec.TensorSpec(shape=[], dtype=tf.int32, name='action')
+        act_spec = tensor_spec.TensorSpec(shape=[1,], dtype=tf.int32, name='action')
     else:
         raise ValueError("Unsupported action space type")
 

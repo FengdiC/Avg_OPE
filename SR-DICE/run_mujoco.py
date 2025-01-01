@@ -25,11 +25,15 @@ def argsparser():
     parser.add_argument('--path', type=str, default='./')
     parser.add_argument('--log_dir', type=str, default='./')
     parser.add_argument('--data_dir', type=str, default='/scratch/fengdic/')
+    parser.add_argument('--policy', type=str, default='Deep_TD')
+
     parser.add_argument('--env', type=str, default='Hopper-v4')
     parser.add_argument('--seed', '-s', type=int, default=0)
     parser.add_argument('--steps', type=int, default=5)
     parser.add_argument('--epoch', type=int, default=250)
     parser.add_argument('--array', type=int, default=1)
+
+    parser.add_argument("--tau", default=0.005)  # Target network update rate
 
     parser.add_argument('--lr', type=float, default=3e-4)
     parser.add_argument('--batch_size', type=int, default=256)
@@ -60,7 +64,7 @@ def load_dataset(log_dir,name,buffer_size,max_len,state_dim, action_dim):
 def run(size,length,random_weight,discount_factor,seed,num_steps,checkpoint):
     args = argsparser()
 
-    file_name = "%s_%s_%s_%s" % (args.policy, args.env, str(args.seed), str(args.random))
+    file_name = "%s_%s_%s_%s" % (args.policy, args.env, str(args.seed), str(args.random_weight))
     print("---------------------------------------")
     print(f"Settings: {file_name}")
     print("---------------------------------------")
@@ -71,10 +75,13 @@ def run(size,length,random_weight,discount_factor,seed,num_steps,checkpoint):
     env = gym.make(args.env)
 
     # Set seeds
-    env.seed(args.seed)
+    np.random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
+    env.reset(seed=seed)
     env.action_space.seed(args.seed)
-    torch.manual_seed(args.seed)
-    np.random.seed(args.seed)
 
     state_dim = env.observation_space.shape[0]
     action_dim = env.action_space.shape[0]

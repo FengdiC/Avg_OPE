@@ -147,6 +147,7 @@ def run(size,length,random_weight,discount_factor,seed,num_steps,checkpoint):
             print("k", k)
             train_results.append(ope.eval_policy(replay_buffer, policy.actor))
             test_results.append(ope.eval_policy(replay_buffer_test, policy.actor))
+    return train_results, test_results
 
 def run_mujoco():
     args = argsparser()
@@ -181,7 +182,8 @@ def run_mujoco():
     result_train, result_test = [], []
     for seed in seeds:
         for size in size_lists:
-            train,test = run(size,length,random_weight,discount_factor,seed,args.steps*args.epoch,args.steps)
+            train,test = run(size, length, random_weight, discount_factor,
+                             seed, args.steps*args.epoch, args.steps)
             train, test = np.around(train, decimals=4), np.around(test, decimals=4)
             result_train.append(train)
             result_test.append(test)

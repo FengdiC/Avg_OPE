@@ -301,7 +301,8 @@ def create_env_step_spec_from_gym(env_name):
     if isinstance(act_space, gymnasium.spaces.Box):
         act_spec = tensor_spec.TensorSpec(shape=act_space.shape, dtype=np.float32, name='action')
     elif isinstance(act_space, gymnasium.spaces.Discrete):
-        tf_env = tf_py_environment.TFPyEnvironment(env)
+        gym_env = suites.load_gym('CartPole-v0')
+        tf_env = tf_py_environment.TFPyEnvironment(gym_env)
         # act_spec = tensor_spec.TensorSpec(shape=[], dtype=tf.int32, name='action')
         # specs.tensor_spec.from_spec(
         #     specs.BoundedArraySpec([],

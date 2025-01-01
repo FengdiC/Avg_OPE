@@ -41,7 +41,7 @@ from dice_rl.data.tf_offpolicy_dataset import TFOffpolicyDataset
 import torch
 import torch.distributions as td
 import dice_rl.ppo.algo.core as core
-import gym
+import gymnasium as gym
 from dice_rl.scripts.create_dataset_pytorch import create_env_step_spec_from_gym, PPOBuffer
 
 def del_all_flags(FLAGS):

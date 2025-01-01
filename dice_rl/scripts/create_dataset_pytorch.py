@@ -38,8 +38,7 @@ from dice_rl.data.tf_offpolicy_dataset import TFOffpolicyDataset
 import dice_rl.ppo.algo.core as core
 import torch
 from torch.distributions import Normal
-import gymnasium
-import gym
+import gymnasium as gym
 from tf_agents.environments import gym_wrapper
 
 from tf_agents.specs import tensor_spec
@@ -302,15 +301,10 @@ def create_env_step_spec_from_gym(env_name):
     if isinstance(act_space, gymnasium.spaces.Box):
         act_spec = tensor_spec.TensorSpec(shape=act_space.shape, dtype=np.float32, name='action')
     elif isinstance(act_space, gymnasium.spaces.Discrete):
-        tf_env = tf_py_environment.TFPyEnvironment(gym_wrapper.GymWrapper(env))
-        # act_spec = tensor_spec.TensorSpec(shape=[], dtype=tf.int32, name='action')
-        # specs.tensor_spec.from_spec(
-        #     specs.BoundedArraySpec([],
-        #                            dtype=np.int64,
-        #                            minimum=0,
-        #                            maximum=self._episode_step_limit,
-        #                            name='step_num'))
-        action_spec = tf_env.action_spec()
+        act_spec = tensor_spec.BoundedTensorSpec(shape=(), dtype=tf.int32,
+                                                 name='action', minimum=array(0, dtype=int32),
+                                                 maximum=array(act_space.n, dtype=int32))
+
     else:
         raise ValueError("Unsupported action space type")
 

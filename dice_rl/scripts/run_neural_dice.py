@@ -361,7 +361,7 @@ def main(argv):
             test_estimates = []
 
             num_steps = FLAGS.epoch * FLAGS.steps
-            best=5
+            best=16
             name = ['discount_factor', gamma, 'random_weight', random_weight, 'max_length', max_trajectory_length,
                     'env', env_name, 'buffer_size', size, 'seed', seed]
             name = '-'.join(str(x) for x in name)

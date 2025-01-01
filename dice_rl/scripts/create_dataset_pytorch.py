@@ -286,7 +286,7 @@ def add_episodes_to_dataset(episodes, valid_ids, write_dataset):
 
 def create_env_step_spec_from_gym(env_name):
     """Create the EnvStep spec from Gymnasium environment."""
-    env = gymnasium.make(env_name)
+    env = gym.make(env_name)
     obs_space = env.observation_space
     act_space = env.action_space
 

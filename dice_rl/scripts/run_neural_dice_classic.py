@@ -355,7 +355,7 @@ def main(argv):
             env.reset(seed=seed)
             env.action_space.seed(seed)
             ac = load(path, env)
-            target_policy = PyTorchPolicyWrapper(ac,mujoco=True,random_weight=random_weight)
+            target_policy = PyTorchPolicyWrapper(ac,mujoco=False,random_weight=random_weight)
             running_losses = []
             running_estimates = []
             train_estimates = []

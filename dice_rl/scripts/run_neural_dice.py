@@ -361,7 +361,7 @@ def main(argv):
             test_estimates = []
 
             num_steps = FLAGS.epoch * FLAGS.steps
-            best=100
+            best=5
             name = ['discount_factor', gamma, 'random_weight', random_weight, 'max_length', max_trajectory_length,
                     'env', env_name, 'buffer_size', size, 'seed', seed]
             name = '-'.join(str(x) for x in name)
@@ -381,7 +381,6 @@ def main(argv):
                     test_estimates.append(eval_obj2)
                     if (eval_obj2-true_obj)**2 < best:
                         best = (eval_obj2-true_obj)**2
-                        print(step)
                         # Save the model at the end of training
                         if FLAGS.output_dir is not None:
                             model_save_path = os.path.join(FLAGS.output_dir, env_name,name+'_best_model_weights')

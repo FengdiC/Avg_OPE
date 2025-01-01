@@ -381,6 +381,7 @@ def main(argv):
                     test_estimates.append(eval_obj2)
                     if (eval_obj2-true_obj)**2 < best:
                         best = (eval_obj2-true_obj)**2
+                        print(step)
                         # Save the model at the end of training
                         if FLAGS.output_dir is not None:
                             model_save_path = os.path.join(FLAGS.output_dir, env_name,name+'_best_model_weights')

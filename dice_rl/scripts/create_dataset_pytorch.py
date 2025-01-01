@@ -38,7 +38,7 @@ from dice_rl.data.tf_offpolicy_dataset import TFOffpolicyDataset
 import dice_rl.ppo.algo.core as core
 import torch
 from torch.distributions import Normal
-import gymnasium as gym
+import gymnasium 
 from tf_agents.environments import gym_wrapper
 
 from tf_agents.specs import tensor_spec
@@ -286,7 +286,7 @@ def add_episodes_to_dataset(episodes, valid_ids, write_dataset):
 
 def create_env_step_spec_from_gym(env_name):
     """Create the EnvStep spec from Gymnasium environment."""
-    env = gym.make(env_name)
+    env = gymnasium.make(env_name)
     obs_space = env.observation_space
     act_space = env.action_space
 

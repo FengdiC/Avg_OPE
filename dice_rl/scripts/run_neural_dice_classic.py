@@ -176,7 +176,7 @@ def load_dataset(log_dir,name,buffer_size,max_len,env_name,action_discrete=True)
         if not action_discrete:
             tf_action = tf.convert_to_tensor(buf.act_buf[i], dtype=tf.float32)
         else:
-            tf_action = tf.convert_to_tensor([int(buf.act_buf[i])], dtype=tf.int32)
+            tf_action = tf.convert_to_tensor(int(buf.act_buf[i]), dtype=tf.int32)
 
         # Create the EnvStep using cached step data
         env_step = EnvStep(

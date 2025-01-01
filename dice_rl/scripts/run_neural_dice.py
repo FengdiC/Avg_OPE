@@ -272,6 +272,13 @@ def main(argv):
         writer.writerow(mylist)  # Use writerow for single list
 
     for seed in seeds:
+        # Set seeds
+        np.random.seed(seed)
+        os.environ['PYTHONHASHSEED'] = str(seed)
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed(seed)
+        torch.backends.cudnn.deterministic = True
+        tf.random.set_seed(seed)
         for size in size_lists:
             name = ['discount_factor', 0.8, 'random_weight', random_weight, 'max_length', max_trajectory_length,
                     'buffer_size', 16000, 'seed', seed, 'env', env_name]
@@ -344,6 +351,8 @@ def main(argv):
             tf.summary.experimental.set_step(global_step)
 
             env = gym.make(env_name)
+            env.reset(seed=seed)
+            env.action_space.seed(args.seed)
             ac = load(path, env)
             target_policy = PyTorchPolicyWrapper(ac,mujoco=True,random_weight=random_weight)
             running_losses = []

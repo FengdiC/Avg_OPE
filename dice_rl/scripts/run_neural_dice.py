@@ -175,6 +175,7 @@ def load_dataset(log_dir,name,buffer_size,max_len,env_name,action_discrete=False
 
         if not action_discrete:
             tf_action = tf.convert_to_tensor(buf.act_buf[i], dtype=tf.float32)
+            print(buf.act_buf[i])
         else:
             tf_action = tf.convert_to_tensor(buf.act_buf[i], dtype=tf.int32)
 

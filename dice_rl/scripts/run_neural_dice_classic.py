@@ -263,7 +263,7 @@ def main(argv):
 
     os.makedirs(FLAGS.output_dir, exist_ok=True)
     os.makedirs(FLAGS.output_dir+str(env_name), exist_ok=True)
-    filename = FLAGS.output_dir + str(env_name)+'/dice-classic-' + str(env) + '-discount-' + str(gamma) \
+    filename = FLAGS.output_dir + str(env_name)+'/dice-classic-' + str(env_name) + '-discount-' + str(gamma) \
                + '-length-' + str(max_trajectory_length) + '-random-' + str(random_weight) + '.csv'
 
     mylist = [str(i) for i in range(0, FLAGS.epoch * FLAGS.steps, FLAGS.steps)] + ['hyperparam']

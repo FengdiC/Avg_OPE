@@ -14,6 +14,17 @@ import TD3
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+path_lists = {
+    'CartPole-v1':'./exper/cartpole.pth',
+    'Acrobot-v1':'./exper/acrobot.pth',
+    'MountainCarContinuous-v0':'./exper/mountaincar.pth',
+    'Hopper-v4':'./exper/hopper.pth',
+    'HalfCheetah-v4':'./exper/halfcheetah_0.pth',
+    'Avt-v4':'./exper/ant.pth',
+    'Swimmer-v4':'./exper/swimmer.pth',
+    'Walker2d-v4':'./exper/walker.pth',
+}
+
 
 # Runs policy for X episodes and returns average discounted reward
 def eval_policy(policy, env, seed, eval_episodes=100):

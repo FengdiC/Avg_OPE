@@ -45,11 +45,11 @@ class Deep_TD(object):
 		self.max_action = max_action
 
 
-	def train_OPE(self, replay_buffer, policy, batch_size=256):
+	def train_OPE(self, replay_buffer, policy, batch_size=512):
 		state, action, next_state, reward, not_done = replay_buffer.sample(batch_size)
 
 		with torch.no_grad():
-			next_action = policy(next_state)
+			next_action, _, _ = policy.step(next_state)
 			next_action = (next_action + torch.randn_like(next_action) * self.max_action * 0.1).clamp(-self.max_action, self.max_action)
 			target_Q = reward + self.discount * not_done * self.critic_target(next_state, next_action)
 
@@ -66,7 +66,7 @@ class Deep_TD(object):
 
 	def eval_policy(self, replay_buffer, policy, batch_size=10000):
 		start_state = replay_buffer.all_start()
-		start_action = policy(start_state)
+		start_action,_,_ = policy.step(start_state)
 		start_action = (start_action + torch.randn_like(start_action) * self.max_action * 0.1).clamp(-self.max_action, self.max_action)
 
 		R =  (1. - self.discount) * self.critic(start_state, start_action).mean()

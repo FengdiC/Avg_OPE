@@ -103,7 +103,7 @@ class SR_DICE(object):
 		state, action, next_state, reward, not_done = replay_buffer.sample(batch_size)
 
 		with torch.no_grad():
-			next_action = policy(next_state)
+			next_action,_,_ = policy.step(next_state)
 			next_action = (next_action + torch.randn_like(next_action) * self.max_action * 0.1).clamp(-self.max_action, self.max_action)
 
 			latent = self.encoder_decoder.latent(state, action)
@@ -120,12 +120,12 @@ class SR_DICE(object):
 			target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
 
 
-	def train_OPE(self, replay_buffer, policy, batch_size=2048):
+	def train_OPE(self, replay_buffer, policy, batch_size=512):
 		state, action, next_state, reward, not_done = replay_buffer.sample(batch_size)
 
 		start_state = replay_buffer.all_start()
 		with torch.no_grad():
-			start_action = policy(start_state)
+			start_action,_,_ = policy.step(start_state)
 			start_action = (start_action + torch.randn_like(start_action) * self.max_action * 0.1).clamp(-self.max_action, self.max_action)
 
 			Q = self.critic(start_state, start_action)
@@ -141,5 +141,5 @@ class SR_DICE(object):
 
 
 	def eval_policy(self, replay_buffer, policy, batch_size=10000):
-		state, action, next_state, reward, not_done = replay_buffer.sample(batch_size)
+		state, action, next_state, reward, not_done = replay_buffer.sample_all()
 		return float(((self.W * self.encoder_decoder.latent(state, action)).mean(1,keepdim=True) * reward).mean())

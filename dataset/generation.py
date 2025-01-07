@@ -293,4 +293,8 @@ def main():
                             env, path = envs[i], paths[i]
                             data(log_dir,seed,gamma,weight,length,size,env,path,continuous)
 
-main()
+swimmer = []
+for gamma in [0.99]:
+    value,_,_ = eval_policy(path='./exper/halfcheetah_0.pth',env='HalfCheetah-v4',gamma=gamma)
+    print(gamma,":::",value)
+    swimmer.append(value)

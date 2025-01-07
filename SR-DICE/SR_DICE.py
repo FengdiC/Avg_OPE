@@ -89,7 +89,7 @@ class SR_DICE(object):
 
 
 	def train_encoder_decoder(self, replay_buffer, batch_size=256):
-		state, action, next_state, next_action, reward, not_done = replay_buffer.sample(batch_size)
+		state, action, next_state, reward, not_done = replay_buffer.sample(batch_size)
 
 		recons_next, recons_reward, recons_action, lat = self.encoder_decoder(state, action)
 		ed_loss = F.mse_loss(recons_next, next_state) + 0.1 * F.mse_loss(recons_reward, reward) + F.mse_loss(recons_action, action)
@@ -99,10 +99,11 @@ class SR_DICE(object):
 		self.ed_optimizer.step()
 
 
-	def train_SR(self, replay_buffer, batch_size=256):
-		state, action, next_state, next_action,reward, not_done = replay_buffer.sample(batch_size)
+	def train_SR(self, replay_buffer, policy, batch_size=256):
+		state, action, next_state, reward, not_done = replay_buffer.sample(batch_size)
 
 		with torch.no_grad():
+			next_action = policy(next_state)
 			next_action = (next_action + torch.randn_like(next_action) * self.max_action * 0.1).clamp(-self.max_action, self.max_action)
 
 			latent = self.encoder_decoder.latent(state, action)
@@ -119,8 +120,8 @@ class SR_DICE(object):
 			target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
 
 
-	def train_OPE(self, replay_buffer, policy, batch_size=512):
-		state, action, next_state, next_action, reward, not_done = replay_buffer.sample(batch_size)
+	def train_OPE(self, replay_buffer, policy, batch_size=2048):
+		state, action, next_state, reward, not_done = replay_buffer.sample(batch_size)
 
 		start_state = replay_buffer.all_start()
 		with torch.no_grad():
@@ -139,6 +140,6 @@ class SR_DICE(object):
 		self.W_optimizer.step()
 
 
-	def eval_policy(self, replay_buffer, batch_size=10000):
-		state, action, next_state, next_action, reward, not_done = replay_buffer.sample_all(batch_size)
+	def eval_policy(self, replay_buffer, policy, batch_size=10000):
+		state, action, next_state, reward, not_done = replay_buffer.sample(batch_size)
 		return float(((self.W * self.encoder_decoder.latent(state, action)).mean(1,keepdim=True) * reward).mean())

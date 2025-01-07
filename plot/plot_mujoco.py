@@ -12,8 +12,8 @@ import _pickle as pickle
 def compute_points(gamma,size,random_weight,length,env,train,true_obj,env_name):
     result = []
     # plot the result for our avg algorithm
-    for filename in os.listdir('./tune_log/mujoco'):
-        f = os.path.join('./tune_log/mujoco/', filename)
+    for filename in os.listdir('../avg_tune_log/mujoco'):
+        f = os.path.join('../avg_tune_log/mujoco/', filename)
         # checking if it is a file
         if not f.endswith('.csv'):
             continue
@@ -37,7 +37,7 @@ def compute_points(gamma,size,random_weight,length,env,train,true_obj,env_name):
               np.mean(last_logmse),np.mean(np.var(last_logmse,axis=0))]
 
     result = []
-    result_dir = "tune_log/COP-TD/results/results/"+env_name+"/"
+    result_dir = "../avg_tune_log/COP-TD/results/results/"+env_name+"/"
     # plot the result for our avg algorithm
     for filename in os.listdir(result_dir):
         f = os.path.join(result_dir, filename)
@@ -90,7 +90,7 @@ def compute_points(gamma,size,random_weight,length,env,train,true_obj,env_name):
     return values_avg_mse,values_dice,values_cop_td
 
 
-def plot_classic(env_file='./exper/ant.pth',env='HalfCheetah-v4',env_name='halfcheetah'):
+def plot_classic(env_file='./exper/ant.pth',env='Ant-v4',env_name='ant'):
     discount_factor_lists = [0.8, 0.9, 0.95, 0.99, 0.995]
     size_lists = [2000, 4000, 8000, 16000]
 

@@ -254,7 +254,7 @@ def main(argv):
         obj = pickle.load(file)
     true_obj = obj[env_name][idx[2]]
 
-    filename = FLAGS.log_dir + '/dice-mujoco-' + str(env) + '-discount-' + str(gamma) \
+    filename = FLAGS.log_dir + '/dice-mujoco-' + str(env_name) + '-discount-' + str(gamma) \
                + '-length-' + str(max_trajectory_length) + '-random-' + str(random_weight) + '.csv'
     os.makedirs(FLAGS.log_dir, exist_ok=True)
     mylist = [str(i) for i in range(0, FLAGS.epoch * FLAGS.steps, FLAGS.steps)] + ['hyperparam']

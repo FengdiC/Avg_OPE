@@ -9,7 +9,7 @@ from avg_corr.main import eval_policy
 import _pickle as pickle
 
 
-def compute_points(gamma,size,random_weight,length,env,train,true_obj,env_name):
+def compute_points(gamma,size,random_weight,length,env,train,true_obj,env_name,mujoco=False):
     result = []
     # plot the result for our avg algorithm
     for filename in os.listdir('../avg_tune_log/mujoco'):

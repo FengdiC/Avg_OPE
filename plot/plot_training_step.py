@@ -9,42 +9,45 @@ from avg_corr.main import eval_policy
 import _pickle as pickle
 
 
-def plot_algo(gamma,buffer,random_weight,env,train='train'):
-    result = []
+def plot_algo(gamma,size,random_weight,length,mujoco=True,env_name='Hopper-v4',train='train'):
     # plot the result for our avg algorithm
-    for filename in os.listdir('./tune_log/classic'):
-        f = os.path.join('./tune_log/classic/', filename)
-        # checking if it is a file
-        if not f.endswith('.csv'):
-            continue
-        if '-'+str(gamma)+'-' in filename and str(buffer) in filename and str(random_weight) in filename \
-                and str(env) in filename and 'mse' in filename:
-            data = pd.read_csv(f, header=0, index_col='hyperparam')
-            data.columns = data.columns.astype(int)
-            data = data.sort_index(axis=1, ascending=True)
-            for name in data.index.to_list():
-                if train in name and 'mean' in name:
-                    print(filename)
-                    result.append(data.loc[name].to_list())
-    mean_avg_mse = np.mean(result,axis=0)
-    # var_avg = np.var(result, axis=0)
 
-    for filename in os.listdir('./tune_log/classic'):
-        f = os.path.join('./tune_log/classic/', filename)
-        # checking if it is a file
-        if not f.endswith('.csv'):
-            continue
-        if '-'+str(gamma)+'-' in filename and str(buffer) in filename and str(random_weight) in filename \
-                and str(env) in filename and 'gamma' in filename:
-            data = pd.read_csv(f, header=0, index_col='hyperparam')
-            data.columns = data.columns.astype(int)
-            data = data.sort_index(axis=1, ascending=True)
-            for name in data.index.to_list():
-                if train in name and 'mean' in name:
-                    print(filename)
-                    result.append(data.loc[name].to_list())
-    mean_avg_gamma = np.mean(result,axis=0)
-    # var_avg = np.var(result, axis=0)
+    if mujoco:
+        log_dir = '../avg_tune_log/mujoco/'
+        filename = f"final-mujoco-{env_name}-discount-{gamma}-length-{length}-random-{random_weight}.csv"
+    else:
+        log_dir = '../avg_tune_log/classic/'
+        filename = f"final-classic-{env_name}-discount-{gamma}-length-{length}-random-{random_weight}.csv"
+
+    f = os.path.join(log_dir, filename)
+
+    data = pd.read_csv(f, header=0, index_col='hyperparam')
+    data.columns = data.columns.astype(int)
+    data = data.sort_index(axis=1, ascending=True)
+    result = []
+    for name in data.index.to_list():
+        if train in name and str(size) in name:
+            result.append(data.loc[name].to_list())
+    result = np.array(result)
+    mean_avg_mse = np.mean(result,axis=0)
+    var_avg = np.var(result, axis=0)
+
+    # plot COP-TD
+    result = []
+    log_dir = "../avg_tune_log/COP-TD/results/results/" + env_name + "/"
+    if mujoco:
+        filename = f"mse-tune-random_weight_{random_weight}-discount_factor_{gamma}-max_ep_{size // length}\
+            -max_len_{length}-link_default-batch_size_512-bootstrap_target_target_network-lr_0.005-alpha_0.0.pkl"
+    else:
+        filename = f"mse-tune-random_weight_{random_weight}-discount_factor_{gamma}-max_ep_{size//length}\
+        -max_len_{length}-link_default-batch_size_512-bootstrap_target_target_network-lr_0.005-alpha_0.01.pkl"
+
+    f = os.path.join(log_dir, filename)
+    run_data = pickle.load(open(f, "rb"))
+    for seed in run_data["seeds"]:
+        result.append(np.array(run_data["results"][seed][1]))
+    mean_cop_mse = np.mean(result, axis=0)
+    var_cop = np.var(result, axis=0)
 
     # plot best dice
     result = []

@@ -6,7 +6,7 @@
 #SBATCH --account=def-ashique
 #SBATCH --array=0-499
 
-# salloc --cpus-per-task=1 --mem=3600M --time=0-3:00 --account=def-ashique
+# salloc --gpus-per-node=1  --cpus-per-task=1 --mem=3600M --time=0-3:00 --account=def-ashique
 # Did not tune for three discount factors
 
 module load StdEnv/2023
@@ -29,4 +29,5 @@ python SR-DICE/run_mujoco.py --log_dir $SCRATCH/avg_corr/MIS/ --policy "SR_DICE"
 
 echo "Baseline job $seed took $SECONDS"
 sleep 144h
+
 

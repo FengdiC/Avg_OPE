@@ -99,6 +99,7 @@ class SR_DICE(object):
 
 		with torch.no_grad():
 			next_action,_,_ = policy.step(next_state)
+			next_action = torch.FloatTensor(next_action).to(device)
 			if self.mujoco:
 				next_action = (next_action + torch.randn_like(next_action) *
 							   self.max_action * 0.1).clamp(-self.max_action, self.max_action)
@@ -126,6 +127,7 @@ class SR_DICE(object):
 		start_state = replay_buffer.all_start()
 		with torch.no_grad():
 			start_action,_,_ = policy.step(start_state)
+			start_action = torch.FloatTensor(start_action).to(device)
 			if self.mujoco:
 				start_action = (start_action + torch.randn_like(start_action) *
 								self.max_action * 0.1).clamp(-self.max_action, self.max_action)

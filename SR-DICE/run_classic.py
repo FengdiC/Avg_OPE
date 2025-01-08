@@ -97,6 +97,7 @@ def run(args,env_name,seed,size,length,random_weight,discount_factor,num_steps,c
         "max_action": max_action,
         "discount": discount_factor,
         "tau": args.tau,
+        "mujoco":False,
     }
 
     # Initialize policy
@@ -157,14 +158,17 @@ def run_mujoco():
     args = argsparser()
     seeds = range(10)
 
+    if args.array > 200:
+        return -1
+
     discount_factor_lists = [0.8, 0.9, 0.95, 0.99, 0.995]
     size_lists = [2000, 4000, 8000, 16000]
 
-    weight_lists = [1.4, 1.8, 2.0, 2.4, 2.8]
-    length_lists = [20, 50, 100, 200]
-    env = ['MountainCarContinuous-v0','Hopper-v4','HalfCheetah-v4','Ant-v4',
-           'Swimmer-v4','Walker2d-v4']
-    idx = np.unravel_index(args.array, (5, 4, 5, 6))
+    weight_lists = [0.1, 0.2, 0.3, 0.4, 0.5]
+    length_lists = [20, 40, 80, 100]
+    env = ['CartPole-v1', 'Acrobot-v1']
+    path = ['./exper/cartpole.pth', './exper/acrobot.pth']
+    idx = np.unravel_index(int(args.array), (5, 4, 5, 2))
     random_weight, length, discount_factor = (
         weight_lists[idx[0]],
         length_lists[idx[1]],
@@ -176,7 +180,7 @@ def run_mujoco():
     dir = os.path.join(args.log_dir, str(env))
     os.makedirs(dir, exist_ok=True)
 
-    filename = dir + f"{args.policy}-mujoco-{env}-discount-{discount_factor}-length-{length}-random-{random_weight}.csv"
+    filename = dir + f"{args.policy}-classic-{env}-discount-{discount_factor}-length-{length}-random-{random_weight}.csv"
 
     mylist = [str(i) for i in range(0, args.epoch * args.steps, args.steps)] + ['hyperparam']
     with open(filename, 'w+', newline='') as file:

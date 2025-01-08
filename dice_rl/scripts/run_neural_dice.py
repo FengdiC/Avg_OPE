@@ -215,10 +215,10 @@ def main(argv):
     weight_lists = [1.4, 1.8, 2.0, 2.4, 2.8]
     length_lists = [20, 50, 100, 200]
     env = ['MountainCarContinuous-v0', 'Hopper-v4', 'HalfCheetah-v4', 'Ant-v4',
-           'Swimmer-v4', 'Walker2d-v4']
+         'Walker2d-v4']
     path = ['./exper/mountaincar.pth', './exper/hopper.pth', './exper/halfcheetah_0.pth',
-            './exper/ant.pth', './exper/swimmer.pth', './exper/walker.pth']
-    idx = np.unravel_index(int(FLAGS.array), (5, 4, 5, 6))
+            './exper/ant.pth', './exper/walker.pth']
+    idx = np.unravel_index(int(FLAGS.array), (5, 4, 5, 5))
     random_weight, max_trajectory_length, gamma = (
         weight_lists[idx[0]],
         length_lists[idx[1]],

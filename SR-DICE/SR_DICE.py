@@ -59,7 +59,10 @@ class SR_DICE(object):
 		self.encoder_decoder = Encoder_Decoder(state_dim, action_dim).to(device)
 		self.ed_optimizer = torch.optim.Adam(self.encoder_decoder.parameters(), lr=3e-4)
 
-		self.critic = Critic(state_dim, action_dim).to(device)
+		if mujoco:
+			self.critic = Critic(state_dim, action_dim).to(device)
+		else:
+			self.critic = CriticDiscrete(state_dim, action_dim).to(device)
 		self.critic_target = copy.deepcopy(self.critic)
 		self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=3e-4)
 
@@ -73,13 +76,18 @@ class SR_DICE(object):
 
 		self.made_start = False
 		self.max_action = max_action
+		self.action_dim = action_dim
+		self.mujoco = mujoco
 
 
 	def train_encoder_decoder(self, replay_buffer, batch_size=256):
 		state, action, next_state, reward, not_done = replay_buffer.sample(batch_size)
 
+		if not self.mujoco:
+			action = torch.nn.functional.one_hot(action, num_classes=self.action_dim)
 		recons_next, recons_reward, recons_action, lat = self.encoder_decoder(state, action)
-		ed_loss = F.mse_loss(recons_next, next_state) + 0.1 * F.mse_loss(recons_reward, reward) + F.mse_loss(recons_action, action)
+		ed_loss = F.mse_loss(recons_next, next_state) + \
+				  0.1 * F.mse_loss(recons_reward, reward) + F.mse_loss(recons_action, action)
 
 		self.ed_optimizer.zero_grad()
 		ed_loss.backward()
@@ -91,9 +99,14 @@ class SR_DICE(object):
 
 		with torch.no_grad():
 			next_action,_,_ = policy.step(next_state)
-			next_action = (next_action + torch.randn_like(next_action) * self.max_action * 0.1).clamp(-self.max_action, self.max_action)
+			if self.mujoco:
+				next_action = (next_action + torch.randn_like(next_action) *
+							   self.max_action * 0.1).clamp(-self.max_action, self.max_action)
+				latent = self.encoder_decoder.latent(state, action)
+			else:
+				one_hot_action = torch.nn.functional.one_hot(action, num_classes=self.action_dim)
+				latent = self.encoder_decoder.latent(state, one_hot_action)
 
-			latent = self.encoder_decoder.latent(state, action)
 			target_Q = latent + self.discount * not_done * self.critic_target(next_state, next_action)
 
 		current_Q = self.critic(state, action)
@@ -113,12 +126,16 @@ class SR_DICE(object):
 		start_state = replay_buffer.all_start()
 		with torch.no_grad():
 			start_action,_,_ = policy.step(start_state)
-			start_action = (start_action + torch.randn_like(start_action) * self.max_action * 0.1).clamp(-self.max_action, self.max_action)
+			if self.mujoco:
+				start_action = (start_action + torch.randn_like(start_action) *
+								self.max_action * 0.1).clamp(-self.max_action, self.max_action)
 
 			Q = self.critic(start_state, start_action)
 			self.start_Q = (1. - self.discount) * Q.mean(0)
 
 		start_Q = (self.start_Q * self.W).mean()
+		if not self.mujoco:
+			action = torch.nn.functional.one_hot(action, num_classes=self.action_dim)
 		b_sQ = (self.encoder_decoder.latent(state, action) * self.W).mean(1).pow(2).mean()
 		W_loss = (0.5 * b_sQ - start_Q)
 
@@ -129,4 +146,6 @@ class SR_DICE(object):
 
 	def eval_policy(self, replay_buffer, policy, batch_size=10000):
 		state, action, next_state, reward, not_done = replay_buffer.sample_all()
+		if not self.mujoco:
+			action = torch.nn.functional.one_hot(action, num_classes=self.action_dim)
 		return float(((self.W * self.encoder_decoder.latent(state, action)).mean(1,keepdim=True) * reward).mean())

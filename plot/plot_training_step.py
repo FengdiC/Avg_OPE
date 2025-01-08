@@ -9,7 +9,8 @@ from avg_corr.main import eval_policy
 import _pickle as pickle
 
 
-def plot_algo(gamma,size,random_weight,length,mujoco=True,env_name='Hopper-v4',train='train'):
+def plot_algo(gamma,size,random_weight,length,true_obj,
+              mujoco=True,env_name='Hopper-v4',train='train'):
     # plot the result for our avg algorithm
 
     if mujoco:
@@ -17,7 +18,7 @@ def plot_algo(gamma,size,random_weight,length,mujoco=True,env_name='Hopper-v4',t
         filename = f"final-mujoco-{env_name}-discount-{gamma}-length-{length}-random-{random_weight}.csv"
     else:
         log_dir = '../avg_tune_log/classic/'
-        filename = f"final-classic-{env_name}-discount-{gamma}-length-{length}-random-{random_weight}.csv"
+        filename = f"final-classic-mse-{env_name}-discount-{gamma}-length-{length}-length-{random_weight}.csv"
 
     f = os.path.join(log_dir, filename)
 
@@ -34,42 +35,46 @@ def plot_algo(gamma,size,random_weight,length,mujoco=True,env_name='Hopper-v4',t
 
     # plot COP-TD
     result = []
-    log_dir = "../avg_tune_log/COP-TD/results/results/" + env_name + "/"
+    log_dir = "../avg_tune_log/COP-TD/results/results/" + env_name[:-3].lower() + "/"
     if mujoco:
-        filename = f"mse-tune-random_weight_{random_weight}-discount_factor_{gamma}-max_ep_{size // length}\
-            -max_len_{length}-link_default-batch_size_512-bootstrap_target_target_network-lr_0.005-alpha_0.0.pkl"
+        filename = f"mse-tune-random_weight_{random_weight}-discount_factor_{gamma}-max_ep_{size // length}-max_len_{length}-link_default-batch_size_512-bootstrap_target_target_network-lr_0.005-alpha_0.0.pkl"
     else:
-        filename = f"mse-tune-random_weight_{random_weight}-discount_factor_{gamma}-max_ep_{size//length}\
-        -max_len_{length}-link_default-batch_size_512-bootstrap_target_target_network-lr_0.005-alpha_0.01.pkl"
+        filename = f"mse-tune-random_weight_{random_weight}-discount_factor_{gamma}-max_ep_{size//length}-max_len_{length}-link_default-batch_size_512-bootstrap_target_target_network-lr_0.005-alpha_0.01.pkl"
 
     f = os.path.join(log_dir, filename)
     run_data = pickle.load(open(f, "rb"))
     for seed in run_data["seeds"]:
-        result.append(np.array(run_data["results"][seed][1]))
+        result.append(np.array(run_data["results"][seed][0]))
     mean_cop_mse = np.mean(result, axis=0)
     var_cop = np.var(result, axis=0)
 
-    # plot best dice
-    result = []
-    for filename in os.listdir('./tune_log/bestdice_cartpole'):
-        f = os.path.join('./tune_log/bestdice_cartpole', filename)
-        # checking if it is a file
-        if not f.endswith('.csv'):
-            continue
-        if '_'+"%.2f" % gamma+'_' in filename and 'numtraj_'+str(buffer) in filename \
-                and str(random_weight) in filename and train in filename:
-            data = pd.read_csv(f, header=0)
-            mean_dice = data.loc[:,'MSE']
-            result.append(mean_dice.to_list())
-        mean_dice = np.mean(result,axis=0)
+    # # plot best dice
+    # result = []
+    # log_dir = "../avg_tune_log/dice/" +  env_name[:-3].lower() + "/"
+    # if mujoco:
+    #     print("Not Implemented")
+    # else:
+    #     filename = f"dice-classic-['CartPole-v1', 'Acrobot-v1']-discount-{gamma}-length-{length}-random-{random_weight}.csv"
+    # f = os.path.join(log_dir, filename)
+    #
+    # data = pd.read_csv(f, header=0, index_col='hyperparam')
+    # data.columns = data.columns.astype(int)
+    # data = data.sort_index(axis=1, ascending=True)
+    # result = []
+    # for name in data.index.to_list():
+    #     if train in name and str(size) in name:
+    #         result.append(data.loc[name].to_list())
+    # result = np.array(result)
+    # mean_dice_mse = np.mean(result, axis=0)
+    # var_dice = np.var(result, axis=0)
 
     plt.figure()
     plt.plot(range(mean_avg_mse.shape[0]), mean_avg_mse, label='avg_corr_mse')
-    plt.plot(range(mean_avg_gamma.shape[0]), mean_avg_gamma, label='avg_corr_gamma')
-    plt.plot(range(len(mean_dice)), mean_dice, label='best_dice')
-    plt.plot(range(len(mean_dice)), 0.99951*np.ones(len(mean_dice)), label='true_value')
+    plt.plot(range(mean_cop_mse.shape[0]), mean_cop_mse, label='cop_td')
+    # plt.plot(range(mean_dice_mse.shape[0]), mean_dice_mse, label='best_dice')
+    plt.plot(range(mean_avg_mse.shape[0]), true_obj*np.ones(mean_avg_mse.shape[0]), label='true_value')
     plt.legend()
-    plt.title('last')
+    plt.title(env_name)
     plt.show()
 
 def plot_err():
@@ -117,4 +122,32 @@ def plot_err():
 
     plt.show()
 
-plot_err()
+# plot_err()
+
+if __name__ == "__main__":
+    env_lists=['Hopper-v4',
+           'HalfCheetah-v4','Ant-v4',
+           'Walker2d-v4']
+    # env_lists = ['CartPole-v1','Acrobot-v1']
+    discount_factor_lists = [0.8, 0.9, 0.95, 0.99, 0.995]
+    size_lists = [2000, 4000, 8000, 16000]
+
+    random_weight_lists = [1.4, 1.8, 2.0, 2.4, 2.8]
+    length_lists = [20, 50, 100, 200]
+    train = 'test'
+
+    avg_mse, dice, cop = [], [], []
+    for env_name in env_lists:
+        gamma = 0.95
+        size, random_weight, length = 4000, 2.0,100
+        with open('./dataset/mujoco_obj.pkl', 'rb') as file:
+            obj = pickle.load(file)
+        true_obj = obj[env_name][2]
+        plot_algo(gamma = gamma,
+                  size = size,
+                  random_weight = random_weight,
+                  length = length,
+                  true_obj = true_obj,
+                  mujoco=True,
+                  env_name=env_name,
+                  train=train)

@@ -11,7 +11,7 @@ import utils
 import Deep_TD
 import Deep_SR
 import SR_DICE
-import TD3
+from tqdm import tqdm
 import torch
 from gymnasium.spaces import Box, Discrete
 import gymnasium as gym
@@ -162,9 +162,10 @@ def run_mujoco():
 
     weight_lists = [1.4, 1.8, 2.0, 2.4, 2.8]
     length_lists = [20, 50, 100, 200]
-    env = ['MountainCarContinuous-v0','Hopper-v4','HalfCheetah-v4','Ant-v4',
-           'Swimmer-v4','Walker2d-v4']
-    idx = np.unravel_index(args.array, (5, 4, 5, 6))
+    env = ['MountainCarContinuous-v0','Hopper-v4',
+           'HalfCheetah-v4','Ant-v4',
+           'Walker2d-v4']
+    idx = np.unravel_index(args.array, (5, 4, 5, 5))
     random_weight, length, discount_factor = (
         weight_lists[idx[0]],
         length_lists[idx[1]],
@@ -185,8 +186,8 @@ def run_mujoco():
         writer.writerow(mylist)  # Use writerow for single list
 
     result_train, result_test = [], []
-    for seed in seeds:
-        for size in size_lists:
+    for seed in tqdm(seeds, desc="Seeds"):
+        for size in tqdm(size_lists, desc="Size"):
             train,test = run(
                 args=args,
                 env_name=env,

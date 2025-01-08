@@ -42,7 +42,7 @@ def run_mujoco():
     length_lists = [20, 50, 100, 200]
     env = ['MountainCarContinuous-v0','Hopper-v4','HalfCheetah-v4','Ant-v4',
            'Swimmer-v4','Walker2d-v4']
-    path = ['./exper/mountaincar.pth','./exper/hopper.pth','./exper/halfcheetah_0.pth',
+    path = ['./exper/mountaincar.pth','./exper/hopper.pth','./exper/halfcheetah_1.pth',
             './exper/ant.pth','./exper/swimmer.pth','./exper/walker.pth']
     idx = np.unravel_index(args.array, (5, 4, 5, 6))
     random_weight, length, discount_factor = (

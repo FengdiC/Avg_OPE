@@ -19,8 +19,8 @@ path_lists = {
     'Acrobot-v1':'./exper/acrobot.pth',
     'MountainCarContinuous-v0':'./exper/mountaincar.pth',
     'Hopper-v4':'./exper/hopper.pth',
-    'HalfCheetah-v4':'./exper/halfcheetah_0.pth',
-    'Avt-v4':'./exper/ant.pth',
+    'HalfCheetah-v4':'./exper/halfcheetah_1.pth',
+    'Ant-v4':'./exper/ant.pth',
     'Swimmer-v4':'./exper/swimmer.pth',
     'Walker2d-v4':'./exper/walker.pth',
 }

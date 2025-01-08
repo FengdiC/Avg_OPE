@@ -216,7 +216,7 @@ def main(argv):
     length_lists = [20, 50, 100, 200]
     env = ['MountainCarContinuous-v0', 'Hopper-v4', 'HalfCheetah-v4', 'Ant-v4',
          'Walker2d-v4']
-    path = ['./exper/mountaincar.pth', './exper/hopper.pth', './exper/halfcheetah_0.pth',
+    path = ['./exper/mountaincar.pth', './exper/hopper.pth', './exper/halfcheetah_1.pth',
             './exper/ant.pth', './exper/walker.pth']
     idx = np.unravel_index(int(FLAGS.array), (5, 4, 5, 5))
     random_weight, max_trajectory_length, gamma = (

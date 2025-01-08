@@ -6,12 +6,12 @@ import numpy as np
 import csv
 from avg_corr.main import train as PPOBuffer
 import pickle
+from tqdm import tqdm
 
 import utils
 import Deep_TD
 import Deep_SR
 import SR_DICE
-import TD3
 import torch
 from gymnasium.spaces import Box, Discrete
 import gymnasium as gym
@@ -189,7 +189,7 @@ def run_mujoco():
         writer.writerow(mylist)  # Use writerow for single list
 
     result_train, result_test = [], []
-    for seed in seeds:
+    for seed in tqdm(seeds, desc="Seeds"):
         for size in size_lists:
             train,test = run(
                 args=args,

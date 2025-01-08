@@ -28,7 +28,7 @@ sys.path.insert(0, parentdir)
 sys.path.insert(0, granddir)
 import tensorflow.compat.v2 as tf
 tf.compat.v1.enable_v2_behavior()
-import pickle, csv
+import pickle, csv, tqdm
 
 os.environ["TF_USE_LEGACY_KERAS"]='1'
 
@@ -272,7 +272,7 @@ def main(argv):
         writer = csv.writer(file)
         writer.writerow(mylist)  # Use writerow for single list
 
-    for seed in seeds:
+    for seed in tqdm(seeds, desc="Seeds"):
         # Set seeds
         np.random.seed(seed)
         os.environ['PYTHONHASHSEED'] = str(seed)
@@ -380,23 +380,23 @@ def main(argv):
                     eval_obj2 = estimator.eval_policy_csv(dataset2, target_policy)
                     train_estimates.append(eval_obj)
                     test_estimates.append(eval_obj2)
-                    if (eval_obj2-true_obj)**2 < best:
-                        best = (eval_obj2-true_obj)**2
-                        # Save the model at the end of training
-                        if FLAGS.output_dir is not None:
-                            model_save_path = os.path.join(FLAGS.output_dir, env_name,name+'_best_model_weights')
-
-                            # Create a checkpoint object
-                            checkpoint = tf.train.Checkpoint(nu_network=nu_network,
-                                                             zeta_network=zeta_network,
-                                                             nu_optimizer=nu_optimizer,
-                                                             zeta_optimizer=zeta_optimizer,
-                                                             lam_optimizer=lam_optimizer)
-
-                            # Save the checkpoint
-                            checkpoint.save(os.path.join(model_save_path, 'checkpoint'))
-
-                            print(f"Model saved at {model_save_path}")
+                    # if (eval_obj2-true_obj)**2 < best:
+                    #     best = (eval_obj2-true_obj)**2
+                    #     # Save the model at the end of training
+                    #     if FLAGS.output_dir is not None:
+                    #         model_save_path = os.path.join(FLAGS.output_dir, env_name,name+'_best_model_weights')
+                    #
+                    #         # Create a checkpoint object
+                    #         checkpoint = tf.train.Checkpoint(nu_network=nu_network,
+                    #                                          zeta_network=zeta_network,
+                    #                                          nu_optimizer=nu_optimizer,
+                    #                                          zeta_optimizer=zeta_optimizer,
+                    #                                          lam_optimizer=lam_optimizer)
+                    #
+                    #         # Save the checkpoint
+                    #         checkpoint.save(os.path.join(model_save_path, 'checkpoint'))
+                    #
+                    #         print(f"Model saved at {model_save_path}")
 
 
                 # if (step < 1000 and step % 25 == 0) or (step >= 1000 and step % 100 == 0):

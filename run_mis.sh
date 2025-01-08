@@ -21,10 +21,10 @@ echo
 
 #python avg_corr/run_cartpole_td.py --log_dir $SCRATCH/avg_corr/td_err/ --steps 5 --epoch 2000 --max_len 50
 
-python SR_DICE/run.py --output_dir $SCRATCH/avg_corr/dice/classic/ \
+python SR-DICE/run.py --output_dir $SCRATCH/avg_corr/dice/classic/ \
 --array $SLURM_ARRAY_TASK_ID --steps 5 --epoch 5000 --max_trajectory_length 100 --data_dir $SCRATCH/avg_corr/ &
 
-python SR_DICE/run_mujoco.py --output_dir $SCRATCH/avg_corr/MIS/ \
+python SR-DICE/run_mujoco.py --output_dir $SCRATCH/avg_corr/MIS/ \
 --array $SLURM_ARRAY_TASK_ID  --steps 5 --epoch 100000 --max_trajectory_length 100 --data_dir $SCRATCH/avg_corr/ &
 
 echo "Baseline job $seed took $SECONDS"

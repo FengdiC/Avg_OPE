@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from Deep_TD import Critic, CriticDiscrete
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -44,21 +45,6 @@ class Encoder_Decoder(nn.Module):
 		return l
 
 
-class Critic(nn.Module):
-	def __init__(self, state_dim, action_dim):
-		super(Critic, self).__init__()
-
-		self.l1 = nn.Linear(state_dim + action_dim, 256)
-		self.l2 = nn.Linear(256, 256)
-		self.l3 = nn.Linear(256, 256)
-
-
-	def forward(self, state, action):
-		q1 = F.relu(self.l1(torch.cat([state, action], 1)))
-		q1 = F.relu(self.l2(q1))
-		return self.l3(q1)
-
-
 class SR_DICE(object):
 	def __init__(
 		self,
@@ -66,7 +52,8 @@ class SR_DICE(object):
 		action_dim,
 		max_action,
 		discount=0.99,
-		tau=0.005
+		tau=0.005,
+		mujoco=True,
 	):
 
 		self.encoder_decoder = Encoder_Decoder(state_dim, action_dim).to(device)

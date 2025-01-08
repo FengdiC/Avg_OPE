@@ -28,7 +28,8 @@ sys.path.insert(0, parentdir)
 sys.path.insert(0, granddir)
 import tensorflow.compat.v2 as tf
 tf.compat.v1.enable_v2_behavior()
-import pickle, csv, tqdm
+import pickle, csv
+from tqdm import tqdm
 
 os.environ["TF_USE_LEGACY_KERAS"]='1'
 

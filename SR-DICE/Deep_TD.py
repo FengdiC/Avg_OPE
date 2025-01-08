@@ -22,6 +22,28 @@ class Critic(nn.Module):
 		q1 = F.relu(self.l2(q1))
 		return self.l3(q1)
 
+class CriticDiscrete(nn.Module):
+	def __init__(self, state_dim, action_dim):
+		super(Critic, self).__init__()
+
+		self.l1 = nn.Linear(state_dim, 256)
+		self.l2 = nn.Linear(256, 256)
+		self.l3 = nn.Linear(256, action_dim)
+
+
+	def forward(self, state, action):
+		q1 = F.relu(self.l1(state))
+		q1 = F.relu(self.l2(q1))
+		q1 = self.l3(q1)
+
+		one_hot_a_t = torch.nn.functional.one_hot(action, num_classes=self.a_dim)
+		value = q1 * one_hot_a_t
+		if value.dim() == 1:
+			value = torch.sum(value)
+		else:
+			value = value.sum(dim=1)
+		return torch.squeeze(value)
+
 
 class Deep_TD(object):
 	def __init__(
@@ -30,10 +52,13 @@ class Deep_TD(object):
 		action_dim,
 		max_action,
 		discount=0.99,
-		tau=0.005
+		tau=0.005,
+		mujoco=True,
 	):
-
-		self.critic = Critic(state_dim, action_dim).to(device)
+		if mujoco:
+			self.critic = Critic(state_dim, action_dim).to(device)
+		else:
+			self.critic = CriticDiscrete(state_dim, action_dim).to(device)
 		self.critic_target = copy.deepcopy(self.critic)
 		self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=3e-4)
 

@@ -88,8 +88,8 @@ def run(args,env_name,seed,size,length,random_weight,discount_factor,num_steps,c
     env.action_space.seed(seed)
 
     state_dim = env.observation_space.shape[0]
-    action_dim = env.action_space.shape[0]
-    max_action = float(env.action_space.high[0])
+    action_dim = env.action_space.n
+    max_action = float(1)
 
     kwargs = {
         "state_dim": state_dim,

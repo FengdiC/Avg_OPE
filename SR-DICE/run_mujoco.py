@@ -4,7 +4,7 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 import numpy as np
 import csv
-from avg_corr.main import train as PPOBuffer
+from dataset.generation import PPOBuffer
 import pickle
 
 import utils

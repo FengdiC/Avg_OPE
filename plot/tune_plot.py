@@ -12,13 +12,13 @@ def tune_result(env):
     result = {}
     result_var = {}
     result_train = {}
-    for filename in os.listdir('./tune_log/'+env+'/'):
-        f = os.path.join('./tune_log/'+env+'/', filename)
+    for filename in os.listdir('../avg_tune_log/'+env+'/'):
+        f = os.path.join('../avg_tune_log/'+env+'/', filename)
         # checking if it is a file
         if not f.endswith('.csv'):
             continue
-        if 'gamma' not in filename:
-            continue
+        # if 'gamma' not in filename:
+        #     continue
         data = pd.read_csv(f, header=0,index_col='hyperparam')
         data.columns = data.columns.astype(int)
         data = data.sort_index(axis=1, ascending=True)
@@ -65,7 +65,7 @@ def top_five(data,var,data_train,best_value):
 
     n = data.shape[1]
     # check the training error
-    last = data.iloc[:, n - 800:n]
+    last = data.iloc[:, :n]
     last = (last - best_value).abs()
     avg = last.mean(axis=1)
     top_five = avg.nsmallest(20)
@@ -73,16 +73,16 @@ def top_five(data,var,data_train,best_value):
 
     # last few steps top five
     last = data.loc[top_five]
-    last = last.iloc[:, n-800:n]
+    last = last.iloc[:, :n]
     last = (last - best_value).abs()
     avg = last.mean(axis=1)
-    top_five = avg.nsmallest(5)
+    top_five = avg.nsmallest(3)
     top_five = top_five.index
 
     # var = var.loc[top_five]
-    # var = var.iloc[:, n-200:n]
+    # var = var.iloc[:, n-800:n]
     # var = var.mean(axis=1)
-    # top_five = var.nsmallest(5)
+    # top_five = var.nsmallest(3)
     # top_five = top_five.index
 
     top_five = list(top_five)

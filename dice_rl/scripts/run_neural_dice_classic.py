@@ -209,7 +209,7 @@ def main(argv):
     seeds = range(10)
     tf.config.run_functions_eagerly(True)
 
-    if FLAGS.array > 200:
+    if FLAGS.array > 199:
         return -1
 
     discount_factor_lists = [0.8, 0.9, 0.95, 0.99, 0.995]

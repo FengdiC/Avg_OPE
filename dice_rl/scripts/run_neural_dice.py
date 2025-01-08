@@ -209,6 +209,9 @@ def main(argv):
     seeds = range(10)
     tf.config.run_functions_eagerly(True)
 
+    if FLAGS.array <200:
+        return -1
+
     discount_factor_lists = [0.8, 0.9, 0.95, 0.99, 0.995]
     size_lists = [2000, 4000, 8000, 16000]
 
@@ -218,7 +221,7 @@ def main(argv):
          'Walker2d-v4']
     path = ['./exper/mountaincar.pth', './exper/hopper.pth', './exper/halfcheetah_1.pth',
             './exper/ant.pth', './exper/walker.pth']
-    idx = np.unravel_index(int(FLAGS.array), (5, 4, 5, 5))
+    idx = np.unravel_index(int(FLAGS.array)-200, (5, 4, 5, 5))
     random_weight, max_trajectory_length, gamma = (
         weight_lists[idx[0]],
         length_lists[idx[1]],

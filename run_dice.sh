@@ -4,7 +4,7 @@
 #SBATCH --time=0-120:00
 #SBATCH --output=%N-%j.out
 #SBATCH --account=def-ashique
-#SBATCH --array=0-599
+#SBATCH --array=0-699
 
 # salloc --cpus-per-task=1 --mem=3600M --time=0-3:00 --account=def-ashique
 # Did not tune for three discount factors

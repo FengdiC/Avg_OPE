@@ -10,7 +10,7 @@ import _pickle as pickle
 
 
 def plot_algo(gamma,size,random_weight,length,true_obj,
-              mujoco=True,env_name='Hopper-v4',train='train'):
+              mujoco=True,env_name='Hopper-v4',env_id='hopper',train='train'):
     # plot the result for our avg algorithm
 
     if mujoco:
@@ -35,7 +35,7 @@ def plot_algo(gamma,size,random_weight,length,true_obj,
 
     # plot COP-TD
     result = []
-    log_dir = "../avg_tune_log/COP-TD/results/results/" + env_name[:-3].lower() + "/"
+    log_dir = "../avg_tune_log/COP-TD/results/results/" + env_id + "/"
     if mujoco:
         filename = f"mse-tune-random_weight_{random_weight}-discount_factor_{gamma}-max_ep_{size // length}-max_len_{length}-link_default-batch_size_512-bootstrap_target_target_network-lr_0.005-alpha_0.0.pkl"
     else:
@@ -44,13 +44,13 @@ def plot_algo(gamma,size,random_weight,length,true_obj,
     f = os.path.join(log_dir, filename)
     run_data = pickle.load(open(f, "rb"))
     for seed in run_data["seeds"]:
-        result.append(np.array(run_data["results"][seed][0]))
+        result.append(np.array(run_data["results"][seed][1]))
     mean_cop_mse = np.mean(result, axis=0)
     var_cop = np.var(result, axis=0)
 
     # # plot best dice
     # result = []
-    # log_dir = "../avg_tune_log/dice/" +  env_name[:-3].lower() + "/"
+    # log_dir = "../avg_tune_log/dice/" +  env_id + "/"
     # if mujoco:
     #     print("Not Implemented")
     # else:
@@ -128,6 +128,12 @@ if __name__ == "__main__":
     env_lists=['Hopper-v4',
            'HalfCheetah-v4','Ant-v4',
            'Walker2d-v4']
+    env_id_lists = ['hopper',
+
+                    'halfcheetah',
+                    'ant',
+                    'walker',
+                    ]
     # env_lists = ['CartPole-v1','Acrobot-v1']
     discount_factor_lists = [0.8, 0.9, 0.95, 0.99, 0.995]
     size_lists = [2000, 4000, 8000, 16000]
@@ -137,9 +143,11 @@ if __name__ == "__main__":
     train = 'test'
 
     avg_mse, dice, cop = [], [], []
-    for env_name in env_lists:
-        gamma = 0.95
-        size, random_weight, length = 4000, 2.0,100
+    for i in range(len(env_lists)):
+        env_name = env_lists[i]
+        env_id= env_id_lists[i]
+        gamma = 0.8
+        size, random_weight, length = 16000, 1.4,100
         with open('./dataset/mujoco_obj.pkl', 'rb') as file:
             obj = pickle.load(file)
         true_obj = obj[env_name][2]
@@ -150,4 +158,5 @@ if __name__ == "__main__":
                   true_obj = true_obj,
                   mujoco=True,
                   env_name=env_name,
+                  env_id=env_id,
                   train=train)

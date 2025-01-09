@@ -227,16 +227,21 @@ def main(argv):
         0.95,
         4000,
     )
+
     idx = np.unravel_index(int(FLAGS.array) - 36, (18, 5))
+    env_name, path = env[idx[1]], path[idx[1]]
+    with open(FLAGS.data_dir+'/mujoco_obj.pkl','rb') as file:
+        obj = pickle.load(file)
+    true_obj = obj[env_name][2]
     if idx[0] < 5:
         gamma = discount_factor_lists[idx[0]]
+        true_obj = obj[env_name][idx[0]]
     elif idx[0] < 9:
         size = size_lists[idx[0] - 5]
     elif idx[0] < 14:
         random_weight = weight_lists[idx[0] - 9]
     else:
         max_trajectory_length = length_lists[idx[0] - 14]
-    env_name, path = env[idx[1]], path[idx[1]]
 
     nu_learning_rate = FLAGS.nu_learning_rate
     zeta_learning_rate = FLAGS.zeta_learning_rate
@@ -269,9 +274,6 @@ def main(argv):
           raise ValueError('Reward {} not implemented.'.format(transform_reward))
         return reward
 
-    with open(FLAGS.data_dir+'/mujoco_obj.pkl','rb') as file:
-        obj = pickle.load(file)
-    true_obj = obj[env_name][idx[2]]
 
     os.makedirs(FLAGS.output_dir, exist_ok=True)
     os.makedirs(FLAGS.output_dir+str(env_name), exist_ok=True)

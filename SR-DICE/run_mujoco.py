@@ -159,6 +159,9 @@ def run_mujoco():
     args = argsparser()
     seed = args.seed
 
+    if args.array < 36:
+        return -1
+
     discount_factor_lists = [0.8, 0.9, 0.95, 0.99, 0.995]
     size_lists = [2000, 4000, 8000, 16000]
 
@@ -174,12 +177,7 @@ def run_mujoco():
     env = ['MountainCarContinuous-v0','Hopper-v4',
            'HalfCheetah-v4','Ant-v4',
            'Walker2d-v4']
-    idx = np.unravel_index(args.array, (18,5))
-    random_weight, length, discount_factor = (
-        weight_lists[idx[0]],
-        length_lists[idx[1]],
-        discount_factor_lists[idx[2]],
-    )
+    idx = np.unravel_index(args.array-36, (18,5))
     if idx[0] <5:
         discount_factor = discount_factor_lists[idx[0]]
     elif idx[0] <9:

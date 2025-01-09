@@ -4,7 +4,7 @@
 #SBATCH --time=0-144:00
 #SBATCH --output=%N-%j.out
 #SBATCH --account=def-ashique
-#SBATCH --array=0-89
+#SBATCH --array=0-125
 
 # salloc --gpus-per-node=1  --cpus-per-task=1 --mem=3600M --time=0-3:00 --account=def-ashique
 # Did not tune for three discount factors
@@ -21,13 +21,16 @@ echo
 
 #python avg_corr/run_cartpole_td.py --log_dir $SCRATCH/avg_corr/td_err/ --steps 5 --epoch 2000 --max_len 50
 
-python SR-DICE/run_classic.py --log_dir $SCRATCH/avg_corr/MIS/ --policy "SR_DICE"\
---array $SLURM_ARRAY_TASK_ID --steps 5 --epoch 5000  --data_dir $SCRATCH/avg_corr/ &
+for seed in  $(seq 1 10); do
+  echo "Baseline job $seed took $SECONDS"
+  python SR-DICE/run_classic.py --log_dir $SCRATCH/avg_corr/MIS/ --policy "SR_DICE"\
+  --array $SLURM_ARRAY_TASK_ID --steps 5 --epoch 5000  --data_dir $SCRATCH/avg_corr/ --seed $seed
+done
 
-for i in  $(seq 1 10); do
+for seed in  $(seq 1 10); do
+  echo "Baseline job $seed took $SECONDS"
   python SR-DICE/run_mujoco.py --log_dir $SCRATCH/avg_corr/MIS/ --policy "SR_DICE"\
-  --array $SLURM_ARRAY_TASK_ID  --steps 5 --epoch 40000 --data_dir $SCRATCH/avg_corr/ --seed $i
-
+  --array $SLURM_ARRAY_TASK_ID  --steps 5 --epoch 40000 --data_dir $SCRATCH/avg_corr/ --seed $seed
 done
 
 echo "Baseline job $seed took $SECONDS"

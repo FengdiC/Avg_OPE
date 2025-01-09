@@ -225,7 +225,7 @@ def main(argv):
         0.95,
         4000,
     )
-    idx = np.unravel_index(int(FLAGS.array) - 36, (18, 5))
+    idx = np.unravel_index(int(FLAGS.array), (18, 5))
     env_name, path = env[idx[1]], path[idx[1]]
     with open(FLAGS.data_dir + '/mujoco_obj.pkl', 'rb') as file:
         obj = pickle.load(file)

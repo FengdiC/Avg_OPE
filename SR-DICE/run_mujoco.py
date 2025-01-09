@@ -160,7 +160,7 @@ def run(args,env_name,seed,size,length,random_weight,discount_factor,num_steps,c
         torch.save(
             {'encoder_dict':ope.encoder_decoder.state_dict(),
              'weight_dict': ope.W},
-            dir
+            f"{dir}/{name}-final.pt"
         )
         print("model saved")
     return train_results, test_results

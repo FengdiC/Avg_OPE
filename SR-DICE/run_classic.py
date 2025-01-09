@@ -111,7 +111,7 @@ def run(args,env_name,seed,size,length,random_weight,discount_factor,num_steps,c
     kwargs["policy_noise"] = 0.2 * max_action
     kwargs["noise_clip"] = 0.5 * max_action
     kwargs["policy_freq"] = 2
-    policy = load(path,env)
+    policy = load(path,env).to(device)
 
     name = ['discount_factor', 0.8, 'random_weight', random_weight, 'max_length', length,
             'buffer_size', 16000, 'seed', seed, 'env', env_name]

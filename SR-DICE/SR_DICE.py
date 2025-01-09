@@ -85,7 +85,6 @@ class SR_DICE(object):
 
 		if not self.mujoco:
 			action = torch.nn.functional.one_hot(action.to(torch.int64), num_classes=self.action_dim).to(torch.float32)
-		print(state.shape,":::",action.shape)
 		recons_next, recons_reward, recons_action, lat = self.encoder_decoder(state, action)
 		ed_loss = F.mse_loss(recons_next, next_state) + \
 				  0.1 * F.mse_loss(recons_reward, reward) + F.mse_loss(recons_action, action)

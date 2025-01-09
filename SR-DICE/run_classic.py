@@ -153,7 +153,6 @@ def run(args,env_name,seed,size,length,random_weight,discount_factor,num_steps,c
             train_results.append(ope.eval_policy(replay_buffer, policy))
             test_results.append(ope.eval_policy(replay_buffer_test, policy))
 
-    torch.save(model.state_dict(), PATH)
     return train_results, test_results
 
 def run_mujoco():

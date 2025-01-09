@@ -3,8 +3,9 @@
 #SBATCH --mem=3600M       # Memory proportional to GPUs: 32000 Cedar, 64000 Graham.
 #SBATCH --time=0-120:00
 #SBATCH --output=%N-%j.out
-#SBATCH --account=def-ashique
-#SBATCH --array=0-699
+#SBATCH --account=rrg-ashique
+#SBATCH --gpus-per-node=1
+#SBATCH --array=0-125
 
 # salloc --cpus-per-task=1 --mem=3600M --time=0-3:00 --account=def-ashique
 # Did not tune for three discount factors
@@ -21,11 +22,19 @@ echo
 
 #python avg_corr/run_cartpole_td.py --log_dir $SCRATCH/avg_corr/td_err/ --steps 5 --epoch 2000 --max_len 50
 
-python dice_rl/scripts/run_neural_dice_classic.py --output_dir $SCRATCH/avg_corr/dice/classic/ \
---array $SLURM_ARRAY_TASK_ID --steps 5 --epoch 5000 --max_trajectory_length 100 --data_dir $SCRATCH/avg_corr/ &
+for seed in  $(seq 1 10); do
+  echo "Baseline job $seed took $SECONDS"
+  python dice_rl/scripts/run_neural_dice_classic.py --output_dir $SCRATCH/avg_corr/dice/classic/ \
+  --array $SLURM_ARRAY_TASK_ID --steps 5 --epoch 5000 --max_trajectory_length 100 \
+  --data_dir $SCRATCH/avg_corr/ --seed $seed
+done
 
-python dice_rl/scripts/run_neural_dice.py --output_dir $SCRATCH/avg_corr/dice/mujoco/ \
---array $SLURM_ARRAY_TASK_ID  --steps 5 --epoch 40000 --max_trajectory_length 100 --data_dir $SCRATCH/avg_corr/ &
+for seed in  $(seq 1 10); do
+  echo "Baseline job $seed took $SECONDS"
+  python dice_rl/scripts/run_neural_dice.py --output_dir $SCRATCH/avg_corr/dice/mujoco/ \
+  --array $SLURM_ARRAY_TASK_ID  --steps 5 --epoch 40000 --max_trajectory_length 100 \
+  --data_dir $SCRATCH/avg_corr/ --seed $seed
+done
 
 echo "Baseline job $seed took $SECONDS"
 sleep 120h

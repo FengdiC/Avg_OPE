@@ -157,23 +157,38 @@ def run(args,env_name,seed,size,length,random_weight,discount_factor,num_steps,c
 
 def run_mujoco():
     args = argsparser()
-    seeds = range(10)
+    seed = args.seed
 
     discount_factor_lists = [0.8, 0.9, 0.95, 0.99, 0.995]
     size_lists = [2000, 4000, 8000, 16000]
 
     weight_lists = [1.4, 1.8, 2.0, 2.4, 2.8]
     length_lists = [20, 50, 100, 200]
+
+    random_weight, length, discount_factor ,size = (
+        2.0,
+        100,
+        0.95,
+        4000,
+    )
     env = ['MountainCarContinuous-v0','Hopper-v4',
            'HalfCheetah-v4','Ant-v4',
            'Walker2d-v4']
-    idx = np.unravel_index(args.array, (5, 4, 5, 5))
+    idx = np.unravel_index(args.array, (18,5))
     random_weight, length, discount_factor = (
         weight_lists[idx[0]],
         length_lists[idx[1]],
         discount_factor_lists[idx[2]],
     )
-    env = env[idx[3]]
+    if idx[0] <5:
+        discount_factor = discount_factor_lists[idx[0]]
+    elif idx[0] <9:
+        size = size_lists[idx[0]-5]
+    elif idx[0] <14:
+        random_weight = weight_lists[idx[0]-9]
+    else:
+        length = length_lists[idx[0]-14]
+    env = env[idx[1]]
 
     os.makedirs(args.log_dir, exist_ok=True)
     dir = os.path.join(args.log_dir, str(env))
@@ -188,31 +203,29 @@ def run_mujoco():
         writer.writerow(mylist)  # Use writerow for single list
 
     result_train, result_test = [], []
-    for seed in tqdm(seeds, desc="Seeds"):
-        for size in tqdm(size_lists, desc="Size"):
-            train,test = run(
-                args=args,
-                env_name=env,
-                seed=seed,
-                size=size,
-                length=length,
-                random_weight=random_weight,
-                discount_factor=discount_factor,
-                num_steps = args.steps*args.epoch,
-                checkpoint=args.steps,
-            )
-            train, test = np.around(train, decimals=4), np.around(test, decimals=4)
-            result_train.append(train)
-            result_test.append(test)
-            mylist = [str(i) for i in list(train)] + ['-'.join(['train', 'size', str(size), 'seed', str(seed)])]
-            with open(filename, 'a', newline='') as file:
-                # Step 4: Using csv.writer to write the list to the CSV file
-                writer = csv.writer(file)
-                writer.writerow(mylist)  # Use writerow for single list
-            mylist = [str(i) for i in list(test)] + ['-'.join(['test', 'size', str(size), 'seed', str(seed)])]
-            with open(filename, 'a', newline='') as file:
-                # Step 4: Using csv.writer to write the list to the CSV file
-                writer = csv.writer(file)
-                writer.writerow(mylist)  # Use writerow for single list
+    train,test = run(
+        args=args,
+        env_name=env,
+        seed=seed,
+        size=size,
+        length=length,
+        random_weight=random_weight,
+        discount_factor=discount_factor,
+        num_steps = args.steps*args.epoch,
+        checkpoint=args.steps,
+    )
+    train, test = np.around(train, decimals=4), np.around(test, decimals=4)
+    result_train.append(train)
+    result_test.append(test)
+    mylist = [str(i) for i in list(train)] + ['-'.join(['train', 'size', str(size), 'seed', str(seed)])]
+    with open(filename, 'a', newline='') as file:
+        # Step 4: Using csv.writer to write the list to the CSV file
+        writer = csv.writer(file)
+        writer.writerow(mylist)  # Use writerow for single list
+    mylist = [str(i) for i in list(test)] + ['-'.join(['test', 'size', str(size), 'seed', str(seed)])]
+    with open(filename, 'a', newline='') as file:
+        # Step 4: Using csv.writer to write the list to the CSV file
+        writer = csv.writer(file)
+        writer.writerow(mylist)  # Use writerow for single list
 
 run_mujoco()

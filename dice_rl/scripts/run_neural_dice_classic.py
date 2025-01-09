@@ -271,10 +271,6 @@ def main(argv):
           raise ValueError('Reward {} not implemented.'.format(transform_reward))
         return reward
 
-    with open(FLAGS.data_dir+'/classic_obj.pkl','rb') as file:
-        obj = pickle.load(file)
-    true_obj = obj[env_name][idx[2]]
-
     os.makedirs(FLAGS.output_dir, exist_ok=True)
     os.makedirs(FLAGS.output_dir+str(env_name), exist_ok=True)
     filename = FLAGS.output_dir + str(env_name)+'/dice-classic-' + str(env_name) + '-discount-' + str(gamma) \

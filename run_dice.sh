@@ -27,6 +27,9 @@ for seed in  $(seq 1 10); do
   python dice_rl/scripts/run_neural_dice_classic.py --output_dir $SCRATCH/avg_corr/dice/classic/ \
   --array $SLURM_ARRAY_TASK_ID --steps 5 --epoch 5000 --max_trajectory_length 100 \
   --data_dir $SCRATCH/avg_corr/ --seed $seed
+
+   wait
+
   elapsed_time=$((SECONDS - start_time))
   echo "Baseline job $seed took $elapsed_time seconds"
 done
@@ -36,6 +39,8 @@ for seed in  $(seq 1 10); do
   python dice_rl/scripts/run_neural_dice.py --output_dir $SCRATCH/avg_corr/dice/mujoco/ \
   --array $SLURM_ARRAY_TASK_ID  --steps 5 --epoch 40000 --max_trajectory_length 100 \
   --data_dir $SCRATCH/avg_corr/ --seed $seed
+   wait
+
   elapsed_time=$((SECONDS - start_time))
   echo "Baseline job $seed took $elapsed_time seconds"
 done

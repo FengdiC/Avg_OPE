@@ -158,9 +158,8 @@ def run(args,env_name,seed,size,length,random_weight,discount_factor,num_steps,c
     if args.policy == "SR_DICE":
         dir = os.path.join(args.log_dir, str(env_name))
         torch.save(
-            {'encoder_dict':ope.encoder_decoder.state_dict(),
-             'weight_dict': ope.W.state_dict()},
-            dir
+            ope.state_dict(),
+            dir,
         )
         print("model saved")
     return train_results, test_results

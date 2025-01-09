@@ -26,6 +26,8 @@ for seed in  $(seq 1 10); do
   start_time=$SECONDS
   python SR-DICE/run_classic.py --log_dir $SCRATCH/avg_corr/MIS/ --policy "SR_DICE"\
   --array $SLURM_ARRAY_TASK_ID --steps 5 --epoch 5000  --data_dir $SCRATCH/avg_corr/ --seed $seed
+   wait
+
   elapsed_time=$((SECONDS - start_time))
   echo "Baseline job $seed took $elapsed_time seconds"
 done
@@ -34,6 +36,8 @@ for seed in  $(seq 1 10); do
   start_time=$SECONDS
   python SR-DICE/run_mujoco.py --log_dir $SCRATCH/avg_corr/MIS/ --policy "SR_DICE"\
   --array $SLURM_ARRAY_TASK_ID  --steps 5 --epoch 40000 --data_dir $SCRATCH/avg_corr/ --seed $seed
+   wait
+
   # Calculate elapsed time
   elapsed_time=$((SECONDS - start_time))
   echo "Baseline job $seed took $elapsed_time seconds"

@@ -28,6 +28,7 @@ def main(args):
                     seed,
                 ),
             ),
+            baseline_dir=args.baseline_dir,
             device=args.device,
         )
 
@@ -50,6 +51,12 @@ if __name__ == "__main__":
         type=str,
         required=True,
         help="The directory storing all datasets",
+    )
+    parser.add_argument(
+        "--baseline_dir",
+        type=str,
+        required=True,
+        help="The directory storing all baselines",
     )
     parser.add_argument(
         "--device",

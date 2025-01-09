@@ -54,12 +54,14 @@ for env_name in ENV_TO_FAMILY:
     sbatch_content += 'echo "Starting run at: `date`"\n'
 
     sbatch_content += "unzip {}/datasets.zip -d $SLURM_TMPDIR\n".format(DATASET_DIR)
+    sbatch_content += "cp {}/*.obj $SLURM_TMPDIR\n".format(DATASET_DIR)
 
     sbatch_content += "python3 {}/disc_cop/run_experiment.py \\\n".format(REPO_PATH)
     if USE_GPU:
         sbatch_content += "  --device=cuda:0 \\\n"
     sbatch_content += "  --config_path=${config_path} \\\n"
     sbatch_content += "  --dataset_dir=${SLURM_TMPDIR}/datasets \n"
+    sbatch_content += "  --baseline_dir=${SLURM_TMPDIR} \n"
     sbatch_content += 'echo "Program test finished with exit code $? at: `date`"\n'
 
     with open(

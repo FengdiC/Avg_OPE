@@ -65,7 +65,7 @@ def train_ratio(
     use_target_network=False,
     tau=0.0005,
     load_dataset=None,
-    baseline_path=None,
+    baseline_dir=None,
     save_path=None,
     device="cpu",
     **kwargs,
@@ -310,18 +310,18 @@ def train_ratio(
     )
 
     seed_prefix = "seed_{}".format(seed)
-    baseline = None
     check_best = lambda obj_test, curr_best, steps: curr_best
 
     if save_path:
         os.makedirs(os.path.join(save_path, run_dirname), exist_ok=True)
 
-    if baseline_path and os.path.isfile(baseline_path):
-        baseline_rewards = pickle.load(open(baseline_path, "rb"))[seed]
+    if mujoco:
+        baseline_path = os.path.join(baseline_dir, "mujoco_obj.pkl")
+    else:
+        baseline_path = os.path.join(baseline_dir, "classic_obj.pkl")
 
-        baseline = (1 - gamma) * np.mean(
-            baseline_rewards[:, :max_len] * (gamma ** np.arange(max_len)[None])
-        )
+    if baseline_path and os.path.isfile(baseline_path):
+        baseline = pickle.load(open(baseline_path, "rb"))[env][[0.8, 0.9, 0.95, 0.99, 0.995].index(gamma)]
 
         def check_best(obj_test, curr_best, steps):
             loss = (obj_test - baseline) ** 2

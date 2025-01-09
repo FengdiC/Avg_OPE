@@ -1,3 +1,4 @@
+# Beluga
 HOME_DIR = "/home/chanb"
 LOG_DIR = f"{HOME_DIR}/scratch/disc_cop/results"
 RUN_REPORT_DIR = f"{HOME_DIR}/scratch/disc_cop/run_reports"
@@ -6,7 +7,7 @@ REPO_PATH = f"{HOME_DIR}/src/Avg_OPE"
 CC_ACCOUNT = "def-schuurma"
 USE_SLURM = True
 USE_GPU = True
-RUN_ALL = True
+RUN_ALL = False
 
 # HOME_DIR = "/Users/chanb/research/ualberta/Avg_OPE"
 # LOG_DIR = "/Users/chanb/research/ualberta/Avg_OPE/local/results"
@@ -66,11 +67,11 @@ else:
             alphas=[0.0, 0.01, 0.1],  # L1
             tau=0.0005,  # target network
             # =============================================
-            seeds=range(10),
+            seeds=range(5),
             step_frequency=5,
         ),
         classic_control=dict(
-            random_weights=[0.5],
+            random_weights=[0.3],
             discount_factors=[0.95],
             buffer_sizes=[4000],
             max_lens=[100],
@@ -83,7 +84,33 @@ else:
             alphas=[0.0, 0.01, 0.1],  # L1
             tau=0.0005,  # target network
             # =============================================
-            seeds=range(10),
+            seeds=range(5),
             step_frequency=5,
         )
     )
+
+"""
+discount_factor_lists = [0.8, 0.9, 0.95, 0.99, 0.995]
+size_lists = [2000, 4000, 8000, 16000]
+
+weight_lists = [0.1, 0.2, 0.3, 0.4, 0.5]
+length_lists = [20, 40, 80, 100]
+env = ['CartPole-v1', 'Acrobot-v1']
+path = ['./exper/cartpole.pth', './exper/acrobot.pth']
+random_weight, length, discount_factor, size = (
+    0.3,
+    40,
+    0.95,
+    4000,
+)
+idx = np.unravel_index(args.array, (18, 2))
+if idx[0] < 5:
+    discount_factor = discount_factor_lists[idx[0]]
+elif idx[0] < 9:
+    size = size_lists[idx[0] - 5]
+elif idx[0] < 14:
+    random_weight = weight_lists[idx[0] - 9]
+else:
+    length = length_lists[idx[0] - 14]
+env = env[idx[1]]
+"""

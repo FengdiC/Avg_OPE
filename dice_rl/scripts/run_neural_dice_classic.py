@@ -227,7 +227,7 @@ def main(argv):
     )
     idx = np.unravel_index(int(FLAGS.array), (18, 2))
     env_name, path = env[idx[1]], path[idx[1]]
-    with open(FLAGS.data_dir + '/mujoco_obj.pkl', 'rb') as file:
+    with open(FLAGS.data_dir + '/classic_obj.pkl', 'rb') as file:
         obj = pickle.load(file)
     true_obj = obj[env_name][2]
     if idx[0] < 5:

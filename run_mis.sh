@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --cpus-per-task=1  # Cores proportional to GPUs: 6 on Cedar, 16 on Graham.
 #SBATCH --mem=3600M       # Memory proportional to GPUs: 32000 Cedar, 64000 Graham.
-#SBATCH --time=0-144:00
+#SBATCH --time=0-100:00
 #SBATCH --output=%N-%j.out
 #SBATCH --account=rrg-ashique
 #SBATCH --gpus-per-node=1
@@ -33,6 +33,7 @@ for seed in  $(seq 1 10); do
   python SR-DICE/run_mujoco.py --log_dir $SCRATCH/avg_corr/MIS/ --policy "SR_DICE"\
   --array $SLURM_ARRAY_TASK_ID  --steps 5 --epoch 40000 --data_dir $SCRATCH/avg_corr/ --seed $seed
 done
+sleep 144h
 
 echo "Baseline job $seed took $SECONDS"
 sleep 144h

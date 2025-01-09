@@ -154,6 +154,15 @@ def run(args,env_name,seed,size,length,random_weight,discount_factor,num_steps,c
             print("k", k)
             train_results.append(ope.eval_policy(replay_buffer, policy))
             test_results.append(ope.eval_policy(replay_buffer_test, policy))
+
+    if args.policy == "SR_DICE":
+        dir = os.path.join(args.log_dir, str(env_name))
+        torch.save(
+            {'encoder_dict':ope.encoder_decoder.state_dict(),
+             'weight_dict': ope.W.state_dict()},
+            dir
+        )
+        print("model saved")
     return train_results, test_results
 
 def run_mujoco():
@@ -226,5 +235,6 @@ def run_mujoco():
         # Step 4: Using csv.writer to write the list to the CSV file
         writer = csv.writer(file)
         writer.writerow(mylist)  # Use writerow for single list
+    print("done")
 
 run_mujoco()

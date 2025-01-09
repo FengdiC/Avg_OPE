@@ -221,7 +221,7 @@ def main(argv):
          'Walker2d-v4']
     path = ['./exper/mountaincar.pth', './exper/hopper.pth', './exper/halfcheetah_1.pth',
             './exper/ant.pth', './exper/walker.pth']
-    random_weight, length, discount_factor, size = (
+    random_weight, max_trajectory_length, gamma, size = (
         2.0,
         100,
         0.95,

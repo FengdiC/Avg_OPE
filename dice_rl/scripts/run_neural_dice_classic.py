@@ -219,7 +219,7 @@ def main(argv):
     length_lists = [20, 40, 80, 100]
     env = ['CartPole-v1', 'Acrobot-v1']
     path = ['./exper/cartpole.pth', './exper/acrobot.pth']
-    random_weight, length, discount_factor, size = (
+    random_weight, max_trajectory_length, gamma, size = (
         0.3,
         40,
         0.95,

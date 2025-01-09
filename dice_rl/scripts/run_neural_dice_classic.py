@@ -206,10 +206,10 @@ def load(path,env):
     return ac
 
 def main(argv):
-    seeds = range(10)
+    seed = FLAGS.seed
     tf.config.run_functions_eagerly(True)
 
-    if FLAGS.array > 199:
+    if FLAGS.array >=36:
         return -1
 
     discount_factor_lists = [0.8, 0.9, 0.95, 0.99, 0.995]
@@ -219,13 +219,22 @@ def main(argv):
     length_lists = [20, 40, 80, 100]
     env = ['CartPole-v1', 'Acrobot-v1']
     path = ['./exper/cartpole.pth', './exper/acrobot.pth']
-    idx = np.unravel_index(int(FLAGS.array), (5, 4, 5, 2))
-    random_weight, max_trajectory_length, gamma  = (
-        weight_lists[idx[0]],
-        length_lists[idx[1]],
-        discount_factor_lists[idx[2]],
+    random_weight, length, discount_factor, size = (
+        0.3,
+        40,
+        0.95,
+        4000,
     )
-    env_name, path = env[idx[3]], path[idx[3]]
+    idx = np.unravel_index(FLAGS.array, (18, 2))
+    if idx[0] < 5:
+        gamma = discount_factor_lists[idx[0]]
+    elif idx[0] < 9:
+        size = size_lists[idx[0] - 5]
+    elif idx[0] < 14:
+        random_weight = weight_lists[idx[0] - 9]
+    else:
+        max_trajectory_length = length_lists[idx[0] - 14]
+    env_name, path = env[idx[1]], path[idx[1]]
 
     nu_learning_rate = FLAGS.nu_learning_rate
     zeta_learning_rate = FLAGS.zeta_learning_rate
@@ -265,7 +274,8 @@ def main(argv):
     os.makedirs(FLAGS.output_dir, exist_ok=True)
     os.makedirs(FLAGS.output_dir+str(env_name), exist_ok=True)
     filename = FLAGS.output_dir + str(env_name)+'/dice-classic-' + str(env_name) + '-discount-' + str(gamma) \
-               + '-length-' + str(max_trajectory_length) + '-random-' + str(random_weight) + '.csv'
+               + '-length-' + str(max_trajectory_length) + '-random-' + str(random_weight) +\
+               '-size-' + str(size)+'seed'+str(seed) +'.csv'
 
     mylist = [str(i) for i in range(0, FLAGS.epoch * FLAGS.steps, FLAGS.steps)] + ['hyperparam']
     with open(filename, 'w+', newline='') as file:
@@ -273,166 +283,165 @@ def main(argv):
         writer = csv.writer(file)
         writer.writerow(mylist)  # Use writerow for single list
 
-    for seed in tqdm(seeds, desc="Seeds"):
-        # Set seeds
-        np.random.seed(seed)
-        os.environ['PYTHONHASHSEED'] = str(seed)
-        torch.manual_seed(seed)
-        torch.cuda.manual_seed(seed)
-        torch.backends.cudnn.deterministic = True
-        tf.random.set_seed(seed)
-        for size in size_lists:
-            name = ['discount_factor', 0.8, 'random_weight', random_weight, 'max_length', max_trajectory_length,
-                    'buffer_size', 16000, 'seed', seed, 'env', env_name]
-            name = '-'.join(str(x) for x in name)
 
-            dataset = load_dataset(FLAGS.data_dir,'/dataset/'+ name, size,max_trajectory_length,env_name,
-                                   action_discrete=True)
+    # Set seeds
+    np.random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
+    tf.random.set_seed(seed)
+    name = ['discount_factor', 0.8, 'random_weight', random_weight, 'max_length', max_trajectory_length,
+            'buffer_size', 16000, 'seed', seed, 'env', env_name]
+    name = '-'.join(str(x) for x in name)
 
-            name = ['discount_factor', 0.8, 'random_weight', random_weight, 'max_length', max_trajectory_length,
-                    'buffer_size', 16000, 'seed', seed + 1314, 'env', env_name]
-            name = '-'.join(str(x) for x in name)
+    dataset = load_dataset(FLAGS.data_dir,'/dataset/'+ name, size,max_trajectory_length,env_name,
+                           action_discrete=True)
 
-            dataset2 = load_dataset(FLAGS.data_dir,'/dataset_test/'+name, size, max_trajectory_length, env_name,
-                                   action_discrete=True)
+    name = ['discount_factor', 0.8, 'random_weight', random_weight, 'max_length', max_trajectory_length,
+            'buffer_size', 16000, 'seed', seed + 1314, 'env', env_name]
+    name = '-'.join(str(x) for x in name)
 
-            all_steps = dataset.get_all_steps()
-            max_reward = tf.reduce_max(all_steps.reward)
-            min_reward = tf.reduce_min(all_steps.reward)
-            print('num loaded steps', dataset.num_steps)
-            print('num loaded total steps', dataset.num_total_steps)
-            print('num loaded episodes', dataset.num_episodes)
-            print('num loaded total episodes', dataset.num_total_episodes)
-            print('min reward', min_reward, 'max reward', max_reward)
-            print('behavior per-step',
-                  estimator_lib.get_fullbatch_average(dataset, gamma=gamma))
+    dataset2 = load_dataset(FLAGS.data_dir,'/dataset_test/'+name, size, max_trajectory_length, env_name,
+                           action_discrete=True)
 
-            activation_fn = tf.nn.relu
-            kernel_initializer = tf.keras.initializers.GlorotUniform()
-            hidden_dims = (256,256)
-            input_spec = (dataset.spec.observation, dataset.spec.action)
-            print(dataset.spec.observation, dataset.spec.action)
-            nu_network = ValueNetwork(
-                input_spec,
-                fc_layer_params=hidden_dims,
-                activation_fn=activation_fn,
-                kernel_initializer=kernel_initializer,
-                last_kernel_initializer=kernel_initializer)
-            output_activation_fn = tf.math.square if zeta_pos else tf.identity
-            zeta_network = ValueNetwork(
-                input_spec,
-                fc_layer_params=hidden_dims,
-                activation_fn=activation_fn,
-                output_activation_fn=output_activation_fn,
-                kernel_initializer=kernel_initializer,
-                last_kernel_initializer=kernel_initializer)
+    all_steps = dataset.get_all_steps()
+    max_reward = tf.reduce_max(all_steps.reward)
+    min_reward = tf.reduce_min(all_steps.reward)
+    print('num loaded steps', dataset.num_steps)
+    print('num loaded total steps', dataset.num_total_steps)
+    print('num loaded episodes', dataset.num_episodes)
+    print('num loaded total episodes', dataset.num_total_episodes)
+    print('min reward', min_reward, 'max reward', max_reward)
+    print('behavior per-step',
+          estimator_lib.get_fullbatch_average(dataset, gamma=gamma))
 
-            nu_optimizer = tf.keras.optimizers.Adam(nu_learning_rate, clipvalue=1.0)
-            zeta_optimizer = tf.keras.optimizers.Adam(zeta_learning_rate, clipvalue=1.0)
-            lam_optimizer = tf.keras.optimizers.Adam(nu_learning_rate, clipvalue=1.0)
+    activation_fn = tf.nn.relu
+    kernel_initializer = tf.keras.initializers.GlorotUniform()
+    hidden_dims = (256,256)
+    input_spec = (dataset.spec.observation, dataset.spec.action)
+    print(dataset.spec.observation, dataset.spec.action)
+    nu_network = ValueNetwork(
+        input_spec,
+        fc_layer_params=hidden_dims,
+        activation_fn=activation_fn,
+        kernel_initializer=kernel_initializer,
+        last_kernel_initializer=kernel_initializer)
+    output_activation_fn = tf.math.square if zeta_pos else tf.identity
+    zeta_network = ValueNetwork(
+        input_spec,
+        fc_layer_params=hidden_dims,
+        activation_fn=activation_fn,
+        output_activation_fn=output_activation_fn,
+        kernel_initializer=kernel_initializer,
+        last_kernel_initializer=kernel_initializer)
 
-            estimator = NeuralDice(
-                dataset.spec,
-                nu_network,
-                zeta_network,
-                nu_optimizer,
-                zeta_optimizer,
-                lam_optimizer,
-                gamma,
-                zero_reward=zero_reward,
-                f_exponent=f_exponent,
-                primal_form=primal_form,
-                reward_fn=reward_fn,
-                primal_regularizer=primal_regularizer,
-                dual_regularizer=dual_regularizer,
-                norm_regularizer=norm_regularizer,
-                nu_regularizer=nu_regularizer,
-                zeta_regularizer=zeta_regularizer)
+    nu_optimizer = tf.keras.optimizers.Adam(nu_learning_rate, clipvalue=1.0)
+    zeta_optimizer = tf.keras.optimizers.Adam(zeta_learning_rate, clipvalue=1.0)
+    lam_optimizer = tf.keras.optimizers.Adam(nu_learning_rate, clipvalue=1.0)
 
-            global_step = tf.Variable(0, dtype=tf.int64)
-            tf.summary.experimental.set_step(global_step)
+    estimator = NeuralDice(
+        dataset.spec,
+        nu_network,
+        zeta_network,
+        nu_optimizer,
+        zeta_optimizer,
+        lam_optimizer,
+        gamma,
+        zero_reward=zero_reward,
+        f_exponent=f_exponent,
+        primal_form=primal_form,
+        reward_fn=reward_fn,
+        primal_regularizer=primal_regularizer,
+        dual_regularizer=dual_regularizer,
+        norm_regularizer=norm_regularizer,
+        nu_regularizer=nu_regularizer,
+        zeta_regularizer=zeta_regularizer)
 
-            env = gym.make(env_name)
-            env.reset(seed=seed)
-            env.action_space.seed(seed)
-            ac = load(path, env)
-            target_policy = PyTorchPolicyWrapper(ac,mujoco=False,random_weight=random_weight)
-            running_losses = []
-            running_estimates = []
-            train_estimates = []
-            test_estimates = []
+    global_step = tf.Variable(0, dtype=tf.int64)
+    tf.summary.experimental.set_step(global_step)
 
-            num_steps = FLAGS.epoch * FLAGS.steps
-            best=5
-            name = ['discount_factor', gamma, 'random_weight', random_weight, 'max_length', max_trajectory_length,
-                    'env', env_name, 'buffer_size', size, 'seed', seed]
-            name = '-'.join(str(x) for x in name)
-            for step in range(num_steps):
-                transitions_batch = dataset.get_step(batch_size, num_steps=2)
-                initial_steps_batch, _ = dataset.get_episode(batch_size, truncate_episode_at=1)
-                initial_steps_batch = tf.nest.map_structure(lambda t: t[:, 0, ...],
-                                                            initial_steps_batch)
-                losses = estimator.train_step(initial_steps_batch, transitions_batch,
-                                              target_policy)
-                running_losses.append(losses)
+    env = gym.make(env_name)
+    env.reset(seed=seed)
+    env.action_space.seed(seed)
+    ac = load(path, env)
+    target_policy = PyTorchPolicyWrapper(ac,mujoco=False,random_weight=random_weight)
+    running_losses = []
+    running_estimates = []
+    train_estimates = []
+    test_estimates = []
 
-                if step % FLAGS.steps == 0 or step == num_steps - 1:
-                    eval_obj = estimator.eval_policy_csv(dataset, target_policy)
-                    eval_obj2 = estimator.eval_policy_csv(dataset2, target_policy)
-                    train_estimates.append(eval_obj)
-                    test_estimates.append(eval_obj2)
-                    # if (eval_obj2-true_obj)**2 < best:
-                    #     best = (eval_obj2-true_obj)**2
-                    #     # Save the model at the end of training
-                    #     if FLAGS.output_dir is not None:
-                    #         model_save_path = os.path.join(FLAGS.output_dir, env_name,name+'_best_model_weights')
-                    #
-                    #         # Create a checkpoint object
-                    #         checkpoint = tf.train.Checkpoint(nu_network=nu_network,
-                    #                                          zeta_network=zeta_network,
-                    #                                          nu_optimizer=nu_optimizer,
-                    #                                          zeta_optimizer=zeta_optimizer,
-                    #                                          lam_optimizer=lam_optimizer)
-                    #
-                    #         # Save the checkpoint
-                    #         checkpoint.save(os.path.join(model_save_path, 'checkpoint'))
-                    #
-                    #         print(f"Model saved at {model_save_path}")
+    num_steps = FLAGS.epoch * FLAGS.steps
+    best=5
+    name = ['discount_factor', gamma, 'random_weight', random_weight, 'max_length', max_trajectory_length,
+            'env', env_name, 'buffer_size', size, 'seed', seed]
+    name = '-'.join(str(x) for x in name)
+    for step in range(num_steps):
+        transitions_batch = dataset.get_step(batch_size, num_steps=2)
+        initial_steps_batch, _ = dataset.get_episode(batch_size, truncate_episode_at=1)
+        initial_steps_batch = tf.nest.map_structure(lambda t: t[:, 0, ...],
+                                                    initial_steps_batch)
+        losses = estimator.train_step(initial_steps_batch, transitions_batch,
+                                      target_policy)
+        running_losses.append(losses)
+
+        if step % FLAGS.steps == 0 or step == num_steps - 1:
+            eval_obj = estimator.eval_policy_csv(dataset, target_policy)
+            eval_obj2 = estimator.eval_policy_csv(dataset2, target_policy)
+            train_estimates.append(eval_obj)
+            test_estimates.append(eval_obj2)
+            # if (eval_obj2-true_obj)**2 < best:
+            #     best = (eval_obj2-true_obj)**2
+            #     # Save the model at the end of training
+            #     if FLAGS.output_dir is not None:
+            #         model_save_path = os.path.join(FLAGS.output_dir, env_name,name+'_best_model_weights')
+            #
+            #         # Create a checkpoint object
+            #         checkpoint = tf.train.Checkpoint(nu_network=nu_network,
+            #                                          zeta_network=zeta_network,
+            #                                          nu_optimizer=nu_optimizer,
+            #                                          zeta_optimizer=zeta_optimizer,
+            #                                          lam_optimizer=lam_optimizer)
+            #
+            #         # Save the checkpoint
+            #         checkpoint.save(os.path.join(model_save_path, 'checkpoint'))
+            #
+            #         print(f"Model saved at {model_save_path}")
 
 
-                # if (step < 1000 and step % 25 == 0) or (step >= 1000 and step % 100 == 0):
-                #     plot_file = os.path.join(output_dir, '_zeta_'+str(step))
-                #     estimator.plot_zeta_csv(dataset, target_policy, filename_prefix=plot_file)
+        # if (step < 1000 and step % 25 == 0) or (step >= 1000 and step % 100 == 0):
+        #     plot_file = os.path.join(output_dir, '_zeta_'+str(step))
+        #     estimator.plot_zeta_csv(dataset, target_policy, filename_prefix=plot_file)
 
-                global_step.assign_add(1)
+        global_step.assign_add(1)
 
-            # Save the model at the end of training
-            if FLAGS.output_dir is not None:
-                model_save_path = os.path.join(FLAGS.output_dir, env_name,name+'_last_model_weights')
+    # Save the model at the end of training
+    if FLAGS.output_dir is not None:
+        model_save_path = os.path.join(FLAGS.output_dir, env_name,name+'_last_model_weights')
 
-                # Create a checkpoint object
-                checkpoint = tf.train.Checkpoint(nu_network=nu_network,
-                                                 zeta_network=zeta_network,
-                                                 nu_optimizer=nu_optimizer,
-                                                 zeta_optimizer=zeta_optimizer,
-                                                 lam_optimizer=lam_optimizer)
+        # Create a checkpoint object
+        checkpoint = tf.train.Checkpoint(nu_network=nu_network,
+                                         zeta_network=zeta_network,
+                                         nu_optimizer=nu_optimizer,
+                                         zeta_optimizer=zeta_optimizer,
+                                         lam_optimizer=lam_optimizer)
 
-                # Save the checkpoint
-                checkpoint.save(os.path.join(model_save_path, 'checkpoint'))
+        # Save the checkpoint
+        checkpoint.save(os.path.join(model_save_path, 'checkpoint'))
 
-                print(f"Model saved at {model_save_path}")
+        print(f"Model saved at {model_save_path}")
 
-            train, test = np.around(train_estimates, decimals=4), np.around(test_estimates, decimals=4)
-            mylist = [str(i) for i in list(train)] + ['-'.join(['train', 'size', str(size), 'seed', str(seed)])]
-            with open(filename, 'a', newline='') as file:
-                # Step 4: Using csv.writer to write the list to the CSV file
-                writer = csv.writer(file)
-                writer.writerow(mylist)  # Use writerow for single list
-            mylist = [str(i) for i in list(test)] + ['-'.join(['test', 'size', str(size), 'seed', str(seed)])]
-            with open(filename, 'a', newline='') as file:
-                # Step 4: Using csv.writer to write the list to the CSV file
-                writer = csv.writer(file)
-                writer.writerow(mylist)  # Use writerow for single list
+    train, test = np.around(train_estimates, decimals=4), np.around(test_estimates, decimals=4)
+    mylist = [str(i) for i in list(train)] + ['-'.join(['train', 'seed', str(seed)])]
+    with open(filename, 'a', newline='') as file:
+        # Step 4: Using csv.writer to write the list to the CSV file
+        writer = csv.writer(file)
+        writer.writerow(mylist)  # Use writerow for single list
+    mylist = [str(i) for i in list(test)] + ['-'.join(['test', 'seed', str(seed)])]
+    with open(filename, 'a', newline='') as file:
+        # Step 4: Using csv.writer to write the list to the CSV file
+        writer = csv.writer(file)
+        writer.writerow(mylist)  # Use writerow for single list
 
     print('Done!')
 

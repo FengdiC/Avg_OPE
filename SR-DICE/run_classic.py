@@ -152,6 +152,8 @@ def run(args,env_name,seed,size,length,random_weight,discount_factor,num_steps,c
             print("k", k)
             train_results.append(ope.eval_policy(replay_buffer, policy))
             test_results.append(ope.eval_policy(replay_buffer_test, policy))
+
+    torch.save(model.state_dict(), PATH)
     return train_results, test_results
 
 def run_mujoco():
@@ -189,7 +191,7 @@ def run_mujoco():
     dir = os.path.join(args.log_dir, str(env))
     os.makedirs(dir, exist_ok=True)
 
-    filename = dir + f"{args.policy}-classic-{env}-discount-{discount_factor}-length-{length}-random-{random_weight}.csv"
+    filename = dir + f"{args.policy}-classic-{env}-discount-{discount_factor}-length-{length}-random-{random_weight}-size-{size}-seed-{seed}.csv"
 
     mylist = [str(i) for i in range(0, args.epoch * args.steps, args.steps)] + ['hyperparam']
     with open(filename, 'w+', newline='') as file:
@@ -212,15 +214,16 @@ def run_mujoco():
     train, test = np.around(train, decimals=4), np.around(test, decimals=4)
     result_train.append(train)
     result_test.append(test)
-    mylist = [str(i) for i in list(train)] + ['-'.join(['train', 'size', str(size), 'seed', str(seed)])]
+    mylist = [str(i) for i in list(train)] + ['-'.join(['train', 'seed', str(seed)])]
     with open(filename, 'a', newline='') as file:
         # Step 4: Using csv.writer to write the list to the CSV file
         writer = csv.writer(file)
         writer.writerow(mylist)  # Use writerow for single list
-    mylist = [str(i) for i in list(test)] + ['-'.join(['test', 'size', str(size), 'seed', str(seed)])]
+    mylist = [str(i) for i in list(test)] + ['-'.join(['test', 'seed', str(seed)])]
     with open(filename, 'a', newline='') as file:
         # Step 4: Using csv.writer to write the list to the CSV file
         writer = csv.writer(file)
         writer.writerow(mylist)  # Use writerow for single list
+
 
 run_mujoco()

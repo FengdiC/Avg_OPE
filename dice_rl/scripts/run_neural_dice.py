@@ -227,7 +227,7 @@ def main(argv):
         0.95,
         4000,
     )
-    idx = np.unravel_index(FLAGS.array - 36, (18, 5))
+    idx = np.unravel_index(int(FLAGS.array) - 36, (18, 5))
     if idx[0] < 5:
         gamma = discount_factor_lists[idx[0]]
     elif idx[0] < 9:

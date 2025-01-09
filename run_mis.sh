@@ -3,7 +3,8 @@
 #SBATCH --mem=3600M       # Memory proportional to GPUs: 32000 Cedar, 64000 Graham.
 #SBATCH --time=0-144:00
 #SBATCH --output=%N-%j.out
-#SBATCH --account=def-ashique
+#SBATCH --account=rrg-ashique
+#SBATCH --gpus-per-node=1
 #SBATCH --array=0-125
 
 # salloc --gpus-per-node=1  --cpus-per-task=1 --mem=3600M --time=0-3:00 --account=def-ashique

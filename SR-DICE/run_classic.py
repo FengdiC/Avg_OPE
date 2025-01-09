@@ -174,9 +174,6 @@ def run_mujoco():
         0.95,
         4000,
     )
-    env = ['MountainCarContinuous-v0', 'Hopper-v4',
-           'HalfCheetah-v4', 'Ant-v4',
-           'Walker2d-v4']
     idx = np.unravel_index(args.array, (18, 2))
     if idx[0] < 5:
         discount_factor = discount_factor_lists[idx[0]]

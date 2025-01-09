@@ -74,6 +74,7 @@ def load(path,env):
     return ac
 
 def run(args,env_name,seed,size,length,random_weight,discount_factor,num_steps,checkpoint):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     env_name = env_name
     env = gym.make(env_name)
     path = path_lists[env_name]

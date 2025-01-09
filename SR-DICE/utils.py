@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-
+from ppo.algo import core
 
 class ReplayBuffer(object):
 	def __init__(self, state_dim, action_dim, max_size=int(1e6)):
@@ -11,9 +11,9 @@ class ReplayBuffer(object):
 		self.start_ptr = 0
 		self.start_size = 0
 
-		self.state = np.zeros((max_size, state_dim))
-		self.action = np.zeros((max_size, action_dim))
-		self.next_state = np.zeros((max_size, state_dim))
+		self.state = np.zeros(core.combined_shape(max_size, state_dim))
+		self.action = np.zeros(core.combined_shape(max_size, action_dim))
+		self.next_state = np.zeros(core.combined_shape(max_size, state_dim))
 		self.reward = np.zeros((max_size, 1))
 		self.not_done = np.zeros((max_size, 1))
 

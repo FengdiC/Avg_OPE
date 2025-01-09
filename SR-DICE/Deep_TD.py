@@ -29,6 +29,7 @@ class CriticDiscrete(nn.Module):
 		self.l1 = nn.Linear(state_dim, 256)
 		self.l2 = nn.Linear(256, 256)
 		self.l3 = nn.Linear(256, action_dim)
+		self.action_dim = action_dim
 
 
 	def forward(self, state, action):
@@ -36,7 +37,7 @@ class CriticDiscrete(nn.Module):
 		q1 = F.relu(self.l2(q1))
 		q1 = self.l3(q1)
 
-		one_hot_a_t = torch.nn.functional.one_hot(action.to(torch.int64), num_classes=self.a_dim)
+		one_hot_a_t = torch.nn.functional.one_hot(action.to(torch.int64), num_classes=self.action_dim)
 		value = q1 * one_hot_a_t
 		if value.dim() == 1:
 			value = torch.sum(value)

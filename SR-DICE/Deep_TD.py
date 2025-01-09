@@ -36,7 +36,7 @@ class CriticDiscrete(nn.Module):
 		q1 = F.relu(self.l2(q1))
 		q1 = self.l3(q1)
 
-		one_hot_a_t = torch.nn.functional.one_hot(action, num_classes=self.a_dim)
+		one_hot_a_t = torch.nn.functional.one_hot(action.to(torch.int64), num_classes=self.a_dim)
 		value = q1 * one_hot_a_t
 		if value.dim() == 1:
 			value = torch.sum(value)

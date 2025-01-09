@@ -84,7 +84,7 @@ class SR_DICE(object):
 		state, action, next_state, reward, not_done = replay_buffer.sample(batch_size)
 
 		if not self.mujoco:
-			action = torch.nn.functional.one_hot(action, num_classes=self.action_dim)
+			action = torch.nn.functional.one_hot(action.to(torch.int64), num_classes=self.action_dim)
 		recons_next, recons_reward, recons_action, lat = self.encoder_decoder(state, action)
 		ed_loss = F.mse_loss(recons_next, next_state) + \
 				  0.1 * F.mse_loss(recons_reward, reward) + F.mse_loss(recons_action, action)
@@ -105,8 +105,10 @@ class SR_DICE(object):
 							   self.max_action * 0.1).clamp(-self.max_action, self.max_action)
 				latent = self.encoder_decoder.latent(state, action)
 			else:
-				one_hot_action = torch.nn.functional.one_hot(action, num_classes=self.action_dim)
+				one_hot_action = torch.nn.functional.one_hot(action.to(torch.int64), num_classes=self.action_dim)
 				latent = self.encoder_decoder.latent(state, one_hot_action)
+				next_action = next_action.to(torch.int64)
+				action = action.to(torch.int64)
 
 			target_Q = latent + self.discount * not_done * self.critic_target(next_state, next_action)
 
@@ -131,13 +133,15 @@ class SR_DICE(object):
 			if self.mujoco:
 				start_action = (start_action + torch.randn_like(start_action) *
 								self.max_action * 0.1).clamp(-self.max_action, self.max_action)
+			else:
+				start_action = start_action.to(torch.int64)
 
 			Q = self.critic(start_state, start_action)
 			self.start_Q = (1. - self.discount) * Q.mean(0)
 
 		start_Q = (self.start_Q * self.W).mean()
 		if not self.mujoco:
-			action = torch.nn.functional.one_hot(action, num_classes=self.action_dim)
+			action = torch.nn.functional.one_hot(action.to(torch.int64), num_classes=self.action_dim)
 		b_sQ = (self.encoder_decoder.latent(state, action) * self.W).mean(1).pow(2).mean()
 		W_loss = (0.5 * b_sQ - start_Q)
 
@@ -149,5 +153,5 @@ class SR_DICE(object):
 	def eval_policy(self, replay_buffer, policy, batch_size=10000):
 		state, action, next_state, reward, not_done = replay_buffer.sample_all()
 		if not self.mujoco:
-			action = torch.nn.functional.one_hot(action, num_classes=self.action_dim)
+			action = torch.nn.functional.one_hot(action.to(torch.int64), num_classes=self.action_dim)
 		return float(((self.W * self.encoder_decoder.latent(state, action)).mean(1,keepdim=True) * reward).mean())

@@ -4,7 +4,7 @@
 #SBATCH --time=0-144:00
 #SBATCH --output=%N-%j.out
 #SBATCH --account=def-ashique
-#SBATCH --array=0-499
+#SBATCH --array=0-89
 
 # salloc --gpus-per-node=1  --cpus-per-task=1 --mem=3600M --time=0-3:00 --account=def-ashique
 # Did not tune for three discount factors
@@ -24,8 +24,11 @@ echo
 python SR-DICE/run_classic.py --log_dir $SCRATCH/avg_corr/MIS/ --policy "SR_DICE"\
 --array $SLURM_ARRAY_TASK_ID --steps 5 --epoch 5000  --data_dir $SCRATCH/avg_corr/ &
 
-python SR-DICE/run_mujoco.py --log_dir $SCRATCH/avg_corr/MIS/ --policy "SR_DICE"\
---array $SLURM_ARRAY_TASK_ID  --steps 5 --epoch 40000 --data_dir $SCRATCH/avg_corr/ &
+for i in  $(seq 1 10); do
+  python SR-DICE/run_mujoco.py --log_dir $SCRATCH/avg_corr/MIS/ --policy "SR_DICE"\
+  --array $SLURM_ARRAY_TASK_ID  --steps 5 --epoch 40000 --data_dir $SCRATCH/avg_corr/ --seed $i
+
+done
 
 echo "Baseline job $seed took $SECONDS"
 sleep 144h

@@ -44,7 +44,7 @@ def plot_algo(gamma,size,random_weight,length,true_obj,
     f = os.path.join(log_dir, filename)
     run_data = pickle.load(open(f, "rb"))
     for seed in run_data["seeds"]:
-        result.append(np.array(run_data["results"][seed][1]))
+        result.append(np.array(run_data["results"][seed][0]))
     mean_cop_mse = np.mean(result, axis=0)
     var_cop = np.var(result, axis=0)
 
@@ -147,8 +147,8 @@ if __name__ == "__main__":
     for i in range(len(env_lists)):
         env_name = env_lists[i]
         env_id= env_id_lists[i]
-        gamma = 0.8
-        size, random_weight, length = 4000, 2.0, 100
+        gamma = 0.99
+        size, random_weight, length = 16000, 2.0, 50
         with open('./dataset/mujoco_obj.pkl', 'rb') as file:
             obj = pickle.load(file)
         true_obj = obj[env_name][2]

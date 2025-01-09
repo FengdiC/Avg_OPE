@@ -221,13 +221,25 @@ def main(argv):
          'Walker2d-v4']
     path = ['./exper/mountaincar.pth', './exper/hopper.pth', './exper/halfcheetah_1.pth',
             './exper/ant.pth', './exper/walker.pth']
-    idx = np.unravel_index(int(FLAGS.array)-200, (5, 4, 5, 5))
-    random_weight, max_trajectory_length, gamma = (
-        weight_lists[idx[0]],
-        length_lists[idx[1]],
-        discount_factor_lists[idx[2]],
+    random_weight, length, discount_factor, size = (
+        2.0,
+        100,
+        0.95,
+        4000,
     )
-    env_name, path = env[idx[3]], path[idx[3]]
+    env = ['MountainCarContinuous-v0', 'Hopper-v4',
+           'HalfCheetah-v4', 'Ant-v4',
+           'Walker2d-v4']
+    idx = np.unravel_index(FLAGS.array - 36, (18, 5))
+    if idx[0] < 5:
+        discount_factor = discount_factor_lists[idx[0]]
+    elif idx[0] < 9:
+        size = size_lists[idx[0] - 5]
+    elif idx[0] < 14:
+        random_weight = weight_lists[idx[0] - 9]
+    else:
+        length = length_lists[idx[0] - 14]
+    env_name, path = env[idx[1]], path[idx[1]]
 
     nu_learning_rate = FLAGS.nu_learning_rate
     zeta_learning_rate = FLAGS.zeta_learning_rate

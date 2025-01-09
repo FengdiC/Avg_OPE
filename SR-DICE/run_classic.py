@@ -169,8 +169,8 @@ def run_mujoco():
     env = ['CartPole-v1', 'Acrobot-v1']
     path = ['./exper/cartpole.pth', './exper/acrobot.pth']
     random_weight, length, discount_factor, size = (
-        2.0,
-        100,
+        0.3,
+        40,
         0.95,
         4000,
     )

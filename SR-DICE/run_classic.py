@@ -131,16 +131,16 @@ def run(args,env_name,seed,size,length,random_weight,discount_factor,num_steps,c
 
         print("Train Encoder-Decoder")
 
-        for k in range(int(1e3)):
-            # for k in range(int(3e4)):
+        # for k in range(int(1e3)):
+        for k in range(int(3e4)):
             if k % 1e3 == 0:
                 print("k", k)
             ope.train_encoder_decoder(replay_buffer)
 
         print("Train SR")
 
-        # for k in range(int(1e5)):
-        for k in range(int(1e3)):
+        for k in range(int(1e5)):
+        # for k in range(int(1e3)):
             if k % 1e3 == 0:
                 print("k", k)
             ope.train_SR(replay_buffer, policy)

@@ -44,6 +44,5 @@ for seed in  $(seq 1 10); do
 done
 
 echo "Baseline job $seed took $SECONDS"
-sleep 144h
 
 

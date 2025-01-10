@@ -321,7 +321,9 @@ def train_ratio(
         baseline_path = os.path.join(baseline_dir, "classic_obj.pkl")
 
     if baseline_path and os.path.isfile(baseline_path):
-        baseline = pickle.load(open(baseline_path, "rb"))[env][[0.8, 0.9, 0.95, 0.99, 0.995].index(gamma)]
+        baseline = pickle.load(open(baseline_path, "rb"))[env][
+            [0.8, 0.9, 0.95, 0.99, 0.995].index(gamma)
+        ]
 
         def check_best(obj_test, curr_best, steps):
             loss = (obj_test - baseline) ** 2

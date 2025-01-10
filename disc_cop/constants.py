@@ -2,7 +2,7 @@
 HOME_DIR = "/home/chanb"
 LOG_DIR = f"{HOME_DIR}/scratch/disc_cop/results"
 RUN_REPORT_DIR = f"{HOME_DIR}/scratch/disc_cop/run_reports"
-DATASET_DIR = f"{HOME_DIR}/scratch/disc_cop/datasets"
+DATASET_DIR = f"{HOME_DIR}/src/Avg_OPE/datasets"
 REPO_PATH = f"{HOME_DIR}/src/Avg_OPE"
 CC_ACCOUNT = "def-schuurma"
 USE_SLURM = True

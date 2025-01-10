@@ -54,7 +54,8 @@ for env_name in ENV_TO_FAMILY:
     sbatch_content += 'echo "Starting run at: `date`"\n'
 
     sbatch_content += "unzip {}/datasets.zip -d $SLURM_TMPDIR\n".format(DATASET_DIR)
-    sbatch_content += "cp {}/*.obj $SLURM_TMPDIR\n".format(DATASET_DIR)
+    sbatch_content += "cp {}/classic_obj.pkl $SLURM_TMPDIR\n".format(DATASET_DIR)
+    sbatch_content += "cp {}/mujoco_obj.pkl $SLURM_TMPDIR\n".format(DATASET_DIR)
 
     sbatch_content += "python3 {}/disc_cop/run_experiment.py \\\n".format(REPO_PATH)
     if USE_GPU:

@@ -76,6 +76,7 @@ def train_ratio(
     gamma = discount
     set_seed(seed)
 
+    env_name = env
     mujoco = ENV_TO_FAMILY[ENV_ID_TO_NAME[env]] == "mujoco"
     env = gym.make(env)
     env.reset(seed=seed)
@@ -321,7 +322,7 @@ def train_ratio(
         baseline_path = os.path.join(baseline_dir, "classic_obj.pkl")
 
     if baseline_path and os.path.isfile(baseline_path):
-        baseline = pickle.load(open(baseline_path, "rb"))[env][
+        baseline = pickle.load(open(baseline_path, "rb"))[env_name][
             [0.8, 0.9, 0.95, 0.99, 0.995].index(gamma)
         ]
 

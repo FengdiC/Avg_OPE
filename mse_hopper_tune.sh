@@ -4,7 +4,8 @@
 #SBATCH --time=0-72:00
 #SBATCH --output=%N-%j.out
 #SBATCH --account=def-ashique
-#SBATCH --array=1-360
+#SBATCH --gpus-per-node=1
+#SBATCH --array=0-80
 
 # salloc --cpus-per-task=1 --mem=3600M --time=0-3:00 --account=def-ashique
 
@@ -16,8 +17,8 @@ module load mujoco
 SECONDS=0
 echo
 
-python avg_corr/main.py --path './exper/hopper.pth' --env 'Hopper-v4' --array $SLURM_ARRAY_TASK_ID \
---log_dir $SCRATCH/avg_mse/hopper/ --steps 5 --epoch 10000 --max_len 100 --seed 280 &
+python run/tune.py --array $SLURM_ARRAY_TASK_ID --data_dir $SCRATCH/avg_corr/ \
+--log_dir $SCRATCH/avg_mse/tune/ --steps 5 --epoch 10000 --max_len 100 --seed 280 &
 
 echo "Baseline job $seed took $SECONDS"
 sleep 72h

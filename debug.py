@@ -10,7 +10,7 @@ name = ['discount_factor', 0.8, 'random_weight', random_weight, 'max_length', le
         'buffer_size', 16000, 'seed', seed , 'env', env]
 name = '-'.join(str(x) for x in name)
 
-with open('./dataset/' + name + '.pkl', 'rb') as outp:
+with open('./dataset/dataset/' + name + '.pkl', 'rb') as outp:
     buf = pickle.load(outp)
 
 gamma = 0.95
@@ -18,6 +18,9 @@ data = buf.sample(512,1)
 tim, prod = data['tim'], data['prod']
 logtarg, logbev = data['logtarg'], data['logbev']
 
-label = np.exp(np.log(gamma) * tim + prod)
+label = np.exp(np.log(gamma) * tim + prod).numpy()
+label = label.astype(np.float64)
 
 print(label[np.random.randint(low=0,high=512,size=10)])
+# pos = prod>-1
+# print(prod[pos])

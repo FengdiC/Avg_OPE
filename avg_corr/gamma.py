@@ -239,7 +239,7 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,
         buf = collect_dataset(env,gamma,buffer_size=buffer_size,max_len=max_len,path=path,
                                 random_weight=random_weight,fold = cv_fold,mujoco=mujoco)
         buf_test = collect_dataset(env, gamma,buffer_size=buffer_size,max_len=max_len,
-                                          path=path,random_weight=random_weight,fold=cv_fold)
+                                          path=path,random_weight=random_weight,fold=cv_fold,mujoco=mujoco)
     if link=='inverse' or link=='identity':
         weight = WeightNet(env.observation_space.shape[0], hidden_sizes=(256,256),activation=nn.ReLU)
     else:
@@ -273,7 +273,10 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,
             loss = (f + label/ torch.exp(f)).mean()
             ratio = torch.exp(f)
 
-        regularizer = torch.mean((ratio * torch.exp(logtarg - logbev) * max_len * (1 - gamma) - 1)**2)
+        # regularizer = (torch.mean(ratio * torch.exp(logtarg - logbev) * max_len * (1 - gamma) ) - 1)**2
+        with torch.no_grad():
+            eta = torch.mean(ratio*max_len*(1-gamma)-1)
+        regularizer = torch.mean(eta*ratio*max_len*(1-gamma)-eta)
 
         l1_norm = sum(torch.linalg.norm(p, 1) for p in weight.parameters())
         loss = loss + l1_lambda * l1_norm + reg_lambda * regularizer
@@ -294,6 +297,8 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,
             ratio = np.exp(np.exp(ratio))
         else:
             ratio = np.exp(ratio)
+        if np.sum(ratio<0)>0:
+            print("Negative ratios")
         obj = np.mean(ratio * np.exp(buffer.logtarg_buf[:buffer.ptr]
                                      - buffer.logbev_buf[:buffer.ptr])*buffer.rew_buf[:buffer.ptr])
         return obj*max_len*(1-gamma)
@@ -312,7 +317,8 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,
             ratio = np.exp(np.exp(ratio))-1
         else:
             ratio = np.exp(ratio)
-        # print(ratio)
+        if np.sum(ratio<0)>0:
+            print("Negative ratios")
         obj = np.mean(ratio[ind] * np.exp(buffer.logtarg_buf[ind]
                                      - buffer.logbev_buf[ind])*buffer.rew_buf[ind])
         obj_other = np.mean(ratio[other] * np.exp(buffer.logtarg_buf[other]
@@ -326,16 +332,16 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,
         for steps in range(epoch * checkpoint):
             update(fold_num)
             if steps % checkpoint == 0:
-                # obj_val, obj = eval_cv(buf, fold_num)
-                obj, obj_test = eval(buf), eval(buf_test)
+                obj_val, obj = eval_cv(buf, fold_num)
+                # obj, obj_test = eval(buf), eval(buf_test)
                 objs.append(obj)
-                # objs_val.append(obj_val)
-                objs_test.append(obj_test)
-        # objs_mean.append(objs)
-        # objs_val_mean.append(objs_val)
-    return objs, objs_test
-    # return np.around(np.mean(np.array(objs_mean),axis=0),decimals=4),\
-    #        np.around(np.mean(np.array(objs_val_mean),axis=0),decimals=4)
+                objs_val.append(obj_val)
+                # objs_test.append(obj_test)
+        objs_mean.append(objs)
+        objs_val_mean.append(objs_val)
+    # return objs, objs_test
+    return np.around(np.mean(np.array(objs_mean),axis=0),decimals=4),\
+           np.around(np.mean(np.array(objs_val_mean),axis=0),decimals=4)
 
 def argsparser():
     import argparse
@@ -428,15 +434,15 @@ def tune():
         writer = csv.writer(file)
         writer.writerow(mylist)  # Use writerow for single list
 
-# print(eval_policy('/scratch/fengdic/avg_discount/mountaincar/model-1epoch-30.pth'))
-# objs = train(0.001,env='CartPole-v1',seed=2,
-#              path='./exper/cartpole.pth',hyper_choice=32,
-#              link='identity',random_weight=0.7,l1_lambda=0.05,checkpoint=5,
-#              epoch=100, cv_fold=10,batch_size=256,buffer_size=80,max_len=50)
-# print('identity')
-# plt.plot(range(len(objs)),objs)
-# plt.plot(range(len(objs)),0.998*np.ones(len(objs)))
-# plt.ylim((0,5))
-# plt.show()
-
-# tune()
+if __name__ == "__main__" :
+    # print(eval_policy('/scratch/fengdic/avg_discount/mountaincar/model-1epoch-30.pth'))
+    batch_size, link, alpha, lr, loss, reg_lambda = 512,'inverse',0.0,0.001,'gamma', 20
+    objs,objs_test = train(lr=lr,env='HalfCheetah-v4',seed=9,path='./exper/halfcheetah_1.pth',hyper_choice=274,
+                           link=link,random_weight=2.0,l1_lambda=alpha,
+                           reg_lambda=reg_lambda,discount = 0.95,
+                           checkpoint=5,epoch=1000, cv_fold=10,
+                           batch_size=batch_size,buffer_size=40,
+                           max_len=100,mujoco=True)
+    plt.plot(range(len(objs)),objs_test)
+    plt.title("gamma")
+    plt.show()

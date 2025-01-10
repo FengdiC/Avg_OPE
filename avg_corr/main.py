@@ -19,6 +19,7 @@ from avg_corr.td_err import TD_computation
 import matplotlib.pyplot as plt
 import csv
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class PPOBuffer:
     """
@@ -125,34 +126,64 @@ def load(path,env):
     ac.load_state_dict(checkpoint['model_state_dict'])
     return ac
 
-def eval_policy(path='./exper/cartpole.pth',env='CartPole-v1',gamma=0.8):
-    env = gym.make(env)
+def eval_policy(env, gamma, path="./exper/cartpole.pth", random_weight=0.0,mujoco=False):
+    """
+    Evaluates a policy loaded from a file on a given environment.
+
+    This function runs 100 trajectories using the loaded policy and optionally includes random actions
+    based on the random_weight parameter. It computes discounted returns and average returns.
+
+    Args:
+        env: Gym environment object
+        gamma (float): Discount factor for computing returns
+        path (str, optional): Path to the saved policy file
+        random_weight (float, optional, default 0.0): Probability of taking random actions.
+
+    Returns:
+        tuple: Contains:
+            - float: Mean return (discounted) across all trajectories
+            - float: Variance of the returns
+            - float: Mean sum of reward (undiscounted) across all trajectories
+
+    Example:
+        >>> mean_ret, var_ret, mean_sum_rew = eval_policy(env, 0.99)
+    """
     ac = load(path, env)
 
-    o , _ = env.reset()
-    ep_len, ep_ret, ep_avg_ret = 0 ,0, 0
-    num_traj=0
+    o, _ = env.reset()
+    ep_len, ep_ret, ep_sum_rew = 0, 0, 0
+    num_traj, max_num_traj = 0, 100
     rets = []
-    avg_rets = []
+    sum_rew = []
 
-    while num_traj<100:
-        a, _,logtarg = ac.step(torch.as_tensor(o, dtype=torch.float32))
-        next_o, r, d,truncated, _ = env.step(a)
-        ep_ret += r * gamma ** ep_len
-        ep_avg_ret += r
+    while num_traj < max_num_traj:
+        if mujoco:
+            std = torch.exp(ac.pi.log_std)
+            mu = ac.pi.mu_net(torch.as_tensor(o, dtype=torch.float32))
+            beh_pi = Normal(mu, std * random_weight)
+            a = beh_pi.sample().numpy()
+        else:
+            targ_a, _, _ = ac.step(torch.as_tensor(o, dtype=torch.float32))
+            if np.random.random() < random_weight:
+                # random behaviour policy
+                a = env.action_space.sample()
+            else:
+                a = targ_a
+        next_o, r, d, truncated, _ = env.step(a)
+        terminal = d or truncated
+        ep_ret += r * gamma**ep_len
+        ep_sum_rew += r
         ep_len += 1
         # Update obs (critical!)
         o = next_o
 
-        terminal = d or truncated
-
         if terminal:
             num_traj += 1
             rets.append(ep_ret)
-            avg_rets.append(ep_avg_ret)
-            o,_ = env.reset()
-            ep_ret, ep_len, ep_avg_ret = 0, 0, 0
-    return (1-gamma)*np.mean(rets),np.var(rets),np.mean(avg_rets)
+            sum_rew.append(ep_sum_rew)
+            o, _ = env.reset()
+            ep_len, ep_ret, ep_sum_rew = 0, 0, 0
+    return (1 - gamma) * np.mean(rets), np.var(rets), np.mean(sum_rew)
 
 # sample behaviour dataset
 # behaviour policy = (1- random_weight) * target_policy + random_weight * random_policy
@@ -234,6 +265,10 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,buf=None,b
     gamma = discount
     env = gym.make(env)
 
+    true_obj, _, target_ret = eval_policy(env, gamma, path, random_weight=0,mujoco=False)
+    _, _, behaviour_ret = eval_policy(env, gamma, path, random_weight=random_weight,mujoco=mujoco)
+    print("target: ", target_ret, " and behaviour: ", behaviour_ret)
+
     np.random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
     torch.manual_seed(seed)
@@ -257,23 +292,23 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,buf=None,b
     else:
         weight = WeightNet(env.observation_space.shape[0], hidden_sizes=(256,256), activation=nn.Identity)
 
+    weight = weight.to(device)
+
     start_time = time.time()
 
     # Set up optimizers for policy and value function
     optimizer = Adam(weight.parameters(), lr)
 
-    huberloss = nn.HuberLoss(reduction='mean', delta=0.4)
-
     def update(fold_num):
         #sample minibatches
         data = buf.sample(batch_size,fold_num)
 
-        obs, act = data['obs'], data['act']
-        tim, prod = data['tim'], data['prod']
-        logtarg, logbev = data['logtarg'], data['logbev']
+        obs, act = data['obs'].to(device), data['act'].to(device)
+        tim, prod = data['tim'].to(device), data['prod'].to(device)
+        logtarg, logbev = data['logtarg'].to(device), data['logbev'].to(device)
 
-        label = np.exp(np.log(gamma) * tim + prod)
-        print(label[np.random.randint(low=0,high=batch_size,size=10)])
+        discount = torch.as_tensor(gamma,dtype=torch.float32).to(device)
+        label = torch.exp(torch.log(discount) * tim + prod)
         if link=="inverse":
             loss = ((1/weight(obs) - label) ** 2).mean()
             ratio = 1 / (weight(obs) + 0.0001)
@@ -282,14 +317,16 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,buf=None,b
             ratio = weight(obs)
         elif link =='loglog':
             loss = ((torch.exp(torch.exp(weight(obs)))-1 - label) ** 2).mean()
-            ratio = torch.exp(torch.exp(weight(obs)))
+            ratio = torch.exp(torch.exp(weight(obs)))-1
         else:
-            loss = ((torch.exp(weight(obs)) - (np.log(gamma) * tim + prod)) ** 2).mean()
+            # loss = ((weight(obs) - (torch.log(discount) * tim + prod)) ** 2).mean()
+            loss = ((torch.exp(weight(obs)) - label) ** 2).mean()
             ratio = torch.exp(weight(obs))
 
-        regularizer = huberloss(
-            input = torch.mean(ratio * torch.exp(logtarg- logbev)*max_len*(1-gamma)),target=torch.tensor([1]),
-        )
+
+        with torch.no_grad():
+            eta = torch.mean(ratio*max_len*(1-gamma)-1)
+        regularizer = torch.mean(eta*ratio*max_len*(1-gamma)-eta)
 
         l1_norm = sum(torch.linalg.norm(p, 1) for p in weight.parameters())
         loss = loss + l1_lambda * l1_norm+ reg_lambda * regularizer
@@ -302,7 +339,7 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,buf=None,b
     # classic control: train 5k steps and checkpoint =5
 
     def eval(buffer):
-        ratio = weight(torch.as_tensor(buffer.obs_buf[:buffer.ptr],dtype=torch.float32)).detach().numpy()
+        ratio = weight(torch.as_tensor(buffer.obs_buf[:buffer.ptr],dtype=torch.float32).to(device),).detach().cpu().numpy()
         if link == "inverse":
             ratio = 1/(ratio+0.001)
         elif link =='identity':
@@ -320,7 +357,7 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,buf=None,b
         ind = range(fold_num* interval,(fold_num+1)* interval,1)
         other = np.ones(buffer.ptr,dtype=np.int32)
         other[ind] = 0
-        ratio = weight(torch.as_tensor(buffer.obs_buf,dtype=torch.float32)).detach().numpy()
+        ratio = weight(torch.as_tensor(buffer.obs_buf,dtype=torch.float32).to(device),).detach().cpu().numpy()
         if link == "inverse":
             ratio = 1 / (ratio + 0.001)
         elif link == 'identity':
@@ -329,7 +366,6 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,buf=None,b
             ratio = np.exp(np.exp(ratio))-1
         else:
             ratio = np.exp(ratio)
-
         obj = np.mean(ratio[ind] * np.exp(buffer.logtarg_buf[ind]
                                           - buffer.logbev_buf[ind]) * buffer.rew_buf[ind])
         obj_other = np.mean(ratio[other] * np.exp(buffer.logtarg_buf[other]
@@ -344,18 +380,19 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,buf=None,b
         for steps in range(epoch * checkpoint):
             update(fold_num)
             if steps % checkpoint == 0:
-                # obj_val, obj = eval_cv(buf, fold_num)
-                obj, obj_test = eval(buf), eval(buf_test)
+                obj_val, obj = eval_cv(buf, fold_num)
+                # obj, obj_test = eval(buf), eval(buf_test)
                 # td_err = TD_err.compute(weight)
                 objs.append(obj)
-                # objs_val.append(obj_val)
-                objs_test.append(obj_test)
+                objs_val.append(obj_val)
+                # objs_test.append(obj_test)
                 # err.append(td_err)
-        # objs_mean.append(objs)
-        # objs_val_mean.append(objs_val)
-    return objs, objs_test #, err
-    # return np.around(np.mean(np.array(objs_mean), axis=0), decimals=4), \
-    #        np.around(np.mean(np.array(objs_val_mean), axis=0), decimals=4)
+        objs_mean.append(objs)
+        objs_val_mean.append(objs_val)
+        print("One fold done: ",fold_num)
+    # return objs, objs_test #, err
+    return np.around(np.mean(np.array(objs_mean), axis=0), decimals=4), \
+           np.around(np.mean(np.array(objs_val_mean), axis=0), decimals=4)
 
 def argsparser():
     import argparse
@@ -383,17 +420,25 @@ def tune():
     alpha= [0, 0.001, 0.01, 0.1]
     batch_size= 512
     link = 'identity'
-    lr = [0.00005,0.0001,0.0005,0.001]
+    lr = [0.00005,0.0001,0.0005,0.001,0.005]
     reg_lambda = [0.5,2,10,20]
 
+    # env = ['MountainCarContinuous-v0', 'Hopper-v4', 'HalfCheetah-v4', 'Ant-v4','Walker2d-v4']
+    # path = ['./exper/mountaincar.pth',
+    #         './exper/hopper.pth',
+    #         './exper/halfcheetah_1.pth',
+    #         './exper/ant.pth',
+    #         './exper/walker.pth']
+
     args = argsparser()
-    seeds = range(5)
-    idx = np.unravel_index(args.array, (4,5))
+    # seeds = range(5)
+    seed= args.seed
+    idx = np.unravel_index(args.array, (4,5,4))
     random_weight, buffer_size = 2.0, 40
     discount_factor, max_len = 0.95, 100
-    alpha, link, lr, reg_lambda = alpha[idx[0]], link[idx[1]], lr[idx[2]], reg_lambda[idx[3]]
+    alpha, lr, reg_lambda = alpha[idx[0]], lr[idx[1]], reg_lambda[idx[2]]
     filename = args.log_dir+'mse-tune-square-reg-alpha-' + str(alpha)+'-lr-'\
-               +str(lr)+'-lambda-'+str(reg_lambda)+'-'+str(link)+'-'+str(batch_size)+'.csv'
+               +str(lr)+'-lambda-'+str(reg_lambda)+'.csv'
     os.makedirs(args.log_dir, exist_ok=True)
     mylist = [str(i) for i in range(0,args.epoch*args.steps,args.steps)] + ['hyperparam']
     with open(filename, 'w+', newline='') as file:
@@ -404,58 +449,58 @@ def tune():
     result = []
     result_val = []
     print("Finish one combination of hyperparameters!")
-    for seed in seeds:
-        cv, cv_val = train(lr=lr,env=args.env,seed=seed,path=args.path,hyper_choice=args.seed,
-                       link=link,random_weight=random_weight,l1_lambda=alpha,
-                       reg_lambda=reg_lambda,discount = discount_factor,
-                       checkpoint=args.steps,epoch=args.epoch, cv_fold=10,
-                       batch_size=batch_size,buffer_size=buffer_size,
-                       max_len=max_len,mujoco=True)
-        print("Return result shape: ",len(cv),":::", args.steps,":::",seeds)
-        result.append(cv)
-        result_val.append(cv_val)
-        name = ['seed',seed,'train']
-        name = [str(s) for s in name]
-        cv = np.around(cv, decimals=4)
-        mylist = [str(i) for i in list(cv)] + ['-'.join(name)]
-        with open(filename, 'a', newline='') as file:
-            # Step 4: Using csv.writer to write the list to the CSV file
-            writer = csv.writer(file)
-            writer.writerow(mylist)  # Use writerow for single list
+    cv, cv_val = train(lr=lr,env=args.env,seed=seed,path=args.path,hyper_choice=args.seed,
+                   link=link,random_weight=random_weight,l1_lambda=alpha,
+                   reg_lambda=reg_lambda,discount = discount_factor,
+                   checkpoint=args.steps,epoch=args.epoch, cv_fold=10,
+                   batch_size=batch_size,buffer_size=buffer_size,
+                   max_len=max_len,mujoco=True)
+    print("Return result shape: ",len(cv),":::", args.steps)
+    result.append(cv)
+    result_val.append(cv_val)
+    name = ['seed',seed,'train']
+    name = [str(s) for s in name]
+    cv = np.around(cv, decimals=4)
+    mylist = [str(i) for i in list(cv)] + ['-'.join(name)]
+    with open(filename, 'a', newline='') as file:
+        # Step 4: Using csv.writer to write the list to the CSV file
+        writer = csv.writer(file)
+        writer.writerow(mylist)  # Use writerow for single list
 
-        name = ['seed', seed, 'val']
-        name = [str(s) for s in name]
-        cv_val = np.around(cv_val, decimals=4)
-        mylist = [str(i) for i in list(cv_val)] + ['-'.join(name)]
-        with open(filename, 'a', newline='') as file:
-            # Step 4: Using csv.writer to write the list to the CSV file
-            writer = csv.writer(file)
-            writer.writerow(mylist)  # Use writerow for single list
-    result = np.array(result)
-    ret = np.around(np.mean(result,axis=0),decimals=4)
-    mylist = [str(i) for i in list(ret)] + ['mean-train']
+    name = ['seed', seed, 'val']
+    name = [str(s) for s in name]
+    cv_val = np.around(cv_val, decimals=4)
+    mylist = [str(i) for i in list(cv_val)] + ['-'.join(name)]
     with open(filename, 'a', newline='') as file:
         # Step 4: Using csv.writer to write the list to the CSV file
         writer = csv.writer(file)
         writer.writerow(mylist)  # Use writerow for single list
-    result_val = np.array(result_val)
-    ret = np.around(np.mean(result_val, axis=0), decimals=4)
-    mylist = [str(i) for i in list(ret)] + ['mean-val']
-    with open(filename, 'a', newline='') as file:
-        # Step 4: Using csv.writer to write the list to the CSV file
-        writer = csv.writer(file)
-        writer.writerow(mylist)  # Use writerow for single list
+    # result = np.array(result)
+    # ret = np.around(np.mean(result,axis=0),decimals=4)
+    # mylist = [str(i) for i in list(ret)] + ['mean-train']
+    # with open(filename, 'a', newline='') as file:
+    #     # Step 4: Using csv.writer to write the list to the CSV file
+    #     writer = csv.writer(file)
+    #     writer.writerow(mylist)  # Use writerow for single list
+    # result_val = np.array(result_val)
+    # ret = np.around(np.mean(result_val, axis=0), decimals=4)
+    # mylist = [str(i) for i in list(ret)] + ['mean-val']
+    # with open(filename, 'a', newline='') as file:
+    #     # Step 4: Using csv.writer to write the list to the CSV file
+    #     writer = csv.writer(file)
+    #     writer.writerow(mylist)  # Use writerow for single list
 
 if __name__ == "__main__" :
     # print(eval_policy('/scratch/fengdic/avg_discount/mountaincar/model-1epoch-30.pth'))
-    batch_size, link, alpha, lr, loss, reg_lambda = 512,'log',0.001,0.0001,'mse', 2
+    batch_size, link, alpha, lr, loss, reg_lambda = 512,'identity',0.001,0.0001,'mse', 20
     objs,objs_test = train(lr=lr,env='HalfCheetah-v4',seed=9,path='./exper/halfcheetah_1.pth',hyper_choice=274,
                            link=link,random_weight=2.0,l1_lambda=alpha,
                            reg_lambda=reg_lambda,discount = 0.95,
-                           checkpoint=5,epoch=1000, cv_fold=10,
+                           checkpoint=5,epoch=10000, cv_fold=10,
                            batch_size=batch_size,buffer_size=40,
                            max_len=100,mujoco=True)
-    plt.plot(range(len(objs)),objs)
+    plt.plot(range(len(objs)),objs_test)
+    plt.show()
     # plt.plot(range(len(objs)),0.327*np.ones(len(objs)))
     # plt.savefig('hopper.png')
 

@@ -1,4 +1,7 @@
 import os, sys, inspect
+
+from scipy.special.cython_special import huber
+
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
@@ -259,6 +262,8 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,buf=None,b
     # Set up optimizers for policy and value function
     optimizer = Adam(weight.parameters(), lr)
 
+    huberloss = nn.HuberLoss(reduction='mean', delta=0.4)
+
     def update(fold_num):
         #sample minibatches
         data = buf.sample(batch_size,fold_num)
@@ -268,6 +273,7 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,buf=None,b
         logtarg, logbev = data['logtarg'], data['logbev']
 
         label = np.exp(np.log(gamma) * tim + prod)
+        print(label[np.random.randint(low=0,high=batch_size,size=10)])
         if link=="inverse":
             loss = ((1/weight(obs) - label) ** 2).mean()
             ratio = 1 / (weight(obs) + 0.0001)
@@ -281,7 +287,9 @@ def train(lr, env,seed,path,hyper_choice,link,random_weight,l1_lambda,buf=None,b
             loss = ((torch.exp(weight(obs)) - (np.log(gamma) * tim + prod)) ** 2).mean()
             ratio = torch.exp(weight(obs))
 
-        regularizer = torch.mean((ratio * torch.exp(logtarg- logbev)*max_len*(1-gamma)-1)**2)
+        regularizer = huberloss(
+            input = torch.mean(ratio * torch.exp(logtarg- logbev)*max_len*(1-gamma)),target=torch.tensor([1]),
+        )
 
         l1_norm = sum(torch.linalg.norm(p, 1) for p in weight.parameters())
         loss = loss + l1_lambda * l1_norm+ reg_lambda * regularizer
@@ -372,15 +380,15 @@ def argsparser():
     return args
 
 def tune():
-    alpha= [0,0.0005,0.001,0.002,0.005,0.01]
-    batch_size= 1024
-    link = ['inverse','identity']
-    lr = [0.00005,0.0001,0.0005,0.001,0.005]
-    reg_lambda = [0.1,0.5,1,2,5,8]
+    alpha= [0, 0.001, 0.01, 0.1]
+    batch_size= 512
+    link = 'identity'
+    lr = [0.00005,0.0001,0.0005,0.001]
+    reg_lambda = [0.5,2,10,20]
 
     args = argsparser()
     seeds = range(5)
-    idx = np.unravel_index(args.array, (6,2,5,6))
+    idx = np.unravel_index(args.array, (4,5))
     random_weight, buffer_size = 2.0, 40
     discount_factor, max_len = 0.95, 100
     alpha, link, lr, reg_lambda = alpha[idx[0]], link[idx[1]], lr[idx[2]], reg_lambda[idx[3]]
@@ -402,7 +410,7 @@ def tune():
                        reg_lambda=reg_lambda,discount = discount_factor,
                        checkpoint=args.steps,epoch=args.epoch, cv_fold=10,
                        batch_size=batch_size,buffer_size=buffer_size,
-                       max_len=max_len,mujoco=False)
+                       max_len=max_len,mujoco=True)
         print("Return result shape: ",len(cv),":::", args.steps,":::",seeds)
         result.append(cv)
         result_val.append(cv_val)
@@ -438,15 +446,19 @@ def tune():
         writer = csv.writer(file)
         writer.writerow(mylist)  # Use writerow for single list
 
-# print(eval_policy('/scratch/fengdic/avg_discount/mountaincar/model-1epoch-30.pth'))
-# objs = train(0.001,env='Swimmer-v4',seed=2,
-#              path='./exper/swimmer.pth',hyper_choice=394,
-#              link='inverse',random_weight=0.3,l1_lambda=0.001,checkpoint=5,
-#              epoch=1000, cv_fold=10,batch_size=32,buffer_size=40,max_len=100)
-# plt.plot(range(len(objs)),objs)
-# plt.plot(range(len(objs)),0.327*np.ones(len(objs)))
-# plt.savefig('hopper.png')
+if __name__ == "__main__" :
+    # print(eval_policy('/scratch/fengdic/avg_discount/mountaincar/model-1epoch-30.pth'))
+    batch_size, link, alpha, lr, loss, reg_lambda = 512,'log',0.001,0.0001,'mse', 2
+    objs,objs_test = train(lr=lr,env='HalfCheetah-v4',seed=9,path='./exper/halfcheetah_1.pth',hyper_choice=274,
+                           link=link,random_weight=2.0,l1_lambda=alpha,
+                           reg_lambda=reg_lambda,discount = 0.95,
+                           checkpoint=5,epoch=1000, cv_fold=10,
+                           batch_size=batch_size,buffer_size=40,
+                           max_len=100,mujoco=True)
+    plt.plot(range(len(objs)),objs)
+    # plt.plot(range(len(objs)),0.327*np.ones(len(objs)))
+    # plt.savefig('hopper.png')
 
-# tune()
+    # tune()
 
 # print(eval_policy(path='./exper/hopper.pth',env='Hopper-v4',gamma=0.95))

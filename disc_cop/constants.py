@@ -60,7 +60,7 @@ else:
             max_lens=[100],
             # =============================================
             # TODO: Figure best config below
-            batch_sizes=[256, 512],
+            batch_sizes=[512],
             links=["default"],
             bootstrap_targets=["target_network", "cross_q"],
             lrs=[0.0001, 0.0005, 0.001, 0.005],
@@ -77,7 +77,7 @@ else:
             max_lens=[100],
             # =============================================
             # TODO: Figure best config below
-            batch_sizes=[256, 512],
+            batch_sizes=[512],
             links=["default"],
             bootstrap_targets=["target_network", "cross_q"],
             lrs=[0.0001, 0.0005, 0.001, 0.005],

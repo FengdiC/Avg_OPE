@@ -15,6 +15,80 @@ from disc_cop.constants import LOG_DIR, DATASET_DIR, HYPERPARAMETERS, USE_SLURM
 from disc_cop.envs import ENVS, ENV_FAMILY_SPECIFICS
 
 
+def hyperparameter_generator(hyperparameters):
+    random_weights = hyperparameters["random_weights"]
+    discount_factors = hyperparameters["discount_factors"]
+    batch_sizes = hyperparameters["batch_sizes"]
+    links = hyperparameters["links"]
+    buffer_sizes = hyperparameters["buffer_sizes"]
+    bootstrap_targets = hyperparameters["bootstrap_targets"]
+    lrs = hyperparameters["lrs"]
+    alphas = hyperparameters["alphas"]
+    max_lens = hyperparameters["max_lens"]
+
+    if "manual_settings" in hyperparameters:
+        for manual_setting in hyperparameters["manual_settings"]:
+            for (
+                batch_size,
+                link,
+                bootstrap_target,
+                lr,
+                alpha,
+            ) in product(
+                batch_sizes,
+                links,
+                bootstrap_targets,
+                lrs,
+                alphas,
+            ):
+                yield (
+                    manual_setting[2],
+                    manual_setting[0],
+                    batch_size,
+                    link,
+                    manual_setting[1],
+                    bootstrap_target,
+                    lr,
+                    alpha,
+                    manual_setting[3],
+                )
+            
+    else:
+        for (
+            random_weight,
+            discount_factor,
+            batch_size,
+            link,
+            buffer_size,
+            bootstrap_target,
+            lr,
+            alpha,
+            max_len,
+        ) in product(
+            random_weights,
+            discount_factors,
+            batch_sizes,
+            links,
+            buffer_sizes,
+            bootstrap_targets,
+            lrs,
+            alphas,
+            max_lens,
+        ):
+            yield (
+                random_weight,
+                discount_factor,
+                batch_size,
+                link,
+                buffer_size,
+                bootstrap_target,
+                lr,
+                alpha,
+                max_len,
+            )
+
+
+
 def generate_experiment_configs():
     """
     Generate experiment configurations.

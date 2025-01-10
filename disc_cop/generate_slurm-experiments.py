@@ -60,7 +60,7 @@ for env_name in ENV_TO_FAMILY:
     if USE_GPU:
         sbatch_content += "  --device=cuda:0 \\\n"
     sbatch_content += "  --config_path=${config_path} \\\n"
-    sbatch_content += "  --dataset_dir=${SLURM_TMPDIR}/datasets \n"
+    sbatch_content += "  --dataset_dir=${SLURM_TMPDIR}/datasets \\\n"
     sbatch_content += "  --baseline_dir=${SLURM_TMPDIR} \n"
     sbatch_content += 'echo "Program test finished with exit code $? at: `date`"\n'
 

@@ -89,8 +89,10 @@ def tune_mse():
                                max_len=max_len, mujoco=mujoco)
 
             print("Return result shape: ", len(cv), ":::", args.steps)
-            result.append((cv-true_obj)**2)
-            result_val.append((cv_val-true_obj)**2)
+            cv = (cv-true_obj)**2
+            cv_val = (cv_val-true_obj)**2
+            result.append(cv)
+            result_val.append(cv_val)
             name = ['seed', seed, 'env',env_name, 'train']
             name = [str(s) for s in name]
             cv = np.around(cv, decimals=4)

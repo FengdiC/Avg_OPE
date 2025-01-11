@@ -126,7 +126,7 @@ class PyTorchPolicyWrapper:
     def distribution(self, tf_time_step):
         """Generates action distribution for a given time step (compatible with TensorFlow)."""
         # Convert TensorFlow observation to a NumPy array and then a PyTorch tensor
-        obs = tf_time_step.observation.numpy()  # Run in eager mode
+        obs = tf_time_step.observation.eval()  # Run in eager mode
         obs_tensor = torch.as_tensor(obs, dtype=torch.float32)
 
         # Get action distribution from the PyTorch policy
@@ -207,7 +207,7 @@ def load(path,env):
 
 def main(argv):
     seed = FLAGS.seed
-    # tf.config.run_functions_eagerly(False)
+    tf.config.run_functions_eagerly(False)
 
     if FLAGS.array <36:
         return -1

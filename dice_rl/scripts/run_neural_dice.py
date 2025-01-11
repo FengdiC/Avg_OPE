@@ -207,7 +207,7 @@ def load(path,env):
 
 def main(argv):
     seed = FLAGS.seed
-    tf.config.run_functions_eagerly(False)
+    # tf.config.run_functions_eagerly(False)
 
     if FLAGS.array <36:
         return -1

@@ -20,7 +20,7 @@ path_lists = {
     'MountainCarContinuous-v0':'./exper/mountaincar.pth',
     'Hopper-v4':'./exper/hopper.pth',
     'HalfCheetah-v4':'./exper/halfcheetah_0.pth',
-    'Avt-v4':'./exper/ant.pth',
+    'Ant-v4':'./exper/ant.pth',
     'Swimmer-v4':'./exper/swimmer.pth',
     'Walker2d-v4':'./exper/walker.pth',
 }
@@ -42,7 +42,7 @@ def tune_mse():
     batch_size = 512
     link = 'identity'
     lr = [0.00005, 0.0001, 0.0005, 0.001, 0.005]
-    reg_lambda = [0.5, 2, 10, 20 ,30]
+    reg_lambda = [0.5, 2, 10, 20 ,40]
 
     args = argsparser()
     seeds = range(5)
@@ -61,7 +61,7 @@ def tune_mse():
         writer = csv.writer(file)
         writer.writerow(mylist)  # Use writerow for single list
 
-    for seed in seeds:
+    for seed in tqdm(seeds, desc="Seeds"):
         for i in range(len(env_lists)):
             env_name, path, mujoco, random_weight = (
                 env_lists[i],

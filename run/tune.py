@@ -42,11 +42,11 @@ def tune_mse():
     batch_size = 512
     link = 'identity'
     lr = [0.00005, 0.0001, 0.0005, 0.001, 0.005]
-    reg_lambda = [0.5, 2, 10, 20 ]
+    reg_lambda = [0.5, 2, 10, 20 ,30]
 
     args = argsparser()
     seeds = range(5)
-    idx = np.unravel_index(args.array, (4, 5, 4))
+    idx = np.unravel_index(args.array, (4, 5, 5))
     buffer_size = 40
     discount_factor, max_len = 0.95, 100
 

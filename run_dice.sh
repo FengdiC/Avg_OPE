@@ -22,7 +22,7 @@ echo
 
 #python avg_corr/run_cartpole_td.py --log_dir $SCRATCH/avg_corr/td_err/ --steps 5 --epoch 2000 --max_len 50
 
-for seed in  $(seq 1 10); do
+for seed in  $(seq 0 9); do
   start_time=$SECONDS
   python dice_rl/scripts/run_neural_dice_classic.py --output_dir $SCRATCH/avg_corr/dice_gpu/classic/ \
   --array $SLURM_ARRAY_TASK_ID --steps 5 --epoch 5000 --max_trajectory_length 100 \
@@ -34,7 +34,7 @@ for seed in  $(seq 1 10); do
   echo "Baseline job $seed took $elapsed_time seconds"
 done
 
-for seed in  $(seq 1 10); do
+for seed in  $(seq 0 9); do
   start_time=$SECONDS
   python dice_rl/scripts/run_neural_dice.py --output_dir $SCRATCH/avg_corr/dice_gpu/mujoco/ \
   --array $SLURM_ARRAY_TASK_ID  --steps 5 --epoch 40000 --max_trajectory_length 100 \

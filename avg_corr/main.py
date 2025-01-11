@@ -399,6 +399,7 @@ def argsparser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--path', type=str, default='./')
     parser.add_argument('--log_dir', type=str, default='./')
+    parser.add_argument('--data_dir', type=str, default='./')
     parser.add_argument('--env', type=str, default='Hopper-v4')
     parser.add_argument('--seed', '-s', type=int, default=0)
     parser.add_argument('--steps', type=int, default=5)

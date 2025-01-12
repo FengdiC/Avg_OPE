@@ -48,29 +48,51 @@ def plot_algo(gamma,size,random_weight,length,true_obj,
     mean_cop_mse = np.mean(result, axis=0)
     var_cop = np.var(result, axis=0)
 
-    # # plot best dice
-    # result = []
-    # log_dir = "../avg_tune_log/dice/" +  env_id + "/"
-    # if mujoco:
-    #     print("Not Implemented")
-    # else:
-    #     filename = f"dice-classic-['CartPole-v1', 'Acrobot-v1']-discount-{gamma}-length-{length}-random-{random_weight}.csv"
-    # f = os.path.join(log_dir, filename)
-    #
-    # data = pd.read_csv(f, header=0, index_col='hyperparam')
-    # data.columns = data.columns.astype(int)
-    # data = data.sort_index(axis=1, ascending=True)
-    # result = []
-    # for name in data.index.to_list():
-    #     if train in name and str(size) in name:
-    #         result.append(data.loc[name].to_list())
-    # result = np.array(result)
-    # mean_dice_mse = np.mean(result, axis=0)
-    # var_dice = np.var(result, axis=0)
+    # plot SR-DICE
+    seeds = range(1,10)
+    result = []
+    log_dir = '../avg_tune_log/MIS/'
+    for seed in seeds:
+        if mujoco:
+            filename = f"{env_name}SR_DICE-mujoco-{env_name}-discount-{gamma}-length-{length}-random-{random_weight}-size-{size}-seed-{seed}.csv"
+        else:
+            filename = f"{env_name}SR_DICE-classic-{env_name}-discount-{gamma}-length-{length}-random-{random_weight}-size-{size}-seed-{seed}.csv"
+
+        f = os.path.join(log_dir, filename)
+        data = pd.read_csv(f, header=0, index_col='hyperparam')
+        data.columns = data.columns.astype(int)
+        data = data.sort_index(axis=1, ascending=True)
+        for name in data.index.to_list():
+            if train in name:
+                result.append(data.loc[name].to_list())
+    mean_mis = np.mean(result, axis=0)
+    var_mis = np.var(result, axis=0)
+
+    # plot Deep_TD
+    seeds = range(1, 10)
+    result = []
+    log_dir = '../avg_tune_log/TD/'
+    for seed in seeds:
+        if mujoco:
+            filename = f"{env_name}Deep_TD-mujoco-{env_name}-discount-{gamma}-length-{length}-random-{random_weight}-size-{size}-seed-{seed}.csv"
+        else:
+            filename = f"{env_name}Deep_TD-classic-{env_name}-discount-{gamma}-length-{length}-random-{random_weight}-size-{size}-seed-{seed}.csv"
+
+        f = os.path.join(log_dir, filename)
+        data = pd.read_csv(f, header=0, index_col='hyperparam')
+        data.columns = data.columns.astype(int)
+        data = data.sort_index(axis=1, ascending=True)
+        for name in data.index.to_list():
+            if train in name:
+                result.append(data.loc[name].iloc[0].tolist())
+    mean_td = np.mean(result, axis=0)
+    var_td = np.var(result, axis=0)
 
     plt.figure()
     plt.plot(range(mean_avg_mse.shape[0]), mean_avg_mse, label='avg_corr_mse')
     plt.plot(range(mean_cop_mse.shape[0]), mean_cop_mse, label='cop_td')
+    plt.plot(range(mean_mis.shape[0]), mean_mis, label='sr_dice')
+    plt.plot(range(mean_td.shape[0]), mean_td, label='deep_td')
     # plt.plot(range(mean_dice_mse.shape[0]), mean_dice_mse, label='best_dice')
     plt.plot(range(mean_avg_mse.shape[0]), true_obj*np.ones(mean_avg_mse.shape[0]), label='true_value')
     plt.legend()
@@ -129,7 +151,6 @@ if __name__ == "__main__":
            'HalfCheetah-v4','Ant-v4',
            'Walker2d-v4']
     env_id_lists = ['hopper',
-
                     'halfcheetah',
                     'ant',
                     'walker',
@@ -147,8 +168,8 @@ if __name__ == "__main__":
     for i in range(len(env_lists)):
         env_name = env_lists[i]
         env_id= env_id_lists[i]
-        gamma = 0.99
-        size, random_weight, length = 16000, 2.0, 50
+        gamma = 0.95
+        size, random_weight, length = 4000, 2.0, 100
         with open('./dataset/mujoco_obj.pkl', 'rb') as file:
             obj = pickle.load(file)
         true_obj = obj[env_name][2]

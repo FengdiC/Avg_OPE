@@ -1,10 +1,11 @@
 #!/bin/bash
 #SBATCH --cpus-per-task=1  # Cores proportional to GPUs: 6 on Cedar, 16 on Graham.
 #SBATCH --mem=3600M       # Memory proportional to GPUs: 32000 Cedar, 64000 Graham.
-#SBATCH --time=0-144:00
+#SBATCH --time=0-16:00
 #SBATCH --output=%N-%j.out
 #SBATCH --account=def-ashique
-# hei SBATCH --array=0-599
+# hei SBATCH --array=0-125
+#SBATCH --gpus-per-node=1
 
 # salloc --cpus-per-task=1 --mem=3600M --time=0-3:00 --account=def-ashique
 # Did not tune for three discount factors
@@ -17,15 +18,29 @@ source $HOME/ENV_1/bin/activate
 SECONDS=0
 echo
 
-#python run/eval_policies.py --log_dir $SCRATCH/avg_corr/
+for seed in  $(seq 0 9); do
+  start_time=$SECONDS
+  python run/run_classic.py --log_dir $SCRATCH/avg_corr/avg_mse/ \
+  --array $SLURM_ARRAY_TASK_ID  --steps 5 --epoch 5000 --data_dir $SCRATCH/avg_corr/ --seed $seed
 
-#python avg_corr/run_cartpole_td.py --log_dir $SCRATCH/avg_corr/td_err/ --steps 5 --epoch 2000 --max_len 50
+  wait
 
-python run/run_classic.py --log_dir $SCRATCH/avg_corr/classic/ \
---array $SLURM_ARRAY_TASK_ID  --steps 5 --epoch 5000 --max_len 50 &
+  elapsed_time=$((SECONDS - start_time))
+  echo "Baseline job $seed took $elapsed_time seconds"
+done
 
-python run/run_mujoco.py --log_dir $SCRATCH/avg_corr/mujoco/ \
---array $SLURM_ARRAY_TASK_ID --steps 5 --epoch 40000 --max_len 100 &
+for seed in  $(seq 0 9); do
+  start_time=$SECONDS
+  python run/run_mujoco.py --log_dir $SCRATCH/avg_corr/avg_mse/ \
+  --array $SLURM_ARRAY_TASK_ID --steps 5 --epoch 40000 --data_dir $SCRATCH/avg_corr/ --seed $seed
+
+  wait
+
+  # Calculate elapsed time
+  elapsed_time=$((SECONDS - start_time))
+  echo "Baseline job $seed took $elapsed_time seconds"
+done
+
 
 echo "Baseline job $seed took $SECONDS"
 sleep 144h

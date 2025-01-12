@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --cpus-per-task=1  # Cores proportional to GPUs: 6 on Cedar, 16 on Graham.
 #SBATCH --mem=7200M       # Memory proportional to GPUs: 32000 Cedar, 64000 Graham.
-#SBATCH --time=0-100:00
+#SBATCH --time=0-24:00
 #SBATCH --output=%N-%j.out
 #SBATCH --account=rrg-ashique
 #SBATCH --gpus-per-node=1
@@ -37,7 +37,7 @@ done
 for seed in  $(seq 0 9); do
   start_time=$SECONDS
   python dice_rl/scripts/run_neural_dice.py --output_dir $SCRATCH/avg_corr/dice_gpu/mujoco/ \
-  --array $SLURM_ARRAY_TASK_ID  --steps 5 --epoch 40000 --max_trajectory_length 100 \
+  --array $SLURM_ARRAY_TASK_ID  --steps 5 --epoch 10000 --max_trajectory_length 100 \
   --data_dir $SCRATCH/avg_corr/ --seed $seed
    wait
 

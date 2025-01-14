@@ -43,8 +43,8 @@ if RUN_ALL:
             batch_sizes=[512],
             links=["default"],
             bootstrap_targets=["target_network"],
-            lrs=[0.005],
-            alphas=[0.01],  # L1
+            lrs=[1e-3],
+            alphas=[0.0],  # L1
             tau=0.0005,  # target network
             seeds=range(10),
             step_frequency=5,

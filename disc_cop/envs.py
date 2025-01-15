@@ -56,7 +56,7 @@ ENV_TO_FAMILY = {
     "ant": "mujoco",
     "halfcheetah": "mujoco",
     "hopper": "mujoco",
-    "swimmer": "mujoco",
+    # "swimmer": "mujoco",
     "walker": "mujoco",
     "acrobot": "classic_control",
     "cartpole": "classic_control",

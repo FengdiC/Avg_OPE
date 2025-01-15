@@ -1,14 +1,15 @@
 # Beluga
-HOME_DIR = "/home/chanb"
-LOG_DIR = f"{HOME_DIR}/scratch/disc_cop/results"
-RUN_REPORT_DIR = f"{HOME_DIR}/scratch/disc_cop/run_reports"
-DATASET_DIR = f"{HOME_DIR}/src/Avg_OPE/datasets"
-REPO_PATH = f"{HOME_DIR}/src/Avg_OPE"
-CC_ACCOUNT = "def-schuurma"
-USE_SLURM = True
-USE_GPU = True
-RUN_ALL = False
+# HOME_DIR = "/home/chanb"
+# LOG_DIR = f"{HOME_DIR}/scratch/disc_cop/results"
+# RUN_REPORT_DIR = f"{HOME_DIR}/scratch/disc_cop/run_reports"
+# DATASET_DIR = f"{HOME_DIR}/src/Avg_OPE/datasets"
+# REPO_PATH = f"{HOME_DIR}/src/Avg_OPE"
+# CC_ACCOUNT = "def-schuurma"
+# USE_SLURM = True
+# USE_GPU = True
+# RUN_ALL = False
 
+# Local
 # HOME_DIR = "/Users/chanb/research/ualberta/Avg_OPE"
 # LOG_DIR = "/Users/chanb/research/ualberta/Avg_OPE/local/results"
 # RUN_REPORT_DIR = "/Users/chanb/research/ualberta/Avg_OPE/local/run_reports"
@@ -16,6 +17,20 @@ RUN_ALL = False
 # REPO_PATH = "/Users/chanb/research/ualberta/Avg_OPE"
 # CC_ACCOUNT = "def-schuurma"
 # USE_SLURM = False
+
+# Salient
+HOME_DIR = "/home/bryanpu1/projects/icml_2025"
+LOG_DIR = f"{HOME_DIR}/results"
+RUN_REPORT_DIR = f"{HOME_DIR}/run_reports"
+DATASET_DIR = f"{HOME_DIR}/datasets"
+REPO_PATH = f"{HOME_DIR}/Avg_OPE"
+CC_ACCOUNT = "def-schuurma"
+USE_SLURM = False
+USE_GPU = True
+RUN_ALL = True
+
+NUM_GPUS = 8
+NUM_RUNS_PER_GPU = 10
 
 MAX_BUFFER_SIZE = 16000
 if RUN_ALL:
@@ -34,6 +49,26 @@ if RUN_ALL:
             tau=0.0005,  # target network
             seeds=range(10),
             step_frequency=5,
+            manual_settings=[
+                [0.8, 4000, 2.0, 100, ],
+                [0.9, 4000, 2.0, 100, ],
+                [0.95, 4000, 2.0, 100, ],
+                [0.99, 4000, 2.0, 100, ],
+                [0.995, 4000, 2.0, 100, ],
+                [0.95, 2000, 2.0, 100, ],
+                [0.95, 4000, 2.0, 100, ],
+                [0.95, 8000, 2.0, 100, ],
+                [0.95, 16000, 2.0, 100, ],
+                [0.95, 4000, 1.4, 100, ],
+                [0.95, 4000, 1.8, 100, ],
+                [0.95, 4000, 2.0, 100, ],
+                [0.95, 4000, 2.4, 100, ],
+                [0.95, 4000, 2.8, 100, ],
+                [0.95, 4000, 2.0, 20, ],
+                [0.95, 4000, 2.0, 50, ],
+                [0.95, 4000, 2.0, 100, ],
+                [0.95, 4000, 2.0, 200, ],
+            ],
         ),
         classic_control=dict(
             random_weights=[0.1, 0.2, 0.3, 0.4, 0.5],
@@ -48,28 +83,28 @@ if RUN_ALL:
             tau=0.0005,  # target network
             seeds=range(10),
             step_frequency=5,
+            # gamma, buffer_size, random_weight, max_len
+            manual_settings=[
+                [0.8, 4000, 0.3, 40,],
+                [0.9, 4000, 0.3, 40,],
+                [0.95, 4000, 0.3, 40,],
+                [0.99, 4000, 0.3, 40,],
+                [0.995, 4000, 0.3, 40,],
+                [0.95, 2000, 0.3, 40,],
+                [0.95, 4000, 0.3, 40,],
+                [0.95, 8000, 0.3, 40,],
+                [0.95, 16000, 0.3, 40,],
+                [0.95, 4000, 0.1, 40,],
+                [0.95, 4000, 0.2, 40,],
+                [0.95, 4000, 0.3, 40,],
+                [0.95, 4000, 0.4, 40,],
+                [0.95, 4000, 0.5, 40,],
+                [0.95, 4000, 0.3, 20,],
+                [0.95, 4000, 0.3, 40,],
+                [0.95, 4000, 0.3, 80,],
+                [0.95, 4000 ,0.3 ,100,],
+            ],
         ),
-        # gamma, buffer_size, random_weight, max_len
-        manual_settings=[
-            [0.8, 4000, 0.3, 40,],
-            [0.9, 4000, 0.3, 40,],
-            [0.95, 4000, 0.3, 40,],
-            [0.99, 4000, 0.3, 40,],
-            [0.995, 4000, 0.3, 40,],
-            [0.95, 2000, 0.3, 40,],
-            [0.95, 4000, 0.3, 40,],
-            [0.95, 8000, 0.3, 40,],
-            [0.95, 16000, 0.3, 40,],
-            [0.95, 4000, 0.1, 40,],
-            [0.95, 4000, 0.2, 40,],
-            [0.95, 4000, 0.3, 40,],
-            [0.95, 4000, 0.4, 40,],
-            [0.95, 4000, 0.5, 40,],
-            [0.95, 4000, 0.3, 20,],
-            [0.95, 4000, 0.3, 40,],
-            [0.95, 4000, 0.3, 80,],
-            [0.95, 4000 ,0.3 ,100,],
-        ]
     )
 else:
     # CHOOSE BEST HYPERPARAM WITH CARTPOLE AND HOPPER

@@ -15,19 +15,19 @@ from disc_cop.constants import LOG_DIR, DATASET_DIR, HYPERPARAMETERS, USE_SLURM
 from disc_cop.envs import ENVS, ENV_FAMILY_SPECIFICS
 
 
-def hyperparameter_generator(hyperparameters):
-    random_weights = hyperparameters["random_weights"]
-    discount_factors = hyperparameters["discount_factors"]
-    batch_sizes = hyperparameters["batch_sizes"]
-    links = hyperparameters["links"]
-    buffer_sizes = hyperparameters["buffer_sizes"]
-    bootstrap_targets = hyperparameters["bootstrap_targets"]
-    lrs = hyperparameters["lrs"]
-    alphas = hyperparameters["alphas"]
-    max_lens = hyperparameters["max_lens"]
+def hyperparameter_generator(env_family):
+    random_weights = HYPERPARAMETERS[env_family]["random_weights"]
+    discount_factors = HYPERPARAMETERS[env_family]["discount_factors"]
+    batch_sizes = HYPERPARAMETERS[env_family]["batch_sizes"]
+    links = HYPERPARAMETERS[env_family]["links"]
+    buffer_sizes = HYPERPARAMETERS[env_family]["buffer_sizes"]
+    bootstrap_targets = HYPERPARAMETERS[env_family]["bootstrap_targets"]
+    lrs = HYPERPARAMETERS[env_family]["lrs"]
+    alphas = HYPERPARAMETERS[env_family]["alphas"]
+    max_lens = HYPERPARAMETERS[env_family]["max_lens"]
 
-    if "manual_settings" in hyperparameters:
-        for manual_setting in hyperparameters["manual_settings"]:
+    if "manual_settings" in HYPERPARAMETERS[env_family]:
+        for manual_setting in HYPERPARAMETERS[env_family]["manual_settings"]:
             for (
                 batch_size,
                 link,
@@ -96,18 +96,9 @@ def generate_experiment_configs():
     """
 
     for env_family in ENVS:
-        random_weights = HYPERPARAMETERS[env_family]["random_weights"]
-        discount_factors = HYPERPARAMETERS[env_family]["discount_factors"]
-        batch_sizes = HYPERPARAMETERS[env_family]["batch_sizes"]
-        links = HYPERPARAMETERS[env_family]["links"]
-        buffer_sizes = HYPERPARAMETERS[env_family]["buffer_sizes"]
-        bootstrap_targets = HYPERPARAMETERS[env_family]["bootstrap_targets"]
-        lrs = HYPERPARAMETERS[env_family]["lrs"]
-        alphas = HYPERPARAMETERS[env_family]["alphas"]
         tau = HYPERPARAMETERS[env_family]["tau"]
         seeds = HYPERPARAMETERS[env_family]["seeds"]
         step_frequency = HYPERPARAMETERS[env_family]["step_frequency"]
-        max_lens = HYPERPARAMETERS[env_family]["max_lens"]
 
         env_specific = ENV_FAMILY_SPECIFICS[env_family]
         for env_name, env_config in ENVS[env_family].items():
@@ -123,17 +114,7 @@ def generate_experiment_configs():
                 alpha,
                 max_len,
             ) in tqdm(
-                product(
-                    random_weights,
-                    discount_factors,
-                    batch_sizes,
-                    links,
-                    buffer_sizes,
-                    bootstrap_targets,
-                    lrs,
-                    alphas,
-                    max_lens,
-                ),
+                hyperparameter_generator(env_family),
                 postfix="Hyperparameter sweep for environment: {}".format(env_name),
             ):
                 filename = (

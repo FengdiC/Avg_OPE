@@ -12,26 +12,42 @@ import _pickle as pickle
 def plot_algo(gamma,size,random_weight,length,true_obj,
               mujoco=True,env_name='Hopper-v4',env_id='hopper',train='train'):
     # plot the result for our avg algorithm
-
-    if mujoco:
-        log_dir = '../avg_tune_log/mujoco/'
-        filename = f"final-mujoco-{env_name}-discount-{gamma}-length-{length}-random-{random_weight}.csv"
-    else:
-        log_dir = '../avg_tune_log/classic/'
-        filename = f"final-classic-mse-{env_name}-discount-{gamma}-length-{length}-length-{random_weight}.csv"
-
-    f = os.path.join(log_dir, filename)
+    name = 'mse-tune--alpha-0.001-lr-0.0005-lambda-0.5.csv'
+    f = os.path.join('../avg_tune_log/avg_tune/', name)
 
     data = pd.read_csv(f, header=0, index_col='hyperparam')
     data.columns = data.columns.astype(int)
     data = data.sort_index(axis=1, ascending=True)
-    result = []
     for name in data.index.to_list():
-        if train in name and str(size) in name:
-            result.append(data.loc[name].to_list())
-    result = np.array(result)
-    mean_avg_mse = np.mean(result,axis=0)
-    var_avg = np.var(result, axis=0)
+        if 'val' in name and env_name in name:
+
+    result = []
+    # for name in data.index.to_list():
+    #     if train in name and str(size) in name:
+    #         result.append(data.loc[name].to_list())
+    # result = np.array(result)
+    # mean_avg_mse = np.mean(result,axis=0)
+    # var_avg = np.var(result, axis=0)
+
+    # if mujoco:
+    #     log_dir = '../avg_tune_log/mujoco/'
+    #     filename = f"final-mujoco-{env_name}-discount-{gamma}-length-{length}-random-{random_weight}.csv"
+    # else:
+    #     log_dir = '../avg_tune_log/classic/'
+    #     filename = f"final-classic-mse-{env_name}-discount-{gamma}-length-{length}-length-{random_weight}.csv"
+    #
+    # f = os.path.join(log_dir, filename)
+    #
+    # data = pd.read_csv(f, header=0, index_col='hyperparam')
+    # data.columns = data.columns.astype(int)
+    # data = data.sort_index(axis=1, ascending=True)
+    # result = []
+    # for name in data.index.to_list():
+    #     if train in name and str(size) in name:
+    #         result.append(data.loc[name].to_list())
+    # result = np.array(result)
+    # mean_avg_mse = np.mean(result,axis=0)
+    # var_avg = np.var(result, axis=0)
 
     # plot COP-TD
     result = []

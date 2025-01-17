@@ -4,9 +4,10 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 import numpy as np
 import csv
-from avg_corr.main import train as train_mse, PPOBuffer
+from avg_corr.main import train as train_mse, PPOBuffer, WeightNet
 from avg_corr.gamma import train as train_gamma
 import pickle
+import torch
 
 def argsparser():
     import argparse
@@ -103,7 +104,7 @@ def run_mujoco():
     buf_test.ptr, buf_test.max_size = size, size
     if loss == 'mse':
         print("loss: mse!")
-        train, test = train_mse(lr=lr, env=env, seed=seed, path=path, hyper_choice=args.seed,
+        train, test, weight = train_mse(lr=lr, env=env, seed=seed, path=path, hyper_choice=args.seed,
                                 link=link, random_weight=random_weight, l1_lambda=alpha,
                                 buf=buf, buf_test=buf_test, reg_lambda=reg_lambda,
                                 discount=discount_factor,
@@ -131,6 +132,10 @@ def run_mujoco():
         # Step 4: Using csv.writer to write the list to the CSV file
         writer = csv.writer(file)
         writer.writerow(mylist)  # Use writerow for single list
+
+    torch.save(weight.state_dict(), args.log_dir + '/model-' + str(env) + '-discount-' + str(discount_factor) \
+               + '-length-' + str(length) + '-length-' + str(random_weight) + '-size-' + str(size) + '-seed-' + str(
+        seed) + '.pth')
 
 
 run_mujoco()

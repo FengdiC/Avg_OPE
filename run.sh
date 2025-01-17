@@ -4,7 +4,7 @@
 #SBATCH --time=0-16:00
 #SBATCH --output=%N-%j.out
 #SBATCH --account=def-ashique
-# hei SBATCH --array=0-125
+#SBATCH --array=0-125
 #SBATCH --gpus-per-node=1
 
 # salloc --cpus-per-task=1 --mem=3600M --time=0-3:00 --account=def-ashique --gpus-per-node=1

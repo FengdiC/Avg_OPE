@@ -138,10 +138,11 @@ def find_best():
     print(hyper_choices)
 
 def plot_best():
-    hyper_choices = ['mse-tune--alpha-0.01-lr-0.005-lambda-10.csv',
-                     'mse-tune--alpha-0.1-lr-5e-05-lambda-2.csv',
-                     'mse-tune--alpha-0.01-lr-0.0001-lambda-2.csv',
-                     'mse-tune--alpha-0.1-lr-0.0001-lambda-20.csv',
+    hyper_choices = [
+                     # 'mse-tune--alpha-0.01-lr-0.005-lambda-10.csv',
+                     # 'mse-tune--alpha-0.1-lr-5e-05-lambda-2.csv',
+                     # 'mse-tune--alpha-0.01-lr-0.0001-lambda-2.csv',
+                     # 'mse-tune--alpha-0.1-lr-0.0001-lambda-20.csv',
                      'mse-tune--alpha-0.001-lr-0.0005-lambda-0.5.csv']
 
 
@@ -163,7 +164,7 @@ def plot_best():
             data.columns = data.columns.astype(int)
             data = data.sort_index(axis=1, ascending=True)
             for name in data.index.to_list():
-                if 'val' in name and env_name in name:
+                if 'train' in name and env_name in name:
                     result.append(data.loc[name].to_list())
             result = np.array(result)
             plt.plot(np.arange(result.shape[1]), np.mean(result,axis=0),label=filename)

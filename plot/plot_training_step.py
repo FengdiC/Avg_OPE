@@ -5,7 +5,6 @@ sys.path.insert(0, parentdir)
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from avg_corr.main import eval_policy
 import _pickle as pickle
 
 def setsizes():
@@ -169,8 +168,8 @@ def plot_algo(gamma,size,random_weight,length,true_obj,
     plt.plot(range(0,mean_avg_mse.shape[0]*5,5), mean_avg_mse, label='our correction')
     plt.fill_between(range(0,mean_avg_mse.shape[0]*5,5),mean_avg_mse-var_avg,mean_avg_mse+var_avg,alpha=0.2)
 
-    plt.plot(range(0,mean_avg_mse.shape[0]*5,5), mean_cop_mse, label='COP-TD')
-    plt.fill_between(range(0,mean_avg_mse.shape[0]*5,5),mean_cop_mse-var_cop,mean_cop_mse+var_cop,alpha=0.2)
+    plt.plot(range(0,mean_cop_mse.shape[0]*5,5), mean_cop_mse, label='COP-TD')
+    plt.fill_between(range(0,mean_cop_mse.shape[0]*5,5),mean_cop_mse-var_cop,mean_cop_mse+var_cop,alpha=0.2)
 
     plt.plot(range(0,mean_avg_mse.shape[0]*5,5), mean_mis, label='SR-DICE')
     plt.fill_between(range(0,mean_avg_mse.shape[0]*5,5),mean_mis-var_mis, mean_mis+var_mis, alpha=0.2)
@@ -240,20 +239,20 @@ def plot_err():
 # plot_err()
 
 if __name__ == "__main__":
-    # env_lists=[
-    #        'Hopper-v4',
-    #        'HalfCheetah-v4',
-    #        'Ant-v4',
-    #        'Walker2d-v4',
-    # ]
-    # env_id_lists = [
-    #                 'hopper',
-    #                 'halfcheetah',
-    #                 'ant',
-    #                 'walker'
-    #                 ]
-    env_lists = ['CartPole-v1','Acrobot-v1']
-    env_id_lists = ['cartpole','acrobot']
+    env_lists=[
+           'Hopper-v4',
+           'HalfCheetah-v4',
+           'Ant-v4',
+           'Walker2d-v4',
+    ]
+    env_id_lists = [
+                    'hopper',
+                    'halfcheetah',
+                    'ant',
+                    'walker'
+                    ]
+    # env_lists = ['CartPole-v1','Acrobot-v1']
+    # env_id_lists = ['cartpole','acrobot']
 
     discount_factor_lists = [0.8, 0.9, 0.95, 0.99, 0.995]
     size_lists = [2000, 4000, 8000, 16000]
@@ -267,8 +266,8 @@ if __name__ == "__main__":
         env_name = env_lists[i]
         env_id= env_id_lists[i]
         gamma = 0.95
-        size, random_weight, length = 8000, 0.3, 40
-        with open('./dataset/classic_obj.pkl', 'rb') as file:
+        size, random_weight, length = 4000, 2.0,100
+        with open('./dataset/mujoco_obj.pkl', 'rb') as file:
             obj = pickle.load(file)
         true_obj = obj[env_name][2]
         plot_algo(gamma = gamma,
@@ -276,7 +275,7 @@ if __name__ == "__main__":
                   random_weight = random_weight,
                   length = length,
                   true_obj = true_obj,
-                  mujoco=False,
+                  mujoco=True,
                   env_name=env_name,
                   env_id=env_id,
                   train=train)

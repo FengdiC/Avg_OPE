@@ -90,7 +90,7 @@ weight_lists = [1.4, 1.8, 2.0, 2.4, 2.8]
 length_lists = [20, 50, 100, 200]
 
 for array in range(18):
-    random_weight, max_len, discount_factor, buffer_size = (
+    random_weight, length, discount_factor, buffer_size = (
         2.0,
         100,
         0.95,
@@ -107,8 +107,8 @@ for array in range(18):
         if random_weight == 2.0:
             continue
     else:
-        max_len = length_lists[array - 14]
-        if max_len == 100:
+        length = length_lists[array - 14]
+        if length == 100:
             continue
     for seed in seeds:
         for env in env_lists:

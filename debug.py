@@ -110,34 +110,34 @@ for array in range(18):
         max_len = length_lists[array - 14]
         if max_len == 100:
             continue
-        for seed in seeds:
-            for env in env_lists:
-                name = ['discount_factor', 0.8, 'random_weight', random_weight, 'max_length', length,
-                        'buffer_size', 16000, 'seed', seed, 'env', env]
-                name = '-'.join(str(x) for x in name)
+    for seed in seeds:
+        for env in env_lists:
+            name = ['discount_factor', 0.8, 'random_weight', random_weight, 'max_length', length,
+                    'buffer_size', 16000, 'seed', seed, 'env', env]
+            name = '-'.join(str(x) for x in name)
 
-                with open(data_dir + '/dataset/' + name + '.pkl', 'rb') as outp:
-                    print(data_dir + '/dataset/' + name + '.pkl')
-                    buf = pickle.load(outp)
-                name = ['discount_factor', 0.8, 'random_weight', random_weight, 'max_length', length,
-                        'buffer_size', 16000, 'seed', seed + 1314, 'env', env]
-                name = '-'.join(str(x) for x in name)
+            with open(data_dir + '/dataset/' + name + '.pkl', 'rb') as outp:
+                print(data_dir + '/dataset/' + name + '.pkl')
+                buf = pickle.load(outp)
+            name = ['discount_factor', 0.8, 'random_weight', random_weight, 'max_length', length,
+                    'buffer_size', 16000, 'seed', seed + 1314, 'env', env]
+            name = '-'.join(str(x) for x in name)
 
-                with open(data_dir + '/dataset_test/' + name + '.pkl', 'rb') as outp:
-                    buf_test = pickle.load(outp)
+            with open(data_dir + '/dataset_test/' + name + '.pkl', 'rb') as outp:
+                buf_test = pickle.load(outp)
 
-                name = ['discount_factor', discount_factor, 'random_weight', random_weight, 'max_length', length,
-                        'buffer_size', buffer_size, 'seed', seed]
-                name = '-'.join(str(x) for x in name)
-                obj = (1 - discount_factor) * np.sum(buf.rew_buf[:buf.ptr]
-                                                     * (discount_factor ** buf.tim_buf[
-                                                                           :buf.ptr])) * length / buffer_size
-                obj_test = (1 - discount_factor) * np.sum(buf_test.rew_buf[:buf_test.ptr]
-                                                          * (discount_factor ** buf_test.tim_buf[
-                                                                                :buf_test.ptr])) * length / buffer_size
+            name = ['discount_factor', discount_factor, 'random_weight', random_weight, 'max_length', length,
+                    'buffer_size', buffer_size, 'seed', seed]
+            name = '-'.join(str(x) for x in name)
+            obj = (1 - discount_factor) * np.sum(buf.rew_buf[:buf.ptr]
+                                                 * (discount_factor ** buf.tim_buf[
+                                                                       :buf.ptr])) * length / buffer_size
+            obj_test = (1 - discount_factor) * np.sum(buf_test.rew_buf[:buf_test.ptr]
+                                                      * (discount_factor ** buf_test.tim_buf[
+                                                                            :buf_test.ptr])) * length / buffer_size
 
-                biased_obj[env]['train'][name] = obj
-                biased_obj[env]['test'][name] = obj_test
+            biased_obj[env]['train'][name] = obj
+            biased_obj[env]['test'][name] = obj_test
 
 with open(data_dir+'biased_obj.pkl', 'wb') as outp:
     pickle.dump(biased_obj, outp, pickle.HIGHEST_PROTOCOL)

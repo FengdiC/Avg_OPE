@@ -66,10 +66,8 @@ for array in range(18):
             name = ['discount_factor', discount_factor, 'random_weight', random_weight, 'max_length', length,
                     'buffer_size',buffer_size,'seed',seed]
             name = '-'.join(str(x) for x in name)
-            obj = (1-discount_factor) *np.sum(buf.rew_buf[:buf.ptr]
-                                              * (discount_factor** buf.tim_buf[:buf.ptr])) * length / buffer_size
-            obj_test = (1 - discount_factor) * np.sum(buf_test.rew_buf[:buf_test.ptr]
-                                                 * (discount_factor ** buf_test.tim_buf[:buf_test.ptr])) * length / buffer_size
+            obj = (1-discount_factor) *np.mean(buf.rew_buf[:buf.ptr])
+            obj_test = (1 - discount_factor) * np.mean(buf_test.rew_buf[:buf_test.ptr])
 
             biased_obj[env]['train'][name] = obj
             biased_obj[env]['test'][name] = obj_test
@@ -129,12 +127,8 @@ for array in range(18):
             name = ['discount_factor', discount_factor, 'random_weight', random_weight, 'max_length', length,
                     'buffer_size', buffer_size, 'seed', seed]
             name = '-'.join(str(x) for x in name)
-            obj = (1 - discount_factor) * np.sum(buf.rew_buf[:buf.ptr]
-                                                 * (discount_factor ** buf.tim_buf[
-                                                                       :buf.ptr])) * length / buffer_size
-            obj_test = (1 - discount_factor) * np.sum(buf_test.rew_buf[:buf_test.ptr]
-                                                      * (discount_factor ** buf_test.tim_buf[
-                                                                            :buf_test.ptr])) * length / buffer_size
+            obj = (1 - discount_factor) * np.mean(buf.rew_buf[:buf.ptr])
+            obj_test = (1 - discount_factor) * np.mean(buf_test.rew_buf[:buf_test.ptr])
 
             biased_obj[env]['train'][name] = obj
             biased_obj[env]['test'][name] = obj_test

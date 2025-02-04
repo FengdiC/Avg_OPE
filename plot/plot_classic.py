@@ -86,7 +86,7 @@ def compute_points(gamma,size,random_weight,length,env_name,train,true_obj,env_i
     result = []
     log_dir = "../avg_tune_log/dice/" + env_id +'/'
 
-    for seed in range(10):
+    for seed in range(5):
         if mujoco:
             filename =  'dice-mujoco-' + str(env_name) + '-discount-' + str(gamma) \
                        + '-length-' + str(length) + '-random-' + str(random_weight) + \

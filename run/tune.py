@@ -31,29 +31,30 @@ path_lists = {
 def tune_mse():
 
     env_lists = ['CartPole-v1', 'Acrobot-v1',
-                 'MountainCarContinuous-v0', 'Hopper-v4',
+                 'Hopper-v4',
                  'HalfCheetah-v4', 'Ant-v4',
                  'Walker2d-v4'
                  ]
     random_weight_lists = [0.3,0.3,
-                           2.0,2.0,2.0,2.0,2.0]
+                           2.0,2.0,2.0,2.0]
     mujoco_lists = [False, False,
-                    True, True, True, True, True]
+                    True, True, True, True]
 
     alpha = [0, 0.001, 0.01, 0.1]
     batch_size = 512
     link = 'identity'
     lr = [0.00005, 0.0001, 0.0005, 0.001, 0.005]
-    reg_lambda = [0.5, 2, 10, 20 ,40]
+    # reg_lambda = [0.5, 2, 10, 20 ,40]
 
     args = argsparser()
     seeds = range(5)
-    idx = np.unravel_index(args.array, (4, 5, 5))
+    idx = np.unravel_index(args.array, (4, 5))
     buffer_size = 40
     discount_factor, max_len = 0.95, 100
 
 
-    alpha, lr, reg_lambda = alpha[idx[0]], lr[idx[1]], reg_lambda[idx[2]]
+    # alpha, lr, reg_lambda = alpha[idx[0]], lr[idx[1]], reg_lambda[idx[2]]
+    alpha, lr, reg_lambda = alpha[idx[0]], lr[idx[1]], 0
     filename = args.log_dir + 'mse-tune--alpha-' + str(alpha) + '-lr-' \
                + str(lr) + '-lambda-' + str(reg_lambda) + '.csv'
     os.makedirs(args.log_dir, exist_ok=True)
@@ -175,6 +176,6 @@ def plot_best():
         plt.show()
 
 if __name__ == "__main__":
-    # tune_mse()
+    tune_mse()
     # find_best()
-    plot_best()
+    # plot_best()

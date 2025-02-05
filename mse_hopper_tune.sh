@@ -18,7 +18,7 @@ SECONDS=0
 echo
 
 python run/tune.py --array $SLURM_ARRAY_TASK_ID --data_dir $SCRATCH/avg_corr/ \
---log_dir $SCRATCH/avg_mse/tune/ --steps 5 --epoch 10000 --max_len 100 --seed 280 &
+--log_dir $SCRATCH/avg_mse/tune_ablation/ --steps 5 --epoch 10000 --max_len 100 --seed 280 &
 
 echo "Baseline job $seed took $SECONDS"
 sleep 72h

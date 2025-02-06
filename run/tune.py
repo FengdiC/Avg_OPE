@@ -40,7 +40,7 @@ def tune_mse():
     mujoco_lists = [False, False,
                     True, True, True, True]
 
-    alpha = [0, 0.001, 0.01, 0.1]
+    # alpha = [0, 0.001, 0.01, 0.1]
     batch_size = 512
     link = 'identity'
     lr = [0.00005, 0.0001, 0.0005, 0.001, 0.005]
@@ -48,13 +48,14 @@ def tune_mse():
 
     args = argsparser()
     seeds = range(5)
-    idx = np.unravel_index(args.array, (4, 5))
+    # idx = np.unravel_index(args.array, (4, 5))
+    idx = [args.array]
     buffer_size = 40
     discount_factor, max_len = 0.95, 100
 
 
     # alpha, lr, reg_lambda = alpha[idx[0]], lr[idx[1]], reg_lambda[idx[2]]
-    alpha, lr, reg_lambda = alpha[idx[0]], lr[idx[1]], 0
+    alpha, lr, reg_lambda = 0, lr[idx[0]], 0
     filename = args.log_dir + 'mse-tune--alpha-' + str(alpha) + '-lr-' \
                + str(lr) + '-lambda-' + str(reg_lambda) + '.csv'
     os.makedirs(args.log_dir, exist_ok=True)

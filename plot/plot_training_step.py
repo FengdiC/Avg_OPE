@@ -111,7 +111,7 @@ def plot_algo(gamma,size,random_weight,length,true_obj,
     # plot COP-TD
     result = []
     if not mujoco:
-        log_dir = "../avg_tune_log/COP-TD/Byran/" + env_id + "/"
+        log_dir = "../avg_tune_log/COP-TD/" + env_id + "/"
         filename = f"mse-tune-random_weight_{random_weight}-discount_factor_{gamma}-max_ep_{size // length}-max_len_{length}-link_default-batch_size_512-bootstrap_target_target_network-lr_0.001-alpha_0.0.pkl"
     else:
         log_dir = "../avg_tune_log/COP-TD/" + env_id + "/"
@@ -309,7 +309,7 @@ if __name__ == "__main__":
                     'walker'
                     ]
 
-    train = 'train'
+    train = 'test'
 
     avg_mse, dice, cop = [], [], []
     for i in range(len(env_lists)):
@@ -335,7 +335,7 @@ if __name__ == "__main__":
     env_lists = ['CartPole-v1','Acrobot-v1']
     env_id_lists = ['cartpole','acrobot']
 
-    train = 'train'
+    train = 'test'
 
     avg_mse, dice, cop = [], [], []
     for i in range(len(env_lists)):

@@ -236,9 +236,11 @@ def plot_classic(env_file='./exper/cartpole.pth',env='CartPole-v1',env_name='car
             obj = pickle.load(file)
         true_obj = obj[env][2]
 
-    fig = plt.figure(figsize=(9,6))
+    fig = plt.figure(figsize=(7.38, 6))
     plt.title(env_id, fontsize=16)
     plt.axis('off')
+    setsizes()
+    setaxes()
     plt.subplot(221)
     plt.errorbar(range(len(discount_factor_lists)), biased_list[:, 0], yerr=biased_list[:, 1],
                  color='tab:brown', label='behaviour policy')
@@ -386,9 +388,9 @@ def plot_classic(env_file='./exper/cartpole.pth',env='CartPole-v1',env_name='car
     # plt.xscale('log')
     plt.xlabel('Trajectory Length', fontsize=10)
 
-    plt.tight_layout(rect=[0, 0, 0.82, 1])
-    plt.legend(bbox_to_anchor=(1.02, 1.1), loc="upper left", ncol=1)
-
+    # plt.tight_layout(rect=[0, 0, 0.82, 1])
+    # plt.legend(bbox_to_anchor=(1.02, 1.1), loc="upper left", ncol=1)
+    plt.tight_layout()
     plt.show()
 
 
@@ -406,8 +408,11 @@ if __name__ == "__main__":
         'walker'
     ]
 
-    # env_lists = ['CartPole-v1', 'Acrobot-v1']
-    # env_id_lists = ['cartpole', 'acrobot']
+    env_lists = ['CartPole-v1', 'Acrobot-v1']
+    env_id_lists = ['cartpole', 'acrobot']
+
+    env_lists = ['Hopper-v4']
+    env_id_lists = ['hopper']
 
     for i in range(len(env_lists)):
         env_name = env_lists[i]
